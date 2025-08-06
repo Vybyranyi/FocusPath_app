@@ -1,0 +1,110 @@
+:root {
+    // Base Colors
+    --Base-White: #ffffff;
+    --Base-Black: #000000;
+    --Base-Background: #F6F9FF;
+
+    // Primary Colors
+    --Primary-Black: #040415;
+    --Primary-Black-80: #363644;
+    --Primary-Black-60: #686873;
+    --Primary-Black-40: #9B9BA1;
+    --Primary-Black-20: #CDCDD0;
+    --Primary-Black-10: #EAECF0;
+
+    --Primary-Blue: #3843FF;
+    --Primary-Blue-80: #6069FF;
+    --Primary-Blue-60: #888EFF;
+    --Primary-Blue-40: #AFB4FF;
+    --Primary-Blue-20: #D7D9FF;
+    --Primary-Blue-10: #EBECFF;
+
+    --Primary-Blue-info: #12A4ED;
+    --Primary-Blue-info-80: #34B1F0;
+    --Primary-Blue-info-60: #56BEF2;
+    --Primary-Blue-info-40: #78CBF5;
+    --Primary-Blue-info-20: #BBE5FA;
+    --Primary-Blue-info-10: #DDF2FC;
+
+    --Primary-Red-error: #E3524F;
+    --Primary-Red-error-80: #E76B68;
+    --Primary-Red-error-60: #EB8381;
+    --Primary-Red-error-40: #EF9C9A;
+    --Primary-Red-error-20: #F7CECD;
+    --Primary-Red-error-10: #FBE6E6;
+
+    --Primary-Orange-warning: #FEA800;
+    --Primary-Orange-warning-80: #FFB524;
+    --Primary-Orange-warning-60: #FFC148;
+    --Primary-Orange-warning-40: #FFCD6D;
+    --Primary-Orange-warning-20: #FFE6B6;
+    --Primary-Orange-warning-10: #FFF3DA;
+
+    --Primary-Green-success: #3BA935;
+    --Primary-Green-success-80: #4AC443;
+    --Primary-Green-success-60: #68CE62;
+    --Primary-Green-success-40: #86D882;
+    --Primary-Green-success-20: #C3EBC0;
+    --Primary-Green-success-10: #E1F5E0;
+
+    // Secondary Colors
+    --Secondary-Orange: #F15223;
+    --Secondary-Orange-80: #F4754F;
+    --Secondary-Orange-60: #F7977B;
+    --Secondary-Orange-40: #F9BAA7;
+    --Secondary-Orange-20: #FCDCD3;
+    --Secondary-Orange-10: #FEEEE9;
+
+    --Secondary-Purple: #8A24FF;
+    --Secondary-Purple-80: #A150FF;
+    --Secondary-Purple-60: #B97CFF;
+    --Secondary-Purple-40: #D0A7FF;
+    --Secondary-Purple-20: #E8D3FF;
+    --Secondary-Purple-10: #F3E9FF;
+
+    --Secondary-Pink: #FF7D7D;
+    --Secondary-Pink-80: #FF9797;
+    --Secondary-Pink-60: #FFB1B1;
+    --Secondary-Pink-40: #FFCBCB;
+    --Secondary-Pink-20: #FFE5E5;
+    --Secondary-Pink-10: #FFF2F2;
+
+    --Secondary-Teal: #2D9E64;
+    --Secondary-Teal-80: #57B183;
+    --Secondary-Teal-60: #81C5A2;
+    --Secondary-Teal-40: #ABD8C1;
+    --Secondary-Teal-20: #D5ECE0;
+    --Secondary-Teal-10: #EAF5EF;
+
+    --Secondary-Yellow: #FFCA00;
+    --Secondary-Yellow-80: #FFD533;
+    --Secondary-Yellow-60: #FFDF66;
+    --Secondary-Yellow-40: #FFEA99;
+    --Secondary-Yellow-20: #FFF4CC;
+    --Secondary-Yellow-10: #FFFAE6;
+
+    --Secondary-DarkBlue: #878EA8;
+    --Secondary-DarkBlue-80: #9FA5B9;
+    --Secondary-DarkBlue-60: #B7BBCB;
+    --Secondary-DarkBlue-40: #CFD2DC;
+    --Secondary-DarkBlue-20: #E7E8EE;
+    --Secondary-DarkBlue-10: #F3F4F6;
+
+    // Gradients
+    --Blue-Gradient: linear-gradient(-68deg, #6B73FF 0%, #000DFF 100%);
+
+    // Shadows
+    --Box-Shadow: 58px 26px 68px 0 rgba(35, 44, 93, 0.06);
+    --Medium-Shadow: 0px 12px 24px 0 rgba(35, 44, 93, 0.06);
+    --Small-Shadow: 0px 3px 6px 0 rgba(11, 43, 81, 0.2);
+
+
+
+
+
+}
+
+
+// :root[data-theme='dark'] {
+
+// }
