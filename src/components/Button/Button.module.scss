@@ -1,0 +1,89 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.btn {
+    width: 240px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+
+    // Types
+    &.primary {
+        background-color: var(--Primary-Blue);
+
+        span {
+            color: var(--Base-White);
+        }
+
+        &:hover {
+            background-color: var(--Primary-Blue-80);
+        }
+
+        &:disabled {
+            background-color: var(--Primary-Blue);
+            opacity: 0.5;
+            cursor: not-allowed;
+
+            span {
+                color: var(--Primary-Black-40);
+            }
+        }
+    }
+
+    &.secondary {
+        background-color: var(--Base-White);
+
+        span {
+            color: var(--Base-Black);
+        }
+
+        &:hover {
+            background-color: var(--Secondary-DarkBlue-20);
+        }
+
+        &:disabled {
+            background-color: var(--Base-Background);
+            cursor: not-allowed;
+
+            span {
+                color: var(--Primary-Black-40);
+            }
+        }
+    }
+
+    &.outline {
+        background-color: transparent;
+        outline: 1px solid var(--Primary-Black-10);
+        outline-offset: -1px;
+
+        span {
+            color: var(--Base-White);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+
+            span {
+                color: var(--Primary-Black-40);
+            }
+        }
+    }
+
+    // Sizes
+    &.small {
+        padding: 8px 0;
+        border-radius: 18px;
+    }
+
+    &.medium {
+        padding: 12px 0;
+        border-radius: 22px;
+    }
+
+    &.large {
+        padding: 16px 0;
+        border-radius: 24px;
+    }
+}
