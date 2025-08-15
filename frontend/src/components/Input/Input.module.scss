@@ -1,0 +1,59 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.inputContainer {
+    width: 100%;
+    max-width: 295px;
+    min-width: fit-content;
+
+    .inputLabel {
+        margin-bottom: 8px;
+    }
+
+    .inputWrapper {
+        position: relative;
+
+        .input {
+            width: 100%;
+            height: 48px;
+            padding: 12px 32px 12px 0;
+            box-shadow: inset 0 -1px 0 var(--Primary-Black-20);
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 24px;
+            box-sizing: border-box;
+
+            &::placeholder {
+                color: var(--Primary-Black-20);
+            }
+
+            &:focus {
+                box-shadow: inset 0 -2px 0 var(--Primary-Green-success);
+            }
+        }
+
+        .inputIcon {
+            position: absolute;
+            top: 52%;
+            transform: translateY(-50%);
+            right: 0;
+
+            img {
+                cursor: pointer;
+                width: 24px;
+                aspect-ratio: 1;
+            }
+        }
+
+    }
+
+    &.disabled {
+        .inputLabel {
+            color: var(--Primary-Black-60);
+        }
+
+        .input {
+            cursor: not-allowed;
+        }
+
+    }
+}
