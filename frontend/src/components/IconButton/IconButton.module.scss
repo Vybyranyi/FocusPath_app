@@ -1,0 +1,62 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.iconButton {
+    background-color: var(--Base-White);
+    color: var(--Primary-Black-10);
+    border: solid 1px var(--Primary-Black-10);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+
+    &:hover {
+        background-color: var(--Primary-Blue-10);
+        border-color: var(--Primary-Blue);
+    }
+
+    .dot{
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        background-color: var(--Primary-Red-error);
+        border-radius: 50%;
+    }
+
+    &.small {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+
+        .emoji {
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    &.medium {
+        width: 40px;
+        height: 40px;
+        border-radius: 16px;
+
+        .emoji {
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    &.large {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+
+        .emoji {
+            width: 24px;
+            height: 24px;
+        }
+    }
+}
