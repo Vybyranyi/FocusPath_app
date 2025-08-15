@@ -5,6 +5,7 @@ import Button from '@components/Button/Button';
 
 import notification from '@assets/images/icons/notification.svg'
 import Input from '@components/Input/Input';
+import IconButton from '@components/IconButton/IconButton';
 
 function App() {
 
@@ -26,6 +27,14 @@ function App() {
         placeholder="Enter your password"
         type="password"
         disabled={false}
+      />
+
+      <IconButton
+        emoji="smiling cat with heart-eyes"
+        size='large'
+        // icon={notification}
+        onClick={() => alert('icon clicked!')}
+        show_dot={true}
       />
     </div>
   )
