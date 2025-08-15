@@ -4,11 +4,12 @@ import '@assets/styles/typography.scss';
 import Button from '@components/Button/Button';
 
 import notification from '@assets/images/icons/notification.svg'
+import Input from '@components/Input/Input';
 
 function App() {
 
   return (
-    <div style={{ backgroundColor: '#e6e6e6ff' }}>
+    <div style={{ backgroundColor: '#e6e6e6ff', height: '100vh' }}>
       <h1>Hello World</h1>
       <Button
         type='primary'
@@ -19,6 +20,13 @@ function App() {
       >
         Click Me
       </Button>
+
+      <Input
+        label="Password"
+        placeholder="Enter your password"
+        type="password"
+        disabled={false}
+      />
     </div>
   )
 }
