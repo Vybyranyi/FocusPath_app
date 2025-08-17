@@ -44,12 +44,14 @@ export default function Input(props: IInputProps) {
                         <img
                             src={isPasswordVisible ? eye_hide : eye_show}
                             onClick={togglePasswordVisibility}
+                            alt='Toggle password visibility'
                         />
                     }
                     {value &&
                         <img
                             src={remove_cross}
                             onClick={handleClear}
+                            alt='Clear input'
                         />
                     }
                 </div>
