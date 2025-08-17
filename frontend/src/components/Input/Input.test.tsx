@@ -42,12 +42,14 @@ describe("Input component", () => {
         expect(input.type).toBe("password");
     });
 
+    it("shows error message when invalid input is provided", () => {
+        render(<Input label="Email" placeholder="Enter email" type="email" error="Invalid email address" />);
+        const input = screen.getByPlaceholderText("Enter email") as HTMLInputElement;
+        fireEvent.change(input, { target: { value: "invalid-email" } });
+        fireEvent.blur(input);
+        expect(screen.getByText("Invalid email address")).toBeInTheDocument();
+    });
+
 });
 
-// it("shows error message when invalid input is provided", () => {
-//     render(<Input label="Email" placeholder="Enter email" type="email" />);
-//     const input = screen.getByPlaceholderText("Enter email") as HTMLInputElement;
-//     fireEvent.change(input, { target: { value: "invalid-email" } });
-//     fireEvent.blur(input);
-//     expect(screen.getByText("Invalid email address")).toBeInTheDocument();
-// });
+

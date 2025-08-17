@@ -27,6 +27,7 @@ function App() {
         placeholder="Enter your password"
         type="password"
         disabled={false}
+        error="Invalid password"
       />
 
       <IconButton

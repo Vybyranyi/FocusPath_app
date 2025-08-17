@@ -9,6 +9,7 @@ export interface IInputProps {
     placeholder: string;
     type: "text" | "email" | "password" | "date";
     disabled?: boolean;
+    error?: string;
 }
 
 export default function Input(props: IInputProps) {
@@ -32,7 +33,7 @@ export default function Input(props: IInputProps) {
             <p className={`chip ${styles.inputLabel}`}>{props.label}</p>
             <div className={styles.inputWrapper}>
                 <input
-                    className={`${styles.input}`}
+                    className={`${styles.input} ${props.error ? styles.error : ""}`}
                     type={props.type === "password" ? (isPasswordVisible ? "text" : "password") : props.type}
                     placeholder={props.placeholder}
                     disabled={props.disabled}
@@ -56,6 +57,11 @@ export default function Input(props: IInputProps) {
                     }
                 </div>
             </div>
+            {props.error && (
+                <div className={styles.errorPopup}>
+                    <span className='alternative'>{props.error}</span>
+                </div>
+            )}
         </div>
     )
 }
