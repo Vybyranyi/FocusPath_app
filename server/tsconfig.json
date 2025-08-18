@@ -11,6 +11,7 @@
     "resolveJsonModule": true,
     "baseUrl": "./src",
     "paths": {
+      "@app": ["app.ts"],
       "@config/*": ["config/*"],
       "@models/*": ["models/*"],
       "@controllers/*": ["controllers/*"],

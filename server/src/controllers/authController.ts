@@ -23,10 +23,6 @@ export const register = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Password must be at least 8 characters long' });
         }
 
-        if (password.length < 8) {
-            return res.status(400).json({ message: 'Password must be at least 8 characters long' });
-        }
-
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({
