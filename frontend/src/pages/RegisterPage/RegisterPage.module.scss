@@ -1,0 +1,5 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.header {
+    background-color: var(--Base-White);
+}
