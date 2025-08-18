@@ -12,10 +12,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@redux-devtools/extension": "^3.3.0",
+    "@reduxjs/toolkit": "^2.8.2",
     "path": "^0.12.7",
     "react": "^19.1.0",
     "react-apple-emojis": "^3.0.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
