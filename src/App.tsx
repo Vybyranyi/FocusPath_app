@@ -1,9 +1,8 @@
 import './App.css';
-import '@assets/styles/resetStyles.scss'
+import '@assets/styles/resetStyles.scss';
 import '@assets/styles/typography.scss';
 import Button from '@components/Button/Button';
-
-import notification from '@assets/images/icons/notification.svg'
+import notification from '@assets/images/icons/notification.svg';
 import Input from '@components/Input/Input';
 import IconButton from '@components/IconButton/IconButton';
 
