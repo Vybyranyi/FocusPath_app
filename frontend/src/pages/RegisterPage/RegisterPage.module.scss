@@ -1,5 +1,15 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
-.header {
-    background-color: var(--Base-White);
+.form {
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.buttonContainer {
+    position: fixed;
+    bottom: 12px;
+    left: 24px;
+    right: 24px;
 }
