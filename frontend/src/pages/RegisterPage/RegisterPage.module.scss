@@ -1,5 +1,13 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
+.headerContainer {
+    display: block;
+}
+
+.RegisterTitle {
+    display: none;
+}
+
 .form {
     padding-top: 8px;
     display: flex;
@@ -12,4 +20,42 @@
     bottom: 12px;
     left: 24px;
     right: 24px;
+}
+
+@media screen and (min-width: 768px) {
+    .RegisterPage {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        .headerContainer {
+            display: none;
+        }
+
+        .RegisterTitle {
+            display: block;
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .form {
+            max-width: 442px;
+            padding-top: 0px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 0 auto;
+            margin-bottom: 90px;
+        }
+
+        .buttonContainer {
+            max-width: 345px;
+            position: static;
+            margin: 0 auto;
+        }
+    }
+
+
+
 }
