@@ -3,6 +3,7 @@ import '@assets/styles/resetStyles.scss';
 import '@assets/styles/typography.scss';
 import Button from '@components/Button/Button';
 import notification from '@assets/images/icons/notification.svg';
+import arrow_left from '@assets/images/icons/arrow-left.svg';
 import Input from '@components/Input/Input';
 import IconButton from '@components/IconButton/IconButton';
 
@@ -30,12 +31,13 @@ function App() {
       />
 
       <IconButton
-        emoji="smiling cat with heart-eyes"
+        // emoji="smiling cat with heart-eyes"
         size='large'
-        // icon={notification}
+        icon={arrow_left}
         onClick={() => alert('icon clicked!')}
         show_dot={true}
       />
+
     </div>
   )
 }
