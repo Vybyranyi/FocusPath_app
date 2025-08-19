@@ -7,11 +7,14 @@ import arrow_left from "@assets/images/icons/arrow-left.svg";
 
 export default function RegisterPage() {
     return (
-        <>
-            <Header
-                title="Create Account"
-                leftButtonIcon={<IconButton size='large' icon={arrow_left} />}
-            />
+        <div className={styles.RegisterPage}>
+            <div className={styles.headerContainer}>
+                <Header
+                    title="Create Account"
+                    leftButtonIcon={<IconButton size='large' icon={arrow_left} />}
+                />
+            </div>
+            <h5 className={styles.RegisterTitle}>Create Account</h5>
             <div className="container">
                 <div className={styles.form}>
                     <Input label="name" placeholder="Enter your name" type="text" />
@@ -22,7 +25,6 @@ export default function RegisterPage() {
                     <Button type="primary" size="large" >Next</Button>
                 </div>
             </div>
-
-        </>
+        </div>
     );
 };
