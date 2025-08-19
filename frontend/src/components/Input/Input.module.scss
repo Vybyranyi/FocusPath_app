@@ -33,6 +33,32 @@
             &.error {
                 box-shadow: inset 0 -2px 0 var(--Primary-Red-error);
             }
+
+            &[type="date"] {
+                // Стилі для імітації плейсхолдера
+                position: relative;
+                color: transparent; // Ховаємо стандартний текст дати
+
+                &::before {
+                    content: attr(placeholder);
+                    position: absolute;
+                    top: 50%;
+                    left: 12px; // Вирівняйте по вашому дизайну
+                    transform: translateY(-50%);
+                    color: var(--Primary-Black-20); // Колір плейсхолдера
+                    pointer-events: none;
+                }
+
+                &:focus,
+                &:valid {
+                    color: initial; // Показуємо текст, коли інпут сфокусований або має значення
+                }
+
+                &:focus::before,
+                &:valid::before {
+                    content: none; // Прибираємо імітацію плейсхолдера
+                }
+            }
         }
 
         .inputIcon {

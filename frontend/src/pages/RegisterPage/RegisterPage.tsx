@@ -16,7 +16,7 @@ export default function RegisterPage() {
                 <div className={styles.form}>
                     <Input label="name" placeholder="Enter your name" type="text" />
                     <Input label="surname" placeholder="Enter your surname" type="text" />
-                    <Input label="Birthdate" placeholder="mm/dd/yyyy" type="date" />
+                    <Input label="Birthdate" placeholder="dd.mm.yyyy" type="date" />
                 </div>
                 <div className={styles.buttonContainer}>
                     <Button type="primary" size="large" >Next</Button>

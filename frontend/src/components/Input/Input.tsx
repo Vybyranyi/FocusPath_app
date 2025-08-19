@@ -15,6 +15,10 @@ export interface IInputProps {
 export default function Input(props: IInputProps) {
     const [value, setValue] = useState<string>("");
     const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
+    // Створюємо новий стейт для керування типом інпуту
+    const [inputType, setInputType] = useState<string>(
+        props.type === "date" ? "text" : props.type
+    );
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setValue(event.target.value);
@@ -28,17 +32,39 @@ export default function Input(props: IInputProps) {
         setIsPasswordVisible(!isPasswordVisible);
     };
 
+    // Обробники фокуса та втрати фокуса
+    const handleFocus = () => {
+        if (props.type === "date") {
+            setInputType("date");
+        }
+    };
+
+    const handleBlur = () => {
+        if (props.type === "date" && !value) {
+            setInputType("text");
+        }
+    };
+
+    // Визначаємо поточний тип для інпуту
+    let currentInputType = inputType;
+    if (props.type === "password") {
+        currentInputType = isPasswordVisible ? "text" : "password";
+    }
+
+
     return (
         <div className={`${styles.inputContainer} ${props.disabled ? styles.disabled : ""}`}>
             <p className={`chip ${styles.inputLabel}`}>{props.label}</p>
             <div className={styles.inputWrapper}>
                 <input
                     className={`${styles.input} ${props.error ? styles.error : ""}`}
-                    type={props.type === "password" ? (isPasswordVisible ? "text" : "password") : props.type}
+                    type={currentInputType} // Використовуємо динамічний тип
                     placeholder={props.placeholder}
                     disabled={props.disabled}
                     value={value}
                     onChange={handleChange}
+                    onFocus={handleFocus} // Додаємо обробник фокуса
+                    onBlur={handleBlur} // Додаємо обробник втрати фокуса
                 />
                 <div className={styles.inputIcon}>
                     {props.type === "password" &&
