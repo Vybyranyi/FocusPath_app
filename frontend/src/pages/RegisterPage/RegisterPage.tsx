@@ -4,8 +4,11 @@ import Input from "@components/Input/Input";
 import Button from "@components/Button/Button";
 import Header from "@components/Header/Header";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
+import { useNavigate } from "react-router";
 
 export default function RegisterPage() {
+    const navigate = useNavigate();
+
     return (
         <div className={styles.RegisterPage}>
             <div className={styles.headerContainer}>
@@ -22,7 +25,11 @@ export default function RegisterPage() {
                     <Input label="Birthdate" placeholder="dd.mm.yyyy" type="date" />
                 </div>
                 <div className={styles.buttonContainer}>
-                    <p className={`body-bold ${styles.askRedirect}`}>Already have an account? Let's log in!</p>
+                    <p
+                    className={`body-bold ${styles.askRedirect}`}
+                    onClick={() => navigate('/login')}
+                    >
+                    Already have an account? Let's log in!</p>
                     <Button type="primary" size="large" >Next</Button>
                 </div>
             </div>

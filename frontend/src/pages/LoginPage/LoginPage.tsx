@@ -4,8 +4,11 @@ import Input from "@components/Input/Input";
 import Button from "@components/Button/Button";
 import Header from "@components/Header/Header";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
+import { useNavigate } from "react-router";
 
 export default function LoginPage() {
+    const navigate = useNavigate();
+    
     return (
         <div className={styles.LoginPage}>
             <div className={styles.headerContainer}>
@@ -22,7 +25,11 @@ export default function LoginPage() {
                     <p className={`body-bold ${styles.forgotPassword}`}>I forgot my password</p>
                 </div>
                 <div className={styles.buttonContainer}>
-                    <p className={`body-bold ${styles.askRedirect}`}>Don’t have account? Let’s create!</p>
+                    <p
+                        className={`body-bold ${styles.askRedirect}`}
+                        onClick={() => navigate('/register')}
+                    >
+                        Don’t have account? Let’s create!</p>
                     <Button type="primary" size="large" >Next</Button>
                 </div>
             </div>
