@@ -7,12 +7,14 @@ import arrow_left from "@assets/images/icons/arrow-left.svg";
 import { useNavigate } from "react-router";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { useAppDispatch } from "@store/hooks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { loginUser } from "@store/authSlice";
 
 export default function LoginPage() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+
+    const { error, loading } = useAppSelector(state => state.auth);
 
     const initialValues = {
         email: '',
@@ -44,31 +46,38 @@ export default function LoginPage() {
                     }}
                 >
                     {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
-                        <Form className={styles.form}>
-                            <Input
-                                label="e-mail"
-                                placeholder="Enter your e-mail"
-                                type="email"
-                                value={values.email}
-                                onChange={handleChange('email')}
-                                onBlur={handleBlur("email")}
-                                error={touched.email ? errors.email : ""}
-                            />
-                            <Input
-                                label="Password"
-                                placeholder="Enter your password"
-                                type="password"
-                                value={values.password}
-                                onChange={handleChange("password")}
-                                onBlur={handleBlur("password")}
-                                error={touched.password ? errors.password : ""}
-                            />
-                            <p
-                                className={`body-bold ${styles.forgotPassword}`}
-                                onClick={() => alert('This feature is not implemented yet.')}
-                            >
-                                I forgot my password
-                            </p>
+                        <Form>
+                            <div className={styles.form}>
+                                <Input
+                                    label="e-mail"
+                                    placeholder="Enter your e-mail"
+                                    type="email"
+                                    value={values.email}
+                                    onChange={handleChange('email')}
+                                    onBlur={handleBlur("email")}
+                                    error={touched.email ? errors.email : ""}
+                                />
+                                <Input
+                                    label="Password"
+                                    placeholder="Enter your password"
+                                    type="password"
+                                    value={values.password}
+                                    onChange={handleChange("password")}
+                                    onBlur={handleBlur("password")}
+                                    error={touched.password ? errors.password : ""}
+                                />
+                                {error && (
+                                    <p className={`chip ${styles.serverError}`}>{error}</p>
+                                )}
+                                <p
+                                    className={`body-bold ${styles.forgotPassword}`}
+                                    onClick={() => alert('This feature is not implemented yet.')}
+                                >
+                                    I forgot my password
+                                </p>
+                            </div>
+
+
 
                             <div className={styles.buttonContainer}>
                                 <p
@@ -77,7 +86,15 @@ export default function LoginPage() {
                                 >
                                     Don’t have account? Let’s create!
                                 </p>
-                                <Button type="primary" size="large" htmlType="submit" disabled={!(isValid && dirty)}>Next</Button>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    htmlType="submit"
+                                    disabled={!(isValid && dirty) || loading}
+                                >
+                                    {loading ? "Loading..." : "Next"}
+                                </Button>
+
                             </div>
                         </Form>
                     )}

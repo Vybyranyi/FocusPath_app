@@ -18,6 +18,10 @@
         color: var(--Primary-Black-60);
         cursor: not-allowed;
     }
+
+    .serverError {
+        color: var(--Primary-Red-error);
+    }
 }
 
 .buttonContainer {
