@@ -67,6 +67,29 @@ export const loginUser = createAsyncThunk(
     }
 );
 
+export const verifyToken = createAsyncThunk(
+    "auth/verifyToken",
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                return rejectWithValue("No token found");
+            }
+            const res = await fetch(`${API_URL}/auth/verify-token`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                return rejectWithValue(data.message || "Token verification failed");
+            }
+            return data;
+        } catch (error) {
+            return rejectWithValue("Network error during token verification");
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: "auth",
     initialState,
@@ -108,6 +131,23 @@ const authSlice = createSlice({
             .addCase(loginUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            });
+
+        builder
+            .addCase(verifyToken.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(verifyToken.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+            })
+            .addCase(verifyToken.rejected, (state, action) => {
+                state.loading = false;
+                state.token = null;
+                state.user = null;
+                state.error = action.payload as string;
+                localStorage.removeItem("token");
             });
     },
 });

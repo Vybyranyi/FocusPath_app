@@ -9,22 +9,29 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { loginUser } from "@store/authSlice";
+import { useEffect } from "react";
 
 export default function LoginPage() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
-    const { error, loading } = useAppSelector(state => state.auth);
+    const { user, token, error, loading } = useAppSelector(state => state.auth);
+
+    useEffect(() => {
+        if (user && token) {
+            navigate('/main');
+        }
+    }, [user, token, navigate]);
 
     const initialValues = {
         email: '',
         password: ''
-    }
+    };
 
     const validationSchema = Yup.object({
         email: Yup.string().email('Invalid e-mail address').required('Required'),
         password: Yup.string().min(8, 'Password must be at least 8 characters').required('Required'),
-    })
+    });
 
     return (
         <div className={styles.LoginPage}>
