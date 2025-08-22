@@ -1,5 +1,5 @@
 import styles from "@components/Select/Select.module.scss";
-import React, { useState } from "react";
+import React from "react";
 
 export interface ISelectOption {
     label: string;
@@ -12,38 +12,38 @@ export interface ISelectProps {
     options: ISelectOption[];
     disabled?: boolean;
     error?: string;
+    value: string;
+    onChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+    onBlur?: (event: React.FocusEvent<HTMLSelectElement>) => void;
 }
 
 export default function Select(props: ISelectProps) {
-    const [value, setValue] = useState<string>("");
-
-    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setValue(event.target.value);
-    };
+    const { label, placeholder, options, disabled, error, value, onChange, onBlur } = props;
 
     return (
-        <div className={`${styles.selectContainer} ${props.disabled ? styles.disabled : ""}`}>
-            <p className={`chip ${styles.selectLabel}`}>{props.label}</p>
+        <div className={`${styles.selectContainer} ${disabled ? styles.disabled : ""}`}>
+            <p className={`chip ${styles.selectLabel}`}>{label}</p>
             <div className={styles.selectWrapper}>
                 <select
-                    className={`${styles.select} ${!value ? styles.placeholder : ""} ${props.error ? styles.error : ""}`}
+                    className={`${styles.select} ${!value ? styles.placeholder : ""} ${error ? styles.error : ""}`}
                     value={value}
-                    onChange={handleChange}
-                    disabled={props.disabled}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    disabled={disabled}
                 >
                     <option value="" disabled hidden>
-                        {props.placeholder}
+                        {placeholder}
                     </option>
-                    {props.options.map((opt) => (
+                    {options.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                             {opt.label}
                         </option>
                     ))}
                 </select>
             </div>
-            {props.error && (
+            {error && (
                 <div className={styles.errorPopup}>
-                    <span className="alternative">{props.error}</span>
+                    <span className="alternative">{error}</span>
                 </div>
             )}
         </div>

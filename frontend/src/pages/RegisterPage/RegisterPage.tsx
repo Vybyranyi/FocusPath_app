@@ -84,7 +84,7 @@ export default function RegisterPage() {
                                     onBlur={handleBlur("birthdate")}
                                     error={touched.birthdate ? errors.birthdate : ""}
                                 />
-                                {/* <Select
+                                <Select
                                     label="gender"
                                     placeholder="Choose your gender"
                                     options={[
@@ -95,7 +95,7 @@ export default function RegisterPage() {
                                     onChange={handleChange('gender')}
                                     onBlur={handleBlur("gender")}
                                     error={touched.gender ? errors.gender : ""}
-                                /> */}
+                                />
                                 {error && (
                                     <p className={`chip ${styles.serverError}`}>{error}</p>
                                 )}
