@@ -85,3 +85,34 @@ export const login = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error during login' });
     }
 };
+
+interface AuthRequest extends Request {
+    userId?: string;
+}
+
+export const verifyToken = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'User ID not found in token' });
+        }
+
+        const user = await User.findById(userId).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'Token is valid',
+            user: {
+                ...user.toObject(),
+                password: undefined,
+            }
+        });
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        res.status(500).json({ message: 'Server error during token verification' });
+    }
+};
