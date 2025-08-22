@@ -5,26 +5,30 @@ import LoginPage from '@pages/LoginPage/LoginPage';
 import Main from '@pages/Main/Main';
 import RegisterPage from '@pages/RegisterPage/RegisterPage';
 import { verifyToken } from '@store/authSlice';
-import { useAppDispatch } from '@store/hooks';
+import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { useEffect } from 'react';
-import { Route, Routes } from 'react-router';
+import { Navigate, Route, Routes } from 'react-router';
 
 function App() {
   const dispatch = useAppDispatch();
+  const { user, token } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
       dispatch(verifyToken());
     }
-  }, []);
+  }, [dispatch]);
 
   return (
     <div className="app-container">
       <Routes>
-        <Route path="/*" element={<RegisterPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
-        {localStorage.getItem('token') && <Route path="/main/*" element={<Main />} />}
+        <Route
+          path="/main/*"
+          element={user && token ? <Main /> : <Navigate to="/login" replace />}
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
   )
