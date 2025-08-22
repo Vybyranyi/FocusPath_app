@@ -10,22 +10,16 @@ export interface IInputProps {
     type: "text" | "email" | "password" | "date";
     disabled?: boolean;
     error?: string;
+    value?: string;
+    onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 export default function Input(props: IInputProps) {
-    const [value, setValue] = useState<string>("");
     const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
-    const [inputType, setInputType] = useState<string>(
+    const [inputType, setInputType] = useState<"text" | "email" | "password" | "date">(
         props.type === "date" ? "text" : props.type
     );
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setValue(event.target.value);
-    };
-
-    const handleClear = () => {
-        setValue("");
-    };
 
     const togglePasswordVisibility = () => {
         setIsPasswordVisible(!isPasswordVisible);
@@ -37,17 +31,16 @@ export default function Input(props: IInputProps) {
         }
     };
 
-    const handleBlur = () => {
-        if (props.type === "date" && !value) {
+    const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+        if (props.type === "date" && !props.value) {
             setInputType("text");
         }
+        props.onBlur?.(event);
     };
 
-    let currentInputType = inputType;
-    if (props.type === "password") {
-        currentInputType = isPasswordVisible ? "text" : "password";
-    }
-
+    let currentInputType = props.type === "password"
+        ? isPasswordVisible ? "text" : "password"
+        : inputType;
 
     return (
         <div className={`${styles.inputContainer} ${props.disabled ? styles.disabled : ""}`}>
@@ -58,33 +51,33 @@ export default function Input(props: IInputProps) {
                     type={currentInputType}
                     placeholder={props.placeholder}
                     disabled={props.disabled}
-                    value={value}
-                    onChange={handleChange}
+                    value={props.value}
+                    onChange={props.onChange}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                 />
                 <div className={styles.inputIcon}>
-                    {props.type === "password" &&
+                    {props.type === "password" && (
                         <img
                             src={isPasswordVisible ? eye_hide : eye_show}
                             onClick={togglePasswordVisibility}
-                            alt='Toggle password visibility'
+                            alt="Toggle password visibility"
                         />
-                    }
-                    {value &&
+                    )}
+                    {props.value && (
                         <img
                             src={remove_cross}
-                            onClick={handleClear}
-                            alt='Clear input'
+                            onClick={() => props.onChange?.({ target: { value: "" } } as any)}
+                            alt="Clear input"
                         />
-                    }
+                    )}
                 </div>
             </div>
             {props.error && (
                 <div className={styles.errorPopup}>
-                    <span className='alternative'>{props.error}</span>
+                    <span className="alternative">{props.error}</span>
                 </div>
             )}
         </div>
-    )
+    );
 }
