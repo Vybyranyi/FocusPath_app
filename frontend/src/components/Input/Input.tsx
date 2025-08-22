@@ -15,7 +15,6 @@ export interface IInputProps {
 export default function Input(props: IInputProps) {
     const [value, setValue] = useState<string>("");
     const [isPasswordVisible, setIsPasswordVisible] = useState<boolean>(false);
-    // Створюємо новий стейт для керування типом інпуту
     const [inputType, setInputType] = useState<string>(
         props.type === "date" ? "text" : props.type
     );
@@ -32,7 +31,6 @@ export default function Input(props: IInputProps) {
         setIsPasswordVisible(!isPasswordVisible);
     };
 
-    // Обробники фокуса та втрати фокуса
     const handleFocus = () => {
         if (props.type === "date") {
             setInputType("date");
@@ -45,7 +43,6 @@ export default function Input(props: IInputProps) {
         }
     };
 
-    // Визначаємо поточний тип для інпуту
     let currentInputType = inputType;
     if (props.type === "password") {
         currentInputType = isPasswordVisible ? "text" : "password";
@@ -58,13 +55,13 @@ export default function Input(props: IInputProps) {
             <div className={styles.inputWrapper}>
                 <input
                     className={`${styles.input} ${props.error ? styles.error : ""}`}
-                    type={currentInputType} // Використовуємо динамічний тип
+                    type={currentInputType}
                     placeholder={props.placeholder}
                     disabled={props.disabled}
                     value={value}
                     onChange={handleChange}
-                    onFocus={handleFocus} // Додаємо обробник фокуса
-                    onBlur={handleBlur} // Додаємо обробник втрати фокуса
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                 />
                 <div className={styles.inputIcon}>
                     {props.type === "password" &&

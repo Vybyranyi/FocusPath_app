@@ -1,18 +1,18 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
-.inputContainer {
+.selectContainer {
     width: 100%;
-    // max-width: 295px;
     min-width: fit-content;
 
-    .inputLabel {
+    .selectLabel {
         margin-bottom: 8px;
     }
 
-    .inputWrapper {
+    .selectWrapper {
         position: relative;
 
-        .input {
+        .select {
+            color: var(--Primary-Black);
             width: 100%;
             height: 48px;
             padding: 12px 32px 12px 0;
@@ -21,6 +21,9 @@
             font-weight: 500;
             line-height: 24px;
             box-sizing: border-box;
+            background: transparent;
+            border: none;
+            appearance: none;
 
             &::placeholder {
                 color: var(--Primary-Black-20);
@@ -34,56 +37,39 @@
                 box-shadow: inset 0 -2px 0 var(--Primary-Red-error);
             }
 
-            &[type="date"] {
-                position: relative;
-                color: transparent;
+            &:focus-visible {
+                outline: none;
+            }
 
-                &::before {
-                    content: attr(placeholder);
-                    position: absolute;
-                    top: 50%;
-                    left: 12px;
-                    transform: translateY(-50%);
-                    color: var(--Primary-Black-20);
-                    pointer-events: none;
-                }
+            option {
+                background-color: var(--Base-Background);
+            }
 
-                &:focus,
-                &:valid {
-                    color: initial;
-                }
-
-                &:focus::before,
-                &:valid::before {
-                    content: none;
-                }
+            &.placeholder {
+                color: var(--Primary-Black-20);
             }
         }
 
-        .inputIcon {
+        &::after {
+            content: "▼";
             position: absolute;
-            top: 52%;
+            right: 8px;
+            top: 50%;
             transform: translateY(-50%);
-            right: 0;
-
-            img {
-                cursor: pointer;
-                width: 24px;
-                aspect-ratio: 1;
-            }
+            pointer-events: none;
+            font-size: 12px;
+            color: var(--Primary-Black-60);
         }
-
     }
 
     &.disabled {
-        .inputLabel {
+        .selectLabel {
             color: var(--Primary-Black-60);
         }
 
-        .input {
+        .select {
             cursor: not-allowed;
         }
-
     }
 
     .errorPopup {

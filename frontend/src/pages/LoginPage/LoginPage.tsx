@@ -22,7 +22,7 @@ export default function LoginPage() {
                 <div className={styles.form}>
                     <Input label="e-mail" placeholder="Enter your e-mail" type="email" />
                     <Input label="password" placeholder="Enter your password" type="password" />
-                    <p className={`body-bold ${styles.forgotPassword}`}>I forgot my password</p>
+                    <p className={`body-bold ${styles.forgotPassword}`} onClick={() => alert('This feature is not implemented yet.')}>I forgot my password</p>
                 </div>
                 <div className={styles.buttonContainer}>
                     <p

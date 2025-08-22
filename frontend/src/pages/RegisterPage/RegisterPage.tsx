@@ -5,6 +5,7 @@ import Button from "@components/Button/Button";
 import Header from "@components/Header/Header";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
 import { useNavigate } from "react-router";
+import Select from "@components/Select/Select";
 
 export default function RegisterPage() {
     const navigate = useNavigate();
@@ -23,6 +24,14 @@ export default function RegisterPage() {
                     <Input label="name" placeholder="Enter your name" type="text" />
                     <Input label="surname" placeholder="Enter your surname" type="text" />
                     <Input label="Birthdate" placeholder="dd.mm.yyyy" type="date" />
+                    <Select
+                        label="gender"
+                        placeholder="Choose your gender"
+                        options={[
+                            { label: "Male", value: "male" },
+                            { label: "Female", value: "female" },
+                        ]}
+                    />
                 </div>
                 <div className={styles.buttonContainer}>
                     <p
