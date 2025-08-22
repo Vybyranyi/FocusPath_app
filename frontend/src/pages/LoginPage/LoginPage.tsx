@@ -29,8 +29,11 @@ export default function LoginPage() {
     };
 
     const validationSchema = Yup.object({
-        email: Yup.string().email('Invalid e-mail address').required('Required'),
-        password: Yup.string().min(8, 'Password must be at least 8 characters').required('Required'),
+        email: Yup.string()
+            .email('Invalid e-mail address')
+            .required('Required'),
+        password: Yup.string()
+        .min(8, 'Password must be at least 8 characters').required('Required'),
     });
 
     return (
@@ -47,9 +50,7 @@ export default function LoginPage() {
                     initialValues={initialValues}
                     validationSchema={validationSchema}
                     onSubmit={async (values) => {
-                        console.log("Login with:", values);
-                        const action = await dispatch(loginUser({ email: values.email, password: values.password }));
-                        console.log(action);
+                        dispatch(loginUser({ email: values.email, password: values.password }));
                     }}
                 >
                     {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
@@ -84,8 +85,6 @@ export default function LoginPage() {
                                 </p>
                             </div>
 
-
-
                             <div className={styles.buttonContainer}>
                                 <p
                                     className={`body-bold ${styles.askRedirect}`}
@@ -101,7 +100,6 @@ export default function LoginPage() {
                                 >
                                     {loading ? "Loading..." : "Next"}
                                 </Button>
-
                             </div>
                         </Form>
                     )}

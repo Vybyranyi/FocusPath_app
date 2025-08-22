@@ -13,6 +13,10 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+
+    .serverError {
+        color: var(--Primary-Red-error);
+    }
 }
 
 .buttonContainer {
