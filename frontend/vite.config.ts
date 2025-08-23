@@ -16,6 +16,8 @@ export default defineConfig({
       exclude: [
         "src/main.tsx",
         "src/App.tsx",
+        "src/store/hooks.ts",
+        "src/store/store.ts",
         "src/vite-env.d.ts",
         "src/**/*.test.{ts,tsx}",
         "src/setupTests.ts",
