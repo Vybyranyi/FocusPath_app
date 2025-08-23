@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import Input from "./Input";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 describe("Input component", () => {
     it("renders label and placeholder", () => {
@@ -22,13 +22,42 @@ describe("Input component", () => {
         expect(input).toBeDisabled();
     });
 
-    it("shows clear icon and clears input on click", () => {
-        render(<Input label="Name" placeholder="Enter name" type="text" />);
+    it("calls onBlur prop with the blur event", () => {
+        const handleBlur = vi.fn();
+        render(
+            <Input
+                label="Name"
+                placeholder="Enter name"
+                type="text"
+                onBlur={handleBlur}
+            />
+        );
+
         const input = screen.getByPlaceholderText("Enter name") as HTMLInputElement;
-        fireEvent.change(input, { target: { value: "Test" } });
+        fireEvent.blur(input);
+
+        expect(handleBlur).toHaveBeenCalledTimes(1);
+        expect(handleBlur).toHaveBeenCalledWith(
+            expect.objectContaining({ target: input })
+        );
+    });
+
+    it("shows clear icon and clears input on click", () => {
+        const handleChange = vi.fn();
+        render(
+            <Input
+                label="Name"
+                placeholder="Enter name"
+                type="text"
+                value="Test"
+                onChange={handleChange}
+            />
+        );
         const clearIcon = screen.getByRole("img", { name: "Clear input" });
         fireEvent.click(clearIcon);
-        expect(input.value).toBe("");
+        expect(handleChange).toHaveBeenCalledWith(
+            expect.objectContaining({ target: expect.objectContaining({ value: "" }) })
+        );
     });
 
     it("password toggle", () => {
@@ -50,6 +79,34 @@ describe("Input component", () => {
         expect(screen.getByText("Invalid email address")).toBeInTheDocument();
     });
 
+    it("switches input type to date on focus", () => {
+        render(<Input label="Date" placeholder="Enter date" type="date" />);
+        const input = screen.getByPlaceholderText("Enter date") as HTMLInputElement;
+
+        expect(input.type).toBe("text");
+        fireEvent.focus(input);
+        expect(input.type).toBe("date");
+    });
+
+    it("switches back to text on blur if no value", () => {
+        render(<Input label="Date" placeholder="Enter date" type="date" />);
+        const input = screen.getByPlaceholderText("Enter date") as HTMLInputElement;
+
+        fireEvent.focus(input);
+        expect(input.type).toBe("date");
+
+        fireEvent.blur(input);
+        expect(input.type).toBe("text");
+    });
+
+    it("keeps type date on blur if value exists", () => {
+        render(<Input label="Date" placeholder="Enter date" type="date" value="2025-08-23" />);
+        const input = screen.getByPlaceholderText("Enter date") as HTMLInputElement;
+
+        fireEvent.focus(input);
+        expect(input.type).toBe("date");
+
+        fireEvent.blur(input);
+        expect(input.type).toBe("date");
+    });
 });
-
-
