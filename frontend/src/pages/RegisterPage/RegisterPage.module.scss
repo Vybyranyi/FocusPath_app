@@ -4,7 +4,7 @@
     display: block;
 }
 
-.RegisterTitle {
+.titleContainer {
     display: none;
 }
 
@@ -44,9 +44,13 @@
             display: none;
         }
 
-        .RegisterTitle {
-            display: block;
-            text-align: center;
+        .titleContainer {
+            width: 442px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            gap: 8px;
             margin-bottom: 36px;
         }
 

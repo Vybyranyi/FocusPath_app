@@ -76,7 +76,18 @@ export default function RegisterPage() {
                     }
                 />
             </div>
-            <h5 className={styles.RegisterTitle}>Create Account</h5>
+            <div className={styles.titleContainer}>
+                {
+                    step === 2 && (
+                        <IconButton
+                            size='large'
+                            icon={arrow_left}
+                            onClick={() => setStep(1)}
+                        />
+                    )
+                }
+                <h5 className={styles.RegisterTitle}>Create Account</h5>
+            </div>
             <div className="container">
                 <Formik
                     initialValues={initialValues}
