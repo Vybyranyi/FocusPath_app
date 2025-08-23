@@ -319,4 +319,92 @@ describe('Auth Controller', () => {
             jest.restoreAllMocks();
         });
     });
+
+    describe('GET /auth/verify-token', () => {
+        const RegisterData = {
+            name: 'Verify',
+            surname: 'User',
+            birthday: '1990-01-01T00:00:00.000Z',
+            gender: 'male',
+            email: 'verifyuser@example.com',
+            password: 'password123'
+        };
+
+        let token: string;
+
+        beforeEach(async () => {
+            const res = await request(app)
+                .post('/auth/register')
+                .send(RegisterData)
+                .expect(201);
+
+            token = res.body.token;
+        });
+
+        it('should return 200 if token is valid', async () => {
+            const response = await request(app)
+                .get('/auth/verify-token')
+                .set('Authorization', `Bearer ${token}`)
+                .expect(200);
+
+            expect(response.body.message).toBe('Token is valid');
+            expect(response.body.user.email).toBe(RegisterData.email);
+        });
+
+        it('should return 401 if no token provided', async () => {
+            const response = await request(app)
+                .get('/auth/verify-token')
+                .expect(401);
+
+            expect(response.body.message).toBe('No token provided');
+        });
+
+        it('should return 401 if token is invalid', async () => {
+            const response = await request(app)
+                .get('/auth/verify-token')
+                .set('Authorization', 'Bearer invalidtoken123')
+                .expect(401);
+
+            expect(response.body.message).toBe('Invalid token');
+        });
+
+        it('should return 404 if user not found', async () => {
+            // створюємо юзера і беремо токен
+            const res = await request(app)
+                .post('/auth/register')
+                .send({
+                    ...RegisterData,
+                    email: 'deleted@example.com'
+                })
+                .expect(201);
+
+            const tempToken = res.body.token;
+
+            // видаляємо користувача з БД
+            await User.deleteOne({ email: 'deleted@example.com' });
+
+            const response = await request(app)
+                .get('/auth/verify-token')
+                .set('Authorization', `Bearer ${tempToken}`)
+                .expect(404);
+
+            expect(response.body.message).toBe('User not found');
+        });
+
+        it('should return 500 if database throws error', async () => {
+            jest.spyOn(User, 'findById').mockImplementationOnce(() => {
+                throw new Error('Simulated DB error');
+            });
+
+            const response = await request(app)
+                .get('/auth/verify-token')
+                .set('Authorization', `Bearer ${token}`)
+                .expect(500);
+
+            expect(response.body.message).toBe('Server error during token verification');
+
+            jest.restoreAllMocks();
+        });
+    });
+
 });

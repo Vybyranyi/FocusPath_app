@@ -94,10 +94,6 @@ export const verifyToken = async (req: AuthRequest, res: Response) => {
     try {
         const { userId } = req;
 
-        if (!userId) {
-            return res.status(401).json({ message: 'User ID not found in token' });
-        }
-
         const user = await User.findById(userId).select('-password');
 
         if (!user) {
