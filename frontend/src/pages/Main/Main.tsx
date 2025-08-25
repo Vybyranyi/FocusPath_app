@@ -1,6 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { logout } from "@store/authSlice";
 import { useNavigate } from "react-router";
+import Box from "@components/Box/Box";
 
 export default function Main() {
     const { user, token } = useAppSelector(state => state.auth);

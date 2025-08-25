@@ -1,9 +1,7 @@
 import styles from "@pages/LoginPage/LoginPage.module.scss";
-// import IconButton from "@components/IconButton/IconButton";
 import Input from "@components/Input/Input";
 import Button from "@components/Button/Button";
 import Header from "@components/Header/Header";
-// import arrow_left from "@assets/images/icons/arrow-left.svg";
 import { useNavigate } from "react-router";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -41,7 +39,6 @@ export default function LoginPage() {
             <div className={styles.headerContainer}>
                 <Header
                     title="Continue with E-mail"
-                    // leftButtonIcon={<IconButton size='large' icon={arrow_left} />}
                 />
             </div>
             <h5 className={styles.LoginTitle}>Continue with E-mail</h5>

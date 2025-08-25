@@ -1,6 +1,6 @@
-import './App.css';
 import '@assets/styles/resetStyles.scss';
 import '@assets/styles/typography.scss';
+import './App.css';
 import LoginPage from '@pages/LoginPage/LoginPage';
 import Main from '@pages/Main/Main';
 import RegisterPage from '@pages/RegisterPage/RegisterPage';
