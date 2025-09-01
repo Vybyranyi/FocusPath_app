@@ -1,0 +1,50 @@
+// @use '@assets/styles/colorVariables.scss' as *;
+
+// .segmentedControl {
+//     display: flex;
+//     background-color: var(--Primary-Black-10);
+//     border-radius: 16px;
+//     width: max-content;
+//     padding: 2px;
+
+
+//     .segmentButton {
+//         padding: 4px 30px;
+//         background-color: transparent;
+//         color: var(--Primary-Black-60);
+//         border-radius: 14px;
+//         cursor: pointer;
+
+//         &.active {
+//             background-color: var(--Base-White);
+//             color: var(--Primary-Blue);
+//         }
+
+//     }
+// }
+
+
+@use '@assets/styles/colorVariables.scss' as *;
+
+.segmentedControl {
+    display: flex;
+    background-color: var(--Primary-Black-10);
+    border-radius: 16px;
+    width: max-content;
+    padding: 2px;
+
+    .segmentButton {
+        padding: 4px 30px;
+        background-color: transparent;
+        color: var(--Primary-Black-60);
+        border-radius: 14px;
+        cursor: pointer;
+        
+        transition: background-color 0.2s ease, color 0.2s ease;
+
+        &.active {
+            background-color: var(--Base-White);
+            color: var(--Primary-Blue);
+        }
+    }
+}
