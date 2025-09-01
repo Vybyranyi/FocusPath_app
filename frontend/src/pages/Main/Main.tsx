@@ -22,6 +22,7 @@ export default function Main() {
                     />
                 }
                 topContent
+                profile
             />
             <p>token: {token}</p>
             <p>user: {JSON.stringify(user)}</p>

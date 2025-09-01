@@ -49,6 +49,39 @@
                 border-radius: 100%;
             }
         }
+
+        .profileBlock {
+            display: flex;
+            gap: 8px;
+
+            img {
+                height: 56px;
+                width: 56px;
+                border-radius: 100%;
+            }
+
+            .profileText {
+                .pointCounter {
+                    width: max-content;
+                    background-color: var(--Primary-Orange-warning-10);
+                    display: flex;
+                    align-items: center;
+                    padding: 2px 4px;
+                    border-radius: 8px;
+                    margin-top: 4px;
+
+
+                    img {
+                        height: 16px;
+                        width: 16px;
+                    }
+
+                    p {
+                        color: var(--Primary-Orange-warning);
+                    }
+                }
+            }
+        }
     }
 
 

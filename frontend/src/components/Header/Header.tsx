@@ -2,12 +2,15 @@ import styles from '@components/Header/Header.module.scss';
 import type { ReactNode } from 'react';
 import { useAppSelector } from "@store/hooks";
 import { Emoji } from 'react-apple-emojis';
+import default_user from '@assets/images/default_user.png';
+import medal_gold from '@assets/images/icons/medal_gold.svg';
 
 export interface IHeaderProps {
     title?: string;
     leftButtonIcon?: ReactNode;
     rightButtonIcon?: ReactNode;
     topContent?: boolean;
+    profile?: boolean;
 };
 
 export default function Header(props: IHeaderProps) {
@@ -34,6 +37,19 @@ export default function Header(props: IHeaderProps) {
                             <p className={`body-light ${styles.grayText}`}>Let’s make habits together!</p>
                         </div>
                         <Emoji className={styles.emojiFace} name='smiling face with halo' />
+                    </div>
+                )}
+
+                {props.profile && (
+                    <div className={styles.profileBlock}>
+                        <img src={default_user} alt="User profile photo" />
+                        <div className={styles.profileText}>
+                            <p className='title'>{`${user?.name} ${user?.surname}`}</p>
+                            <span className={styles.pointCounter}>
+                                <img src={medal_gold} alt="gold medal" />
+                                <p className='body-bold'>{`1452 Points`}</p>
+                            </span>
+                        </div>
                     </div>
                 )}
 
