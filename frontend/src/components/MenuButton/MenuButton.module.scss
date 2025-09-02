@@ -1,0 +1,18 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.menuButton {
+    height: 24px;
+    width: 24px;
+    cursor: pointer;
+    position: relative;
+
+    .dot {
+        height: 8px;
+        width: 8px;
+        background-color: var(--Primary-Red-error);
+        border-radius: 100%;
+        position: absolute;
+        top: -5px;
+        right: -5px;
+    }
+}

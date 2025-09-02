@@ -1,7 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { logout } from "@store/authSlice";
 import { useNavigate } from "react-router";
-import Box from "@components/Box/Box";
 import Header from "@components/Header/Header";
 import IconButton from "@components/IconButton/IconButton";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
