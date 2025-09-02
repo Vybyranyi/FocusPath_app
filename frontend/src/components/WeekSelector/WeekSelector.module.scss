@@ -1,0 +1,18 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.weekSelector {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .content {
+        .showedWeek {
+            color: var(--Primary-Black-60);
+        }
+    }
+
+    .buttons {
+        display: flex;
+        gap: 8px;
+    }
+}

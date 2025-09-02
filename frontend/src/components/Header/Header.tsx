@@ -4,6 +4,7 @@ import { useAppSelector } from "@store/hooks";
 import { Emoji } from 'react-apple-emojis';
 import default_user from '@assets/images/default_user.png';
 import medal_gold from '@assets/images/icons/medal_gold.svg';
+import SegmentControl from '@components/SegmentControl/SegmentControl';
 
 export interface IHeaderProps {
     title?: string;
@@ -11,11 +12,17 @@ export interface IHeaderProps {
     rightButtonIcon?: ReactNode;
     topContent?: boolean;
     profile?: boolean;
+    segmentControl?: boolean;
 };
 
 export default function Header(props: IHeaderProps) {
     const { user } = useAppSelector(state => state.auth);
 
+    const segments = [
+        { id: '1', label: 'Habits' },
+        { id: '2', label: 'Challenges' },
+    ];
+    
     return (
         <header className={styles.header}>
             <div className={`container ${styles.headerWrapper}`}>
@@ -51,6 +58,16 @@ export default function Header(props: IHeaderProps) {
                             </span>
                         </div>
                     </div>
+                )}
+
+                {props.segmentControl && (
+                    <SegmentControl
+                        segments={ segments }
+                        defaultSelectedId='1'
+                        onSelect={(id) => {
+                            console.log(id);
+                        }}
+                    />
                 )}
 
             </div>
