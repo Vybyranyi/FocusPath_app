@@ -54,6 +54,11 @@
             display: flex;
             gap: 8px;
 
+            .desctopButtons {
+                display: none;
+                margin-right: 60px;
+            }
+
             img {
                 height: 56px;
                 width: 56px;
@@ -83,7 +88,65 @@
             }
         }
     }
+}
+
+@media screen and (min-width: 768px) {
+    .header {
+        margin-bottom: 24px;
+
+        .headerWrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            row-gap: 12px;
+            column-gap: 24px;
+            padding-top: 32px;
+
+            .statusBar {
+                display: none;
+            }
+
+            .titleWithButtonsBlock {
+                display: none;
+            }
+
+            .topContentBlock {
+                grid-column: 1;
+
+                .emojiFace {
+                    display: none;
+                }
+            }
+
+            .profileBlock {
+                grid-column: 2;
+                flex-direction: row-reverse;
+
+                .desctopButtons {
+                    display: flex;
+                    gap: 8px;
+                }
+
+                img {
+                    height: 48px;
+                    width: 48px;
+                }
+
+                .profileText {
+                    .pointCounter {
+                        margin-top: 0;
+                    }
+                }
+            }
+
+            .segmentControlBlock {
+                grid-column: 1;
+            }
+
+            .weekSelectorBlock {
+                grid-column: 1;
+            }
 
 
-
+        }
+    }
 }

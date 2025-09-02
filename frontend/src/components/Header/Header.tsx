@@ -5,6 +5,7 @@ import { Emoji } from 'react-apple-emojis';
 import default_user from '@assets/images/default_user.png';
 import medal_gold from '@assets/images/icons/medal_gold.svg';
 import SegmentControl from '@components/SegmentControl/SegmentControl';
+import WeekSelector from '@components/WeekSelector/WeekSelector';
 
 export interface IHeaderProps {
     title?: string;
@@ -13,6 +14,7 @@ export interface IHeaderProps {
     topContent?: boolean;
     profile?: boolean;
     segmentControl?: boolean;
+    showWeekController?: boolean;
 };
 
 export default function Header(props: IHeaderProps) {
@@ -22,7 +24,7 @@ export default function Header(props: IHeaderProps) {
         { id: '1', label: 'Habits' },
         { id: '2', label: 'Challenges' },
     ];
-    
+
     return (
         <header className={styles.header}>
             <div className={`container ${styles.headerWrapper}`}>
@@ -57,17 +59,29 @@ export default function Header(props: IHeaderProps) {
                                 <p className='body-bold'>{`1452 Points`}</p>
                             </span>
                         </div>
+                        <div className={styles.desctopButtons}>
+                            {props.leftButtonIcon}
+                            {props.rightButtonIcon}
+                        </div>
                     </div>
                 )}
 
                 {props.segmentControl && (
-                    <SegmentControl
-                        segments={ segments }
-                        defaultSelectedId='1'
-                        onSelect={(id) => {
-                            console.log(id);
-                        }}
-                    />
+                    <div className={styles.segmentControlBlock}>
+                        <SegmentControl
+                            segments={segments}
+                            defaultSelectedId='1'
+                            onSelect={(id) => console.log(id)}
+                        />
+                    </div>
+
+                )}
+
+                {props.showWeekController && (
+                    <div className={styles.weekSelectorBlock}>
+                        <WeekSelector />
+                    </div>
+
                 )}
 
             </div>

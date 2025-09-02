@@ -5,8 +5,6 @@ import Box from "@components/Box/Box";
 import Header from "@components/Header/Header";
 import IconButton from "@components/IconButton/IconButton";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
-import SegmentControl from "@components/SegmentControl/SegmentControl";
-import WeekSelector from "@components/WeekSelector/WeekSelector";
 
 export default function Main() {
     const { user, token } = useAppSelector(state => state.auth);
@@ -26,6 +24,7 @@ export default function Main() {
                 topContent
                 profile
                 segmentControl
+                showWeekController
             />
             <p>token: {token}</p>
             <p>user: {JSON.stringify(user)}</p>
@@ -33,7 +32,6 @@ export default function Main() {
                 dispatch(logout());
                 navigate('/login');
             }}>log out</button>
-            <WeekSelector />
         </>
     )
 }
