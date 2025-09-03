@@ -22,4 +22,4 @@ export default function Button(props: IButtonProps) {
             <span className="body-bold">{props.children}</span>
         </button>
     );
-}
+}   

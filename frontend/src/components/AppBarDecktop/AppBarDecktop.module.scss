@@ -1,0 +1,19 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.decktopAppBar {
+
+    background-color: var(--Base-White);
+    box-shadow: inset -1px 0 0 0 var(--Primary-Black-10);
+    padding: 0 32px;
+    width: 17%;
+    min-width: 160px;
+    max-width: 240px;
+    height: 100vh;
+
+    .buttonsWrapper {
+        display: flex;
+        gap: 12px;
+        flex-direction: column;
+        padding-top: 15vh;
+    }
+}

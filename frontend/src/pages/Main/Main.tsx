@@ -1,10 +1,11 @@
 import { useAppDispatch } from "@store/hooks";
 import { logout } from "@store/authSlice";
 import { useNavigate } from "react-router";
-import Header from "@components/Header/Header";
-import IconButton from "@components/IconButton/IconButton";
-import arrow_left from "@assets/images/icons/arrow-left.svg";
-import AppBar from "@components/AppBar/AppBar";
+// import Header from "@components/Header/Header";
+// import IconButton from "@components/IconButton/IconButton";
+// import arrow_left from "@assets/images/icons/arrow-left.svg";
+import AppBarMobile from "@components/AppBarMobile/AppBarMobile";
+import AppBarDecktop from "@components/AppBarDecktop/AppBarDecktop";
 
 export default function Main() {
     const dispatch = useAppDispatch();
@@ -12,7 +13,7 @@ export default function Main() {
 
     return (
         <>
-            <Header
+            {/* <Header
                 title="Label"
                 leftButtonIcon={
                     <IconButton
@@ -24,12 +25,13 @@ export default function Main() {
                 profile
                 segmentControl
                 showWeekController
-            />
-            <button onClick={() => {
+            /> */}
+            {/* <button onClick={() => {
                 dispatch(logout());
                 navigate('/login');
-            }}>log out</button>
-            <AppBar />
+            }}>log out</button> */}
+            <AppBarMobile />
+            <AppBarDecktop />
         </>
     )
 }
