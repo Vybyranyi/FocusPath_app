@@ -1,12 +1,12 @@
-import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { useAppDispatch } from "@store/hooks";
 import { logout } from "@store/authSlice";
 import { useNavigate } from "react-router";
 import Header from "@components/Header/Header";
 import IconButton from "@components/IconButton/IconButton";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
+import AppBar from "@components/AppBar/AppBar";
 
 export default function Main() {
-    const { user, token } = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
@@ -25,12 +25,11 @@ export default function Main() {
                 segmentControl
                 showWeekController
             />
-            <p>token: {token}</p>
-            <p>user: {JSON.stringify(user)}</p>
             <button onClick={() => {
                 dispatch(logout());
                 navigate('/login');
             }}>log out</button>
+            <AppBar />
         </>
     )
 }
