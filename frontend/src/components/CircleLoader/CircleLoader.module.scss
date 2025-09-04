@@ -1,0 +1,58 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.circleLoaderWrapper {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .progressCircle {
+        transition: stroke-dashoffset 0.5s ease;
+        stroke: var(--Primary-Blue); 
+    }
+
+    .bg {
+        stroke: var(--Primary-Black-10);
+    }
+    
+    .label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--Base-Black);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .emoji {
+            width: 14px;
+            height: 14px;
+        }
+
+        .tickIcon {
+            width: 12px;
+            height: 12px;
+        }
+
+        .percents {
+            color: var(--Base-Black);
+        }
+    }
+
+    &.isWhite {
+        .bg {
+            stroke: var(--Primary-Blue-40);
+        }
+
+        .progressCircle {
+            stroke: var(--Base-White);
+        }
+
+        .label .percents {
+            color: var(--Base-White);
+        }
+    }
+}
