@@ -1,0 +1,28 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.datePicker {
+    width: 48px;
+    height: 64px;
+    background-color: var(--Base-White);
+    box-sizing: border-box;
+    border: 1px solid var(--Primary-Black-10);
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    .weekday {
+        color: var(--Primary-Black-20);
+    }
+
+    &.active {
+        border: 2px solid var(--Primary-Blue);
+
+        .day,
+        .weekday {
+            color: var(--Primary-Blue);
+        }
+
+    }
+}
