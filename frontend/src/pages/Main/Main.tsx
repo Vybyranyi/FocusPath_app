@@ -6,7 +6,7 @@ import { useNavigate } from "react-router";
 // import arrow_left from "@assets/images/icons/arrow-left.svg";
 import AppBarMobile from "@components/AppBarMobile/AppBarMobile";
 import AppBarDecktop from "@components/AppBarDecktop/AppBarDecktop";
-import CircleLoader from "@components/CircleLoader/CircleLoader";
+import ProgressBanner from "@components/ProgressBanner/ProgressBanner";
 
 export default function Main() {
     const dispatch = useAppDispatch();
@@ -33,7 +33,8 @@ export default function Main() {
             }}>log out</button> */}
             {/* <AppBarMobile /> */}
             {/* <AppBarDecktop /> */}
-            <CircleLoader percentages={25}/>
+
+            <ProgressBanner />
         </>
     )
 }
