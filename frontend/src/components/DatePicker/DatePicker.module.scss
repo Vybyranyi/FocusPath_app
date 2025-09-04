@@ -13,7 +13,7 @@
     flex-direction: column;
 
     .weekday {
-        color: var(--Primary-Black-20);
+        color: var(--Primary-Black-40); //по ТЗ 20
     }
 
     &.active {
@@ -23,6 +23,5 @@
         .weekday {
             color: var(--Primary-Blue);
         }
-
     }
 }

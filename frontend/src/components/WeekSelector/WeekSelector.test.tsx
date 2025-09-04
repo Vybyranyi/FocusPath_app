@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import WeekSelector from './WeekSelector';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-// Mock date-fns functions
 vi.mock('date-fns', () => ({
   format: vi.fn(() => 'Jan 1'),
   startOfWeek: vi.fn(() => new Date('2025-01-06')),
@@ -15,7 +14,6 @@ vi.mock('date-fns', () => ({
   differenceInCalendarWeeks: vi.fn(() => 0),
 }));
 
-// Mock images
 vi.mock('@assets/images/icons/arrow-left.svg', () => ({
   default: 'arrow-left.svg',
 }));
@@ -23,7 +21,6 @@ vi.mock('@assets/images/icons/arrow-right.svg', () => ({
   default: 'arrow-right.svg',
 }));
 
-// Import mocked functions
 import { format, startOfWeek, endOfWeek, addWeeks, differenceInCalendarWeeks } from 'date-fns';
 
 const mockFormat = vi.mocked(format);
@@ -35,7 +32,6 @@ const mockDifferenceInCalendarWeeks = vi.mocked(differenceInCalendarWeeks);
 describe('WeekSelector component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset to default mock returns
     mockFormat.mockReturnValue('Jan 1');
     mockStartOfWeek.mockReturnValue(new Date('2025-01-06'));
     mockEndOfWeek.mockReturnValue(new Date('2025-01-12'));
