@@ -6,7 +6,7 @@ import { useNavigate } from "react-router";
 // import arrow_left from "@assets/images/icons/arrow-left.svg";
 import AppBarMobile from "@components/AppBarMobile/AppBarMobile";
 import AppBarDecktop from "@components/AppBarDecktop/AppBarDecktop";
-import ProgressBanner from "@components/ProgressBanner/ProgressBanner";
+import HabitCard from "@components/HabitCard/HabitCard";
 
 export default function Main() {
     const dispatch = useAppDispatch();
@@ -33,8 +33,7 @@ export default function Main() {
             }}>log out</button> */}
             {/* <AppBarMobile /> */}
             {/* <AppBarDecktop /> */}
-
-            <ProgressBanner />
+            <HabitCard />
         </>
     )
 }
