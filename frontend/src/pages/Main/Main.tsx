@@ -6,11 +6,14 @@ import { useNavigate } from "react-router";
 // import arrow_left from "@assets/images/icons/arrow-left.svg";
 import AppBarMobile from "@components/AppBarMobile/AppBarMobile";
 import AppBarDecktop from "@components/AppBarDecktop/AppBarDecktop";
-import HabitCard from "@components/HabitCard/HabitCard";
+import ColorPicker from "@components/ColorPicker/ColorPicker";
+import { useState } from "react";
+
 
 export default function Main() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const [color, setColor] = useState('');
 
     return (
         <>
@@ -33,7 +36,13 @@ export default function Main() {
             }}>log out</button> */}
             {/* <AppBarMobile /> */}
             {/* <AppBarDecktop /> */}
-            <HabitCard />
+            
+
+                <ColorPicker
+                    value={color}
+                    onChange={setColor}
+                />
+
         </>
     )
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import DatePicker, { type IDatePicker } from "../DatePicker";
+import DatePicker, { type IDatePicker } from "./DatePicker";
 
 
 const setup = (props?: Partial<IDatePicker>) => {
