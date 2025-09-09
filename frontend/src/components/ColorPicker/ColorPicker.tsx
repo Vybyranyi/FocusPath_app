@@ -53,7 +53,6 @@ export default function ColorPicker(props: IColorPicker) {
         />
         <div>
           <p className="body-bold">{opt.label}</p>
-          {/* <p className={`alternative ${styles.grayText}`}>Color</p> */}
         </div>
       </div>
     ),
@@ -63,9 +62,16 @@ export default function ColorPicker(props: IColorPicker) {
     <div className={styles.wrapper}>
       <Dropdown menu={{ items }} trigger={['click']} disabled={props.disabled}>
         <div className={styles.colorSelect} onBlur={props.onBlur}>
-          <span
+          {/* <span
             className={`${styles.showColor} ${selected ? styles[selected.value] : styles.placeholder}`}
-          />
+          /> */}
+          {selected ? (
+            <span
+              className={`${styles.showColor} ${selected ? styles[selected.value] : styles.placeholder}`}
+            />
+          ) : (
+            <span className={`${styles.showColor} ${styles.placeholder}`}>?</span>
+          )}
           <div>
             <p className="body-bold">{selected?.label ?? 'Select Color'}</p>
             <p className={`alternative ${styles.grayText}`}>Color</p>

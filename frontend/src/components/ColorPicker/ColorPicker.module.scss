@@ -24,12 +24,18 @@
         .showColor {
             height: 36px;
             width: 36px;
-            border-radius: 12px;
-            display: inline-block;
+            border-radius: 12px;          
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--Primary-Blue-10);
             border: 1px solid var(--Primary-Black-10);
 
             &.placeholder {
-                background-color: var(--Primary-Black-10);
+                background-color: var(--Primary-Blue-10);
+                color: var(--Primary-Black-40);
+                font-size: 18px;
+                font-weight: bold;
             }
 
             // Color variants

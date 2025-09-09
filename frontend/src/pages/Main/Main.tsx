@@ -6,13 +6,15 @@ import { useNavigate } from "react-router";
 // import arrow_left from "@assets/images/icons/arrow-left.svg";
 import AppBarMobile from "@components/AppBarMobile/AppBarMobile";
 import AppBarDecktop from "@components/AppBarDecktop/AppBarDecktop";
-import ColorPicker from "@components/ColorPicker/ColorPicker";
 import { useState } from "react";
+import EmojiPicker from "@components/EmojiPicker/EmojiPicker";
+import ColorPicker from "@components/ColorPicker/ColorPicker";
 
 
 export default function Main() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const [emoji, setEmoji] = useState('');
     const [color, setColor] = useState('');
 
     return (
@@ -38,6 +40,10 @@ export default function Main() {
             {/* <AppBarDecktop /> */}
             
 
+                <EmojiPicker
+                    value={emoji}
+                    onChange={setEmoji}
+                />
                 <ColorPicker
                     value={color}
                     onChange={setColor}
