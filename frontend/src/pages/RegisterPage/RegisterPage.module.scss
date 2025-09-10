@@ -1,9 +1,5 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
-.headerContainer {
-    display: block;
-}
-
 .titleContainer {
     display: none;
 }
@@ -39,10 +35,6 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-
-        .headerContainer {
-            display: none;
-        }
 
         .titleContainer {
             width: 442px;

@@ -1,9 +1,5 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
-.headerContainer {
-    display: block;
-}
-
 .LoginTitle {
     display: none;
 }
@@ -44,10 +40,6 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-
-        .headerContainer {
-            display: none;
-        }
 
         .LoginTitle {
             display: block;

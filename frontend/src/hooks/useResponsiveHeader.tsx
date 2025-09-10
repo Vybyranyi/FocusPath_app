@@ -1,0 +1,100 @@
+import { useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { useMediaQuery } from 'react-responsive';
+import IconButton from '@components/IconButton/IconButton';
+import arrow_left from '@assets/images/icons/arrow-left.svg';
+
+interface HeaderConfig {
+    mobile: {
+        visible: boolean;
+        title?: string;
+        leftButtonIcon?: React.ReactNode;
+        rightButtonIcon?: React.ReactNode;
+        topContent?: boolean;
+        profile?: boolean;
+        segmentControl?: boolean;
+        showWeekController?: boolean;
+    };
+    desktop: {
+        visible: boolean;
+        title?: string;
+        leftButtonIcon?: React.ReactNode;
+        rightButtonIcon?: React.ReactNode;
+        topContent?: boolean;
+        profile?: boolean;
+        segmentControl?: boolean;
+        showWeekController?: boolean;
+    };
+}
+
+export const useResponsiveHeader = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const isDesktop = useMediaQuery({ query: "(min-width: 769px)" });
+
+    const headerConfigs: Record<string, HeaderConfig> = useMemo(() => ({
+        '/login': {
+            mobile: {
+                visible: true,
+                title: "Continue with E-mail",
+            },
+            desktop: {
+                visible: false,
+            }
+        },
+        '/register': {
+            mobile: {
+                visible: true,
+                title: "Create Account",
+                leftButtonIcon: (
+                    <IconButton
+                        size='large'
+                        icon={arrow_left}
+                        onClick={() => navigate(-1)}
+                    // onClick={() => setStep(1)}
+                    />
+                ),
+            },
+            desktop: {
+                visible: true,
+                title: "Create Account",
+                leftButtonIcon: (
+                    <IconButton
+                        size='large'
+                        icon={arrow_left}
+                        onClick={() => navigate(-1)}
+                    />
+                ),
+            }
+        },
+        '/main': {
+            mobile: {
+                visible: true,
+                title: "Label",
+                leftButtonIcon: (
+                    <IconButton
+                        size='large'
+                        icon={arrow_left}
+                        onClick={() => navigate(-1)}
+                    />
+                ),
+                topContent: true,
+                profile: true,
+                segmentControl: true,
+            },
+            desktop: {
+                visible: true,
+                title: "Label Decktop",
+                topContent: true,
+                profile: true,
+                segmentControl: true,
+                showWeekController: true,
+            }
+        }
+    }), [navigate]);
+
+    const currentConfig = headerConfigs[location.pathname];
+    const activeConfig = isDesktop ? currentConfig?.desktop : currentConfig?.mobile;
+
+    return activeConfig || { visible: false };
+};

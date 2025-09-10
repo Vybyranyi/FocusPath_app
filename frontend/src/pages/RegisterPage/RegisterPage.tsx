@@ -62,7 +62,7 @@ export default function RegisterPage() {
 
     return (
         <div className={styles.RegisterPage}>
-            <div className={styles.headerContainer}>
+            {/* <div className={styles.headerContainer}>
                 <Header
                     title="Create Account"
                     leftButtonIcon={
@@ -75,7 +75,7 @@ export default function RegisterPage() {
                         )
                     }
                 />
-            </div>
+            </div> */}
             <div className={styles.titleContainer}>
                 {
                     step === 2 && (

@@ -1,7 +1,6 @@
 import styles from "@pages/LoginPage/LoginPage.module.scss";
 import Input from "@components/Input/Input";
 import Button from "@components/Button/Button";
-import Header from "@components/Header/Header";
 import { useNavigate } from "react-router";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -36,11 +35,6 @@ export default function LoginPage() {
 
     return (
         <div className={styles.LoginPage}>
-            <div className={styles.headerContainer}>
-                <Header
-                    title="Continue with E-mail"
-                />
-            </div>
             <h5 className={styles.LoginTitle}>Continue with E-mail</h5>
             <div className="container">
                 <Formik

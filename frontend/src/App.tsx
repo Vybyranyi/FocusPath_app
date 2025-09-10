@@ -8,6 +8,7 @@ import { verifyToken } from '@store/authSlice';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
+import Layout from '@components/Layout/Layout';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -20,7 +21,7 @@ function App() {
   }, [dispatch]);
 
   return (
-    <div className="app-container">
+    <Layout>
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -30,7 +31,8 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </div>
+    </Layout>
+
   )
 }
 
