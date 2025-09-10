@@ -7,7 +7,7 @@ import styles from '@components/Layout/Layout.module.scss';
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className={styles.appContainer}>
-      {/* <AppBarMobile /> */}
+      <AppBarMobile />
       <AppBarDecktop />
       <div className={styles.mainContainer}>
         <ResponsiveHeader />
