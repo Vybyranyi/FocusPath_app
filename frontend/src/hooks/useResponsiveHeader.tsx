@@ -56,15 +56,7 @@ export const useResponsiveHeader = () => {
                 ),
             },
             desktop: {
-                visible: true,
-                title: "Create Account",
-                leftButtonIcon: (
-                    <IconButton
-                        size='large'
-                        icon={arrow_left}
-                        onClick={() => navigate(-1)}
-                    />
-                ),
+                visible: false,
             }
         },
         '/main': {
