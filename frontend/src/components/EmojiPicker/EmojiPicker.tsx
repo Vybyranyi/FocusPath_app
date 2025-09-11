@@ -33,7 +33,6 @@ const defaultEmojiOptions: IEmojiOption[] = [
 
   { label: 'Shopping', value: 'shopping', emoji: 'shopping bags' },
   { label: 'Money', value: 'money', emoji: 'money bag' },
-  { label: 'Saving', value: 'piggy', emoji: 'piggy bank' },
 
   { label: 'Cleaning', value: 'broom', emoji: 'broom' },
   { label: 'Plant Care', value: 'plant', emoji: 'seedling' },

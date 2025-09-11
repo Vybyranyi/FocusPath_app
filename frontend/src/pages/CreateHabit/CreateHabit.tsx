@@ -3,7 +3,6 @@ import EmojiPicker from '@components/EmojiPicker/EmojiPicker';
 import Input from '@components/Input/Input';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
-import { Emoji } from 'react-apple-emojis';
 import * as Yup from "yup";
 
 export interface IHabit {

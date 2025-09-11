@@ -12,6 +12,16 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useEffect, useState } from "react";
 import { registerUser } from "@store/authSlice";
 
+export interface IinitialValues {
+    name: string;
+    surname: string;
+    birthdate: string;
+    gender: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+}
+
 export default function RegisterPage() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -26,7 +36,7 @@ export default function RegisterPage() {
         }
     }, [user, token, navigate]);
 
-    const initialValues = {
+    const initialValues: IinitialValues = {
         name: '',
         surname: '',
         birthdate: '',
@@ -60,6 +70,22 @@ export default function RegisterPage() {
             .when("step", { is: 2, then: (schema) => schema.required("Required") }),
     });
 
+    const handleSubmit = async (values: IinitialValues) => {
+                        if (step === 1) {
+                            setStep(2);
+                        } else {
+                            dispatch(
+                                registerUser({
+                                    name: values.name,
+                                    surname: values.surname,
+                                    birthday: new Date(values.birthdate),
+                                    gender: values.gender as "male" | "female",
+                                    email: values.email,
+                                    password: values.password,
+                                })
+                            );
+                        }
+                    }
     return (
         <div className={styles.RegisterPage}>
             {/* <div className={styles.headerContainer}>
@@ -92,22 +118,7 @@ export default function RegisterPage() {
                 <Formik
                     initialValues={initialValues}
                     validationSchema={validationSchema}
-                    onSubmit={async (values) => {
-                        if (step === 1) {
-                            setStep(2);
-                        } else {
-                            dispatch(
-                                registerUser({
-                                    name: values.name,
-                                    surname: values.surname,
-                                    birthday: new Date(values.birthdate),
-                                    gender: values.gender as "male" | "female",
-                                    email: values.email,
-                                    password: values.password,
-                                })
-                            );
-                        }
-                    }}
+                    onSubmit={handleSubmit}
                 >
                     {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
                         <Form>

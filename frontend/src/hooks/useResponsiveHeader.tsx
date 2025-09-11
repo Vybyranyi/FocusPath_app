@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router';
 import { useMediaQuery } from 'react-responsive';
 import IconButton from '@components/IconButton/IconButton';
 import arrow_left from '@assets/images/icons/arrow-left.svg';
+import notification from '@assets/images/icons/notification.svg';
+import calendar from '@assets/images/icons/calendar.svg';
 
 interface HeaderConfig {
     mobile: {
@@ -81,6 +83,37 @@ export const useResponsiveHeader = () => {
                 profile: true,
                 segmentControl: true,
                 showWeekController: true,
+            }
+        },
+        '/createhabit': {
+            mobile: {
+                visible: true,
+                title: 'Create Habit',
+                leftButtonIcon: (
+                    <IconButton
+                        size='large'
+                        icon={arrow_left}
+                        onClick={() => navigate(-1)}
+                    />
+                )
+            },
+            desktop: {
+                visible: true,
+                leftButtonIcon: (
+                    <IconButton
+                        size='large'
+                        icon={notification}
+                    />
+                ),
+                rightButtonIcon: (
+                    <IconButton
+                        size='large'
+                        icon={calendar}
+                    />
+                ),
+                topContent: true,
+                profile: true,
+                segmentControl: true,                
             }
         }
     }), [navigate]);

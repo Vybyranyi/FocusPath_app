@@ -6,9 +6,11 @@ import explore from '@assets/images/icons/explore.svg';
 import activity from '@assets/images/icons/activity.svg';
 import profile from '@assets/images/icons/profile.svg';
 import { useMediaQuery } from 'react-responsive';
+import { useNavigate } from 'react-router';
 
 export default function AppBarDecktop() {
     const isMobile = useMediaQuery({ query: "(min-width: 769px)" });
+    const navigate = useNavigate();
 
     return (
         isMobile && (
@@ -18,6 +20,7 @@ export default function AppBarDecktop() {
                         type='primary'
                         size='medium'
                         icon={plus}
+                        onClick={() => navigate('/createhabit')}
                     >
                         New habbit
                     </Button>
@@ -26,28 +29,28 @@ export default function AppBarDecktop() {
                         size='medium'
                         icon={home}
                     >
-                        New habbit
+                        Home
                     </Button>
                     <Button
                         type='outline'
                         size='medium'
                         icon={explore}
                     >
-                        New habbit
+                        Explore
                     </Button>
                     <Button
                         type='outline'
                         size='medium'
                         icon={activity}
                     >
-                        New habbit
+                        Activity
                     </Button>
                     <Button
                         type='outline'
                         size='medium'
                         icon={profile}
                     >
-                        New habbit
+                        Profile
                     </Button>
                 </div>
             </menu>

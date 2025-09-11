@@ -1,14 +1,15 @@
 import '@assets/styles/resetStyles.scss';
 import '@assets/styles/typography.scss';
 import './App.css';
-import LoginPage from '@pages/LoginPage/LoginPage';
-import Main from '@pages/Main/Main';
-import RegisterPage from '@pages/RegisterPage/RegisterPage';
 import { verifyToken } from '@store/authSlice';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import Layout from '@components/Layout/Layout';
+import LoginPage from '@pages/LoginPage/LoginPage';
+import RegisterPage from '@pages/RegisterPage/RegisterPage';
+import Main from '@pages/Main/Main';
+import CreateHabit from '@pages/CreateHabit/CreateHabit';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -28,6 +29,10 @@ function App() {
         <Route
           path="/main/*"
           element={user && token ? <Main /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/createhabit/*"
+          element={user && token ? <CreateHabit /> : <Navigate to="/login" replace />}
         />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

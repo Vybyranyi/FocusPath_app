@@ -1,5 +1,5 @@
 import { useResponsiveHeader } from '@hooks/useResponsiveHeader';
-import Header from './Header';
+import Header from '@components/Header/Header';
 
 export default function ResponsiveHeader() {
   const headerConfig = useResponsiveHeader();
