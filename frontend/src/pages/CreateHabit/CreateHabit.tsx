@@ -1,6 +1,8 @@
 import ColorPicker from '@components/ColorPicker/ColorPicker';
 import EmojiPicker from '@components/EmojiPicker/EmojiPicker';
 import Input from '@components/Input/Input';
+import WeekDatePicker from '@components/WeekDatePicker/WeekDatePicker';
+import Button from '@components/Button/Button';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
 import * as Yup from "yup";
@@ -10,6 +12,7 @@ export interface IHabit {
     emoji: string;
     habitName: string;
     habitDescription: string;
+    startDate: Date | undefined; // Додаємо дату початку звички
 };
 
 export default function CreateHabit() {
@@ -18,6 +21,7 @@ export default function CreateHabit() {
         emoji: '',
         habitName: '',
         habitDescription: '',
+        startDate: undefined, // Початково дата не вибрана
     };
 
     const validationSchema = Yup.object({
@@ -33,10 +37,15 @@ export default function CreateHabit() {
             .required("Habit description is required")
             .min(10, "Habit description must be at least 10 characters")
             .max(100, "Habit description must be at most 100 characters"),
+        startDate: Yup.date()
+            .nullable()
+            .required("Start date is required")
+            .min(new Date(), "Start date cannot be in the past"),
     });
 
     const handleSubmit = (values: IHabit) => {
-        console.log(values);
+        console.log('Habit data:', values);
+        // Тут можна відправити дані на сервер
     }
 
     return (
@@ -47,7 +56,7 @@ export default function CreateHabit() {
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
             >
-                {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
+                {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched, isValid, dirty }) => (
                     <Form>
                         <div className={styles.form}>
                             <ColorPicker
@@ -56,14 +65,16 @@ export default function CreateHabit() {
                                 onChange={(value) => handleChange('color')(value)}
                                 onBlur={() => handleBlur('color')}
                             />
+                            
                             <EmojiPicker
                                 error={touched.emoji ? errors.emoji : ''}
                                 value={values.emoji}
                                 onChange={(value) => handleChange('emoji')(value)}
                                 onBlur={() => handleBlur('emoji')}
                             />
+                            
                             <Input
-                                label='Habit'
+                                label='Habit Name'
                                 placeholder='Enter Habit Name'
                                 type='text'
                                 value={values.habitName}
@@ -71,6 +82,46 @@ export default function CreateHabit() {
                                 onBlur={handleBlur('habitName')}
                                 error={touched.habitName ? errors.habitName : ''}
                             />
+
+                            <Input
+                                label='Habit Description'
+                                placeholder='Describe your habit'
+                                type='text'
+                                value={values.habitDescription}
+                                onChange={handleChange('habitDescription')}
+                                onBlur={handleBlur('habitDescription')}
+                                error={touched.habitDescription ? errors.habitDescription : ''}
+                            />
+
+                            {/* Додаємо WeekDatePicker */}
+                            <div className={styles.datePickerContainer}>
+                                <WeekDatePicker
+                                    label="Start Date"
+                                    selectedDate={values.startDate}
+                                    onDateSelect={(date) => {
+                                        setFieldValue('startDate', date);
+                                        setFieldTouched('startDate', true);
+                                    }}
+                                />
+                                {/* Показуємо помилку валідації */}
+                                {touched.startDate && errors.startDate && (
+                                    <div className={styles.errorPopup}>
+                                        <span className="alternative">{errors.startDate}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Додаємо кнопку Submit */}
+                        <div className={styles.buttonContainer}>
+                            <Button
+                                type="primary"
+                                size="large"
+                                htmlType="submit"
+                                disabled={!(isValid && dirty)}
+                            >
+                                Create Habit
+                            </Button>
                         </div>
                     </Form>
                 )}
