@@ -2,7 +2,7 @@ import ColorPicker from '@components/ColorPicker/ColorPicker';
 import EmojiPicker from '@components/EmojiPicker/EmojiPicker';
 import Input from '@components/Input/Input';
 import WeekDatePicker from '@components/WeekDatePicker/WeekDatePicker';
-import Button from '@components/Button/Button';
+// import Button from '@components/Button/Button';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
 import * as Yup from "yup";
@@ -12,7 +12,7 @@ export interface IHabit {
     emoji: string;
     habitName: string;
     habitDescription: string;
-    startDate: Date | undefined; // Додаємо дату початку звички
+    startDate: Date | undefined;
 };
 
 export default function CreateHabit() {
@@ -21,7 +21,7 @@ export default function CreateHabit() {
         emoji: '',
         habitName: '',
         habitDescription: '',
-        startDate: undefined, // Початково дата не вибрана
+        startDate: new Date(),
     };
 
     const validationSchema = Yup.object({
@@ -45,7 +45,6 @@ export default function CreateHabit() {
 
     const handleSubmit = (values: IHabit) => {
         console.log('Habit data:', values);
-        // Тут можна відправити дані на сервер
     }
 
     return (
@@ -65,14 +64,14 @@ export default function CreateHabit() {
                                 onChange={(value) => handleChange('color')(value)}
                                 onBlur={() => handleBlur('color')}
                             />
-                            
+
                             <EmojiPicker
                                 error={touched.emoji ? errors.emoji : ''}
                                 value={values.emoji}
                                 onChange={(value) => handleChange('emoji')(value)}
                                 onBlur={() => handleBlur('emoji')}
                             />
-                            
+
                             <Input
                                 label='Habit Name'
                                 placeholder='Enter Habit Name'
@@ -93,27 +92,18 @@ export default function CreateHabit() {
                                 error={touched.habitDescription ? errors.habitDescription : ''}
                             />
 
-                            {/* Додаємо WeekDatePicker */}
-                            <div className={styles.datePickerContainer}>
-                                <WeekDatePicker
-                                    label="Start Date"
-                                    selectedDate={values.startDate}
-                                    onDateSelect={(date) => {
-                                        setFieldValue('startDate', date);
-                                        setFieldTouched('startDate', true);
-                                    }}
-                                />
-                                {/* Показуємо помилку валідації */}
-                                {touched.startDate && errors.startDate && (
-                                    <div className={styles.errorPopup}>
-                                        <span className="alternative">{errors.startDate}</span>
-                                    </div>
-                                )}
-                            </div>
+                            <WeekDatePicker
+                                label="When you want to start?"
+                                selectedDate={values.startDate}
+                                onDateSelect={(date) => {
+                                    setFieldValue('startDate', date);
+                                    setFieldTouched('startDate', true);
+                                }}
+                                error={touched.startDate ? errors.startDate : ''}
+                            />
                         </div>
 
-                        {/* Додаємо кнопку Submit */}
-                        <div className={styles.buttonContainer}>
+                        {/* <div className={styles.buttonContainer}>
                             <Button
                                 type="primary"
                                 size="large"
@@ -122,7 +112,7 @@ export default function CreateHabit() {
                             >
                                 Create Habit
                             </Button>
-                        </div>
+                        </div> */}
                     </Form>
                 )}
             </Formik>

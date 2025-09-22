@@ -7,6 +7,7 @@ export interface IWeekDatePickerProps {
     selectedDate?: Date | string | number;
     onDateSelect: (date: Date) => void;
     startDate?: Date;
+    error?: string;
 }
 
 export default function WeekDatePicker(props: IWeekDatePickerProps) {
@@ -129,6 +130,11 @@ export default function WeekDatePicker(props: IWeekDatePickerProps) {
             >
                 {isExpanded ? 'Show less' : 'Show more'}
             </button>
+            {props.error && (
+                <div className={styles.errorPopup}>
+                    <span className="alternative">{props.error}</span>
+                </div>
+            )}
         </div>
     );
 }
