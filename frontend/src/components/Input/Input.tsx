@@ -38,6 +38,10 @@ export default function Input(props: IInputProps) {
         props.onBlur?.(event);
     };
 
+    const handleClear = () => {
+        props.onChange?.({ target: { value: "" } } as any);
+    };
+
     let currentInputType = props.type === "password"
         ? isPasswordVisible ? "text" : "password"
         : inputType;
@@ -67,7 +71,7 @@ export default function Input(props: IInputProps) {
                     {props.value && (
                         <img
                             src={remove_cross}
-                            onClick={() => props.onChange?.({ target: { value: "" } } as any)}
+                            onClick={handleClear}
                             alt="Clear input"
                         />
                     )}

@@ -1,0 +1,36 @@
+@use '@assets/styles/colorVariables.scss' as *;
+
+.toggleSwitch {
+    background-color: var(--Primary-Black-10);
+    width: 48px;
+    height: 28px;
+    border-radius: 100px;
+    padding: 3.5px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    .toggleThumb {
+        background-color: var(--Base-White);
+        width: 21px;
+        height: 21px;
+        border-radius: 100px;
+        box-shadow: var(--Small-Shadow);
+        transition: transform 0.3s ease;
+        transform: translateX(0);
+    }
+
+    &.toggled {
+        background-color: var(--Primary-Green-success);
+
+        .toggleThumb {
+            transform: translateX(20px);
+        }
+    }
+
+    &.disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+}
