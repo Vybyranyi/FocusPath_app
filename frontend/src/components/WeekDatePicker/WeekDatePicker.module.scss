@@ -52,6 +52,13 @@
         text-align: center;
         margin-top: 16px;
     }
+
+    .errorPopup {
+        span {
+            color: var(--Primary-Red-error);
+        }
+        
+    }
 }
 
 @media screen and (min-width: 768px) {

@@ -3,6 +3,7 @@ import styles from '@components/DatePicker/DatePicker.module.scss';
 export interface IDatePicker {
     date: Date | string | number;
     active?: boolean;
+    error?: boolean
     onClick?: () => void;
 };
 
@@ -15,7 +16,7 @@ export default function DatePicker(props: IDatePicker) {
 
     return (
         <div
-            className={`${styles.datePicker} ${props.active ? styles.active : ""}`}
+            className={`${styles.datePicker} ${props.active ? styles.active : ""} ${props.error ? styles.error : ""}`}
             onClick={props.onClick}
         >
             <h6 className={styles.day}>{day}</h6>

@@ -97,6 +97,7 @@ export default function WeekDatePicker(props: IWeekDatePickerProps) {
                                 date={date}
                                 active={selectedDateStr === date.toDateString()}
                                 onClick={() => handleDateClick(date)}
+                                error={props.error ? true : false}
                             />
                         ))}
                     </div>
@@ -115,6 +116,7 @@ export default function WeekDatePicker(props: IWeekDatePickerProps) {
                                         date={date}
                                         active={selectedDateStr === date.toDateString()}
                                         onClick={() => handleDateClick(date)}
+                                        error={props.error ? true : false}
                                     />
                                 ))}
                             </div>

@@ -11,6 +11,7 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    cursor: pointer;
 
     .weekday {
         color: var(--Primary-Black-40); //по ТЗ 20
@@ -22,6 +23,15 @@
         .day,
         .weekday {
             color: var(--Primary-Blue);
+        }
+
+        &.error {
+            border: 2px solid var(--Primary-Red-error);
+
+            .day,
+            .weekday {
+                color: var(--Primary-Red-error);
+            }
         }
     }
 }

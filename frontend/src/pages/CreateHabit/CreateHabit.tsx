@@ -96,8 +96,8 @@ export default function CreateHabit() {
                                 label="When you want to start?"
                                 selectedDate={values.startDate}
                                 onDateSelect={(date) => {
-                                    setFieldValue('startDate', date);
-                                    setFieldTouched('startDate', true);
+                                    setFieldValue('startDate', date, true);
+                                    setFieldTouched('startDate', true, false);
                                 }}
                                 error={touched.startDate ? errors.startDate : ''}
                             />
