@@ -4,8 +4,8 @@ import { verifyTokenMiddleware } from '@middlewares/auth';
 
 const router = Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.get('/verify-token' , verifyTokenMiddleware, verifyToken);
+router.post('/', register);
+router.post('/token', login);
+router.get('/token', verifyTokenMiddleware, verifyToken);
 
 export default router;
