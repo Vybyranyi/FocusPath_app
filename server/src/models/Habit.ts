@@ -32,3 +32,31 @@ const HabitSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
+
+// Індекси для швидкого пошуку
+HabitSchema.index({ userId: 1, startDate: 1 });
+HabitSchema.index({ userId: 1, isCompleted: 1 });
+
+// Метод для перевірки чи потрібно виконати звичку сьогодні
+HabitSchema.methods.shouldCompleteToday = function() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const startDate = new Date(this.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    return daysSinceStart >= 0 && daysSinceStart < this.duration && !this.isCompleted;
+};
+
+// Метод для отримання очікуваної кінцевої дати
+HabitSchema.methods.getExpectedEndDate = function() {
+    const endDate = new Date(this.startDate);
+    endDate.setDate(endDate.getDate() + this.duration - 1);
+    return endDate;
+};
+
+const Habit = mongoose.model<IHabit>('Habit', HabitSchema);
+
+export default Habit;
