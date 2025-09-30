@@ -81,14 +81,14 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
 };
 
 export const getAllHabits = async (req: AuthRequest, res: Response) => {
-    try{
+    try {
         const { userId } = req;
 
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         };
 
-        const habits = await Habit.find({userId}).select('-userId').sort({createdAt: -1});
+        const habits = await Habit.find({ userId }).select('-userId').sort({ createdAt: -1 });
 
         res.status(200).json({
             message: 'Habits retrieved successfully',
@@ -99,3 +99,33 @@ export const getAllHabits = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Server error while retrieving habits' });
     }
 };
+
+export const getHabitById = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { id } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid habit ID' });
+        };
+
+        const habit = await Habit.findOne({ _id: id, userId }).select('-userId');
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        };
+
+        res.status(200).json({
+            message: 'Habit retrieved successfully',
+            habit
+        });
+
+    } catch (error) {
+        console.error('Get habit by ID error:', error);
+        res.status(500).json({ message: 'Server error while retrieving habit' });
+    }
+}
