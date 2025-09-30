@@ -79,3 +79,23 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Server error during habit creation' });
     }
 };
+
+export const getAllHabits = async (req: AuthRequest, res: Response) => {
+    try{
+        const { userId } = req;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        const habits = await Habit.find({userId}).select('-userId').sort({createdAt: -1});
+
+        res.status(200).json({
+            message: 'Habits retrieved successfully',
+            habits
+        });
+    } catch (error) {
+        console.error('Get habits error:', error);
+        res.status(500).json({ message: 'Server error while retrieving habits' });
+    }
+};
