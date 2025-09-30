@@ -128,4 +128,70 @@ export const getHabitById = async (req: AuthRequest, res: Response) => {
         console.error('Get habit by ID error:', error);
         res.status(500).json({ message: 'Server error while retrieving habit' });
     }
-}
+};
+
+export const updateHabit = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { id } = req.params;
+        const { title, startDate, duration, type } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid habit ID' });
+        };
+
+        const habit = await Habit.findOne({ _id: id, userId });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        };
+
+        if (type && !['build', 'quit'].includes(type)) {
+            return res.status(400).json({ message: 'Type must be either "build" or "quit"' });
+        };
+
+        if (duration && (duration < 0 || duration > 365)) {
+            return res.status(400).json({ message: 'Duration must be between 0 and 365 days' });
+        };
+
+        if (startDate) {
+            const parsedStartDate = new Date(startDate);
+            if (isNaN(parsedStartDate.getTime())) {
+                return res.status(400).json({ message: 'Invalid start date format' });
+            }
+            parsedStartDate.setHours(0, 0, 0, 0);
+            habit.startDate = parsedStartDate;
+        };
+
+        if (title) habit.title = title.trim();
+        if (duration) habit.duration = duration;
+        if (type) habit.type = type;
+        habit.updatedAt = new Date();
+
+        await habit.save();
+
+        res.status(200).json({
+            message: 'Habit updated successfully',
+            habit: {
+                ...habit.toObject(),
+                userId: undefined
+            }
+        });
+
+    } catch (error) {
+        console.error('Update habit error:', error);
+
+                if (error instanceof mongoose.Error.ValidationError) {
+            return res.status(400).json({
+                message: 'Validation error',
+                errors: error.errors
+            });
+        }
+
+        res.status(500).json({ message: 'Server error during habit update' });
+    }
+};
