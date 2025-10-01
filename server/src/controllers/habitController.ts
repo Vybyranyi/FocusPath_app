@@ -185,7 +185,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Update habit error:', error);
 
-                if (error instanceof mongoose.Error.ValidationError) {
+        if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({
                 message: 'Validation error',
                 errors: error.errors
@@ -193,5 +193,35 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
         }
 
         res.status(500).json({ message: 'Server error during habit update' });
+    }
+};
+
+export const deleteHabit = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { id } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid habit ID' });
+        };
+
+        const habit = await Habit.findOneAndDelete({ _id: id, userId });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        };
+
+        res.status(200).json({
+            message: 'Habit deleted successfully',
+            habitId: id
+        });
+
+    } catch (error) {
+        console.error('Delete habit error:', error);
+        res.status(500).json({ message: 'Server error during habit deletion' });
     }
 };
