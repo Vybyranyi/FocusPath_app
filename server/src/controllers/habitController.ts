@@ -46,6 +46,16 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: 'Start date cannot be more than 0 days in the past' });
         }
 
+        const dailyCompletions = [];
+        for (let i = 0; i < duration; i++) {
+            const completionDate = new Date(parsedStartDate);
+            completionDate.setDate(completionDate.getDate() + i);
+            dailyCompletions.push({
+                date: completionDate,
+                completed: false
+            });
+        };
+
         const newHabit = new Habit({
             title: title.trim(),
             startDate: parsedStartDate,
@@ -54,7 +64,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
             userId,
             currentStreak: 0,
             isCompleted: false,
-            dailyCompletions: []
+            dailyCompletions
         });
 
         await newHabit.save();
@@ -265,14 +275,19 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
 
         // перевіряємо чи є запис для цієї дати
         const existingCompletionIndex = habit.dailyCompletions.findIndex(
-            dc => new Date(dc.date).getTime() === completionDate.getTime()
+            dc => {
+                const dcDate = new Date(dc.date);
+                dcDate.setHours(0, 0, 0, 0);
+                return dcDate.getTime() === completionDate.getTime();
+            }
         );
 
-        if (existingCompletionIndex > -1) {
-            habit.dailyCompletions[existingCompletionIndex].completed = completed;
-        } else {
-            habit.dailyCompletions.push({ date: completionDate, completed });
-        };
+        if (existingCompletionIndex === -1) {
+            return res.status(400).json({ message: 'Date not found in habit schedule' });
+        }
+
+        // Оновлюємо статус виконання
+        habit.dailyCompletions[existingCompletionIndex].completed = completed;
 
         // Оновлення поточної серії
         const sortedCompletions = habit.dailyCompletions
