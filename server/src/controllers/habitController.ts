@@ -225,3 +225,98 @@ export const deleteHabit = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Server error during habit deletion' });
     }
 };
+
+export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { id } = req.params;
+        const { date, completed } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid habit ID' });
+        };
+
+        if (completed === undefined) {
+            return res.status(400).json({ message: 'Completed status is required' });
+        };
+
+        const habit = await Habit.findOne({ _id: id, userId });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        };
+
+        const completionDate = date ? new Date(date) : new Date();
+        completionDate.setHours(0, 0, 0, 0);
+
+        // перевіряю чи дата в межах тривалості звички
+        const startDate = new Date(habit.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + habit.duration - 1);
+
+        if (completionDate < startDate || completionDate > endDate) {
+            return res.status(400).json({ message: 'Date is outside habit duration' });
+        };
+
+        // перевіряємо чи є запис для цієї дати
+        const existingCompletionIndex = habit.dailyCompletions.findIndex(
+            dc => new Date(dc.date).getTime() === completionDate.getTime()
+        );
+
+        if (existingCompletionIndex > -1) {
+            habit.dailyCompletions[existingCompletionIndex].completed = completed;
+        } else {
+            habit.dailyCompletions.push({ date: completionDate, completed });
+        };
+
+        // Оновлення поточної серії
+        const sortedCompletions = habit.dailyCompletions
+            .filter(dc => dc.completed)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        let currentStreak = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = sortedCompletions.length - 1; i >= 0; i--) {
+            const compDate = new Date(sortedCompletions[i].date);
+            compDate.setHours(0, 0, 0, 0);
+            const expectedDate = new Date(today);
+            expectedDate.setDate(expectedDate.getDate() - currentStreak);
+
+            if (compDate.getTime() === expectedDate.getTime()) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        };
+
+        habit.currentStreak = currentStreak;
+
+        // Перевірка чи звичка завершена
+        const completedDays = habit.dailyCompletions.filter(dc => dc.completed).length;
+        if (completedDays >= habit.duration) {
+            habit.isCompleted = true;
+        }
+
+        habit.updatedAt = new Date();
+        await habit.save();
+
+        res.status(200).json({
+            message: 'Habit completion marked successfully',
+            habit: {
+                ...habit.toObject(),
+                userId: undefined
+            }
+        });
+
+    } catch (error) {
+        console.error('Mark habit completion error:', error);
+        res.status(500).json({ message: 'Server error while marking habit completion' });
+    }
+};
