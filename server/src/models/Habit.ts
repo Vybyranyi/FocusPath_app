@@ -10,12 +10,13 @@ export interface IHabit extends Document {
     currentStreak: number;
     isCompleted: boolean;
     dailyCompletions: Array<{
+        title: string;
         date: Date;
         completed: boolean;
     }>;
     createdAt: Date;
     updatedAt: Date;
-};
+}
 
 const HabitSchema: Schema = new Schema({
     title: { type: String, required: true },
@@ -26,6 +27,7 @@ const HabitSchema: Schema = new Schema({
     currentStreak: { type: Number, default: 0 },
     isCompleted: { type: Boolean, default: false },
     dailyCompletions: [{
+        title: { type: String, required: true },
         date: { type: Date, required: true },
         completed: { type: Boolean, required: true }
     }],
