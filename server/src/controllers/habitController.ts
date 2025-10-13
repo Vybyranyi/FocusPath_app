@@ -11,6 +11,7 @@ interface AuthRequest extends Request {
         type?: 'build' | 'quit';
         completed?: boolean;
         date?: string;
+        dayTitle?: string;
     };
 }
 
@@ -206,6 +207,75 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Server error during habit update' });
     }
 };
+
+export const updateDayTitle = async (req: AuthRequest, res: Response) => {
+    try{
+        const { userId } = req;
+        const { id } = req.params;
+        const { date, dayTitle } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid habit ID' });
+        };
+
+        if (!date || !dayTitle) {
+            return res.status(400).json({ message: 'Date and dayTitle are required' });
+        };
+
+        const habit = await Habit.findOne({ _id: id, userId });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        };
+
+        const targetDate = new Date(date);
+        if (isNaN(targetDate.getTime())) {
+            return res.status(400).json({ message: 'Invalid date format' });
+        };
+        targetDate.setHours(0, 0, 0, 0);
+
+        const startDate = new Date(habit.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + habit.duration - 1);
+
+        if (targetDate < startDate || targetDate > endDate) {
+            return res.status(400).json({ message: 'Date is outside habit duration' });
+        };
+
+        const dayCompletionIndex = habit.dailyCompletions.findIndex(
+            dc => {
+                const dcDate = new Date(dc.date);
+                dcDate.setHours(0, 0, 0, 0);
+                return dcDate.getTime() === targetDate.getTime();
+            }
+        );
+
+        if (dayCompletionIndex === -1) {
+            return res.status(400).json({ message: 'Date not found in habit schedule' });
+        };
+
+        habit.dailyCompletions[dayCompletionIndex].dayTitle = dayTitle.trim();
+        habit.updatedAt = new Date();
+        await habit.save();
+
+        res.status(200).json({
+            message: 'Day title updated successfully',
+            habit: {
+                ...habit.toObject(),
+                userId: undefined
+            }
+        });
+
+    } catch (error) {
+        console.error('Update day title error:', error);
+        res.status(500).json({ message: 'Server error during day title update' });
+    }
+}
 
 export const deleteHabit = async (req: AuthRequest, res: Response) => {
     try {
