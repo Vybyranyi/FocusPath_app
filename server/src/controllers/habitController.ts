@@ -51,7 +51,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
             const completionDate = new Date(parsedStartDate);
             completionDate.setDate(completionDate.getDate() + i);
             dailyCompletions.push({
-                title: title.trim(),
+                dayTitle: title.trim(),
                 date: completionDate,
                 completed: false
             });
