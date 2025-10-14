@@ -37,10 +37,10 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: 'Invalid start date format' });
         }
 
-        parsedStartDate.setHours(0, 0, 0, 0);
+        parsedStartDate.setUTCHours(0, 0, 0, 0);
 
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setUTCHours(0, 0, 0, 0);
         const daysDifference = Math.floor((today.getTime() - parsedStartDate.getTime()) / (1000 * 60 * 60 * 24));
 
         if (daysDifference > 0) {
@@ -50,7 +50,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
         const dailyCompletions = [];
         for (let i = 0; i < duration; i++) {
             const completionDate = new Date(parsedStartDate);
-            completionDate.setDate(completionDate.getDate() + i);
+            completionDate.setUTCDate(completionDate.getUTCDate() + i);
             dailyCompletions.push({
                 dayTitle: title.trim(),
                 date: completionDate,
@@ -175,7 +175,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
             if (isNaN(parsedStartDate.getTime())) {
                 return res.status(400).json({ message: 'Invalid start date format' });
             }
-            parsedStartDate.setHours(0, 0, 0, 0);
+            parsedStartDate.setUTCHours(0, 0, 0, 0);
             habit.startDate = parsedStartDate;
         };
 
@@ -236,12 +236,12 @@ export const updateDayTitle = async (req: AuthRequest, res: Response) => {
         if (isNaN(targetDate.getTime())) {
             return res.status(400).json({ message: 'Invalid date format' });
         };
-        targetDate.setHours(0, 0, 0, 0);
+        targetDate.setUTCHours(0, 0, 0, 0);
 
         const startDate = new Date(habit.startDate);
-        startDate.setHours(0, 0, 0, 0);
+        startDate.setUTCHours(0, 0, 0, 0);
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + habit.duration - 1);
+        endDate.setUTCDate(endDate.getUTCDate() + habit.duration - 1);
 
         if (targetDate < startDate || targetDate > endDate) {
             return res.status(400).json({ message: 'Date is outside habit duration' });
@@ -250,7 +250,7 @@ export const updateDayTitle = async (req: AuthRequest, res: Response) => {
         const dayCompletionIndex = habit.dailyCompletions.findIndex(
             dc => {
                 const dcDate = new Date(dc.date);
-                dcDate.setHours(0, 0, 0, 0);
+                dcDate.setUTCHours(0, 0, 0, 0);
                 return dcDate.getTime() === targetDate.getTime();
             }
         );
@@ -332,13 +332,13 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
         };
 
         const completionDate = date ? new Date(date) : new Date();
-        completionDate.setHours(0, 0, 0, 0);
+        completionDate.setUTCHours(0, 0, 0, 0);
 
         // перевіряю чи дата в межах тривалості звички
         const startDate = new Date(habit.startDate);
-        startDate.setHours(0, 0, 0, 0);
+        startDate.setUTCHours(0, 0, 0, 0);
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + habit.duration - 1);
+        endDate.setUTCDate(endDate.getUTCDate() + habit.duration - 1);
 
         if (completionDate < startDate || completionDate > endDate) {
             return res.status(400).json({ message: 'Date is outside habit duration' });
@@ -348,7 +348,7 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
         const existingCompletionIndex = habit.dailyCompletions.findIndex(
             dc => {
                 const dcDate = new Date(dc.date);
-                dcDate.setHours(0, 0, 0, 0);
+                dcDate.setUTCHours(0, 0, 0, 0);
                 return dcDate.getTime() === completionDate.getTime();
             }
         );
@@ -367,13 +367,13 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
 
         let currentStreak = 0;
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setUTCHours(0, 0, 0, 0);
 
         for (let i = sortedCompletions.length - 1; i >= 0; i--) {
             const compDate = new Date(sortedCompletions[i].date);
-            compDate.setHours(0, 0, 0, 0);
+            compDate.setUTCHours(0, 0, 0, 0);
             const expectedDate = new Date(today);
-            expectedDate.setDate(expectedDate.getDate() - currentStreak);
+            expectedDate.setUTCDate(expectedDate.getUTCDate() - currentStreak);
 
             if (compDate.getTime() === expectedDate.getTime()) {
                 currentStreak++;
