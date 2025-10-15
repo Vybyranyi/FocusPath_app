@@ -1,4 +1,5 @@
 import ColorPicker from '@components/ColorPicker/ColorPicker';
+import DurationPicker from '@components/DurationPicker/DurationPicker';
 import EmojiPicker from '@components/EmojiPicker/EmojiPicker';
 import Input from '@components/Input/Input';
 import WeekDatePicker from '@components/WeekDatePicker/WeekDatePicker';
@@ -101,6 +102,8 @@ export default function CreateHabit() {
                                 }}
                                 error={touched.startDate ? errors.startDate : ''}
                             />
+
+                            <DurationPicker />
                         </div>
 
                         {/* <div className={styles.buttonContainer}>
