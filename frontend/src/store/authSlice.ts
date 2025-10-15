@@ -31,7 +31,7 @@ export const registerUser = createAsyncThunk(
     "auth/registerUser",
     async (userData: { name: string; surname: string; birthday: Date; gender: "male" | "female"; email: string; password: string }, { rejectWithValue }) => {
         try {
-            const res = await fetch(`${API_URL}/auth/register`, {
+            const res = await fetch(`${API_URL}/auth/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify(userData),
@@ -51,7 +51,7 @@ export const loginUser = createAsyncThunk(
     "auth/loginUser",
     async (userData: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            const res = await fetch(`${API_URL}/auth/login`, {
+            const res = await fetch(`${API_URL}/auth/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify(userData),
@@ -75,7 +75,7 @@ export const verifyToken = createAsyncThunk(
             if (!token) {
                 return rejectWithValue("No token found");
             }
-            const res = await fetch(`${API_URL}/auth/verify-token`, {
+            const res = await fetch(`${API_URL}/auth/token`, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
