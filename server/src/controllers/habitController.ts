@@ -209,7 +209,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
 };
 
 export const updateDayTitle = async (req: AuthRequest, res: Response) => {
-    try{
+    try {
         const { userId } = req;
         const { id } = req.params;
         const { date, dayTitle } = req.body;
@@ -236,7 +236,16 @@ export const updateDayTitle = async (req: AuthRequest, res: Response) => {
         if (isNaN(targetDate.getTime())) {
             return res.status(400).json({ message: 'Invalid date format' });
         };
-        targetDate.setUTCHours(0, 0, 0, 0);
+        // Якщо дата прийшла без часового поясу, інтерпретуємо як UTC
+        if (!date.includes('Z') && !date.includes('+') && !date.includes('-', 10)) {
+            targetDate.setUTCHours(0, 0, 0, 0);
+        } else {
+            // Якщо з часовим поясом, все одно нормалізуємо до початку дня UTC
+            const year = targetDate.getUTCFullYear();
+            const month = targetDate.getUTCMonth();
+            const day = targetDate.getUTCDate();
+            targetDate.setTime(Date.UTC(year, month, day, 0, 0, 0, 0));
+        }
 
         const startDate = new Date(habit.startDate);
         startDate.setUTCHours(0, 0, 0, 0);
@@ -275,7 +284,7 @@ export const updateDayTitle = async (req: AuthRequest, res: Response) => {
         console.error('Update day title error:', error);
         res.status(500).json({ message: 'Server error during day title update' });
     }
-}
+};
 
 export const deleteHabit = async (req: AuthRequest, res: Response) => {
     try {
