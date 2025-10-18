@@ -14,7 +14,9 @@ export interface IHabit {
     habitName: string;
     habitDescription: string;
     startDate: Date | undefined;
-};
+    aiEnabled: boolean;
+    duration: string;
+}
 
 export default function CreateHabit() {
     const initialValues: IHabit = {
@@ -23,6 +25,8 @@ export default function CreateHabit() {
         habitName: '',
         habitDescription: '',
         startDate: new Date(),
+        aiEnabled: false,
+        duration: '',
     };
 
     const validationSchema = Yup.object({
@@ -42,6 +46,20 @@ export default function CreateHabit() {
             .nullable()
             .required("Start date is required")
             .min(new Date(), "Start date cannot be in the past"),
+        aiEnabled: Yup.boolean(),
+        duration: Yup.string()
+            .when('aiEnabled', {
+                is: false,
+                then: (schema) => schema
+                    .required("Duration is required when AI is disabled")
+                    .matches(/^\d+$/, "Duration must be a number")
+                    .test('range', 'Duration must be between 1 and 365 days', (value) => {
+                        if (!value) return false;
+                        const num = parseInt(value);
+                        return num >= 1 && num <= 365;
+                    }),
+                otherwise: (schema) => schema.notRequired()
+            }),
     });
 
     const handleSubmit = (values: IHabit) => {
@@ -55,7 +73,7 @@ export default function CreateHabit() {
                 initialValues={initialValues}
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
-            >
+                            >
                 {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched, isValid, dirty }) => (
                     <Form>
                         <div className={styles.form}>
@@ -103,7 +121,24 @@ export default function CreateHabit() {
                                 error={touched.startDate ? errors.startDate : ''}
                             />
 
-                            <DurationPicker />
+                            <DurationPicker
+                                aiEnabled={values.aiEnabled}
+                                duration={values.duration}
+                                onAiToggle={() => {
+                                    setFieldValue('aiEnabled', !values.aiEnabled);
+                                    if (!values.aiEnabled) {
+                                        setFieldValue('duration', '');
+                                        setFieldTouched('duration', false);
+                                    }
+                                }}
+                                onDurationChange={(e) => {
+                                    setFieldValue('duration', e.target.value);
+                                }}
+                                onDurationBlur={() => {
+                                    setFieldTouched('duration', true);
+                                }}
+                                error={touched.duration ? errors.duration : ''}
+                            />
                         </div>
 
                         {/* <div className={styles.buttonContainer}>
