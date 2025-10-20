@@ -1,2 +1,7 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}

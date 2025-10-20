@@ -3,6 +3,7 @@ import DurationPicker from '@components/DurationPicker/DurationPicker';
 import EmojiPicker from '@components/EmojiPicker/EmojiPicker';
 import Input from '@components/Input/Input';
 import WeekDatePicker from '@components/WeekDatePicker/WeekDatePicker';
+import HabbitTypePicker from '@components/HabitTypePicker/HabitTypePicker';
 // import Button from '@components/Button/Button';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
@@ -139,6 +140,8 @@ export default function CreateHabit() {
                                 }}
                                 error={touched.duration ? errors.duration : ''}
                             />
+
+                            <HabbitTypePicker />
                         </div>
 
                         {/* <div className={styles.buttonContainer}>
