@@ -3,7 +3,7 @@ import DurationPicker from '@components/DurationPicker/DurationPicker';
 import EmojiPicker from '@components/EmojiPicker/EmojiPicker';
 import Input from '@components/Input/Input';
 import WeekDatePicker from '@components/WeekDatePicker/WeekDatePicker';
-import HabbitTypePicker from '@components/HabitTypePicker/HabitTypePicker';
+import HabitTypePicker from '@components/HabitTypePicker/HabitTypePicker';
 // import Button from '@components/Button/Button';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
@@ -17,6 +17,7 @@ export interface IHabit {
     startDate: Date | undefined;
     aiEnabled: boolean;
     duration: string;
+    habitType: 'build' | 'quit';
 }
 
 export default function CreateHabit() {
@@ -28,6 +29,7 @@ export default function CreateHabit() {
         startDate: new Date(),
         aiEnabled: false,
         duration: '',
+        habitType: 'build',
     };
 
     const validationSchema = Yup.object({
@@ -61,6 +63,9 @@ export default function CreateHabit() {
                     }),
                 otherwise: (schema) => schema.notRequired()
             }),
+        habitType: Yup.string()
+            .oneOf(['build', 'quit'], "Invalid habit type")
+            .required("Habit type is required"),
     });
 
     const handleSubmit = (values: IHabit) => {
@@ -74,7 +79,7 @@ export default function CreateHabit() {
                 initialValues={initialValues}
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
-                            >
+            >
                 {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched, isValid, dirty }) => (
                     <Form>
                         <div className={styles.form}>
@@ -141,7 +146,14 @@ export default function CreateHabit() {
                                 error={touched.duration ? errors.duration : ''}
                             />
 
-                            <HabbitTypePicker />
+                            <HabitTypePicker
+                                value={values.habitType}
+                                onSelect={(type) => {
+                                    setFieldValue('habitType', type);
+                                    setFieldTouched('habitType', true);
+                                }}
+                                error={touched.habitType ? errors.habitType : ''}
+                            />
                         </div>
 
                         {/* <div className={styles.buttonContainer}>
