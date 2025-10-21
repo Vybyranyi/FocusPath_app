@@ -88,7 +88,7 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        res.status(500).json({ message: 'Server error during habit creation' });
+        res.status(400).json({ message: 'Server error during habit creation' });
     }
 };
 
@@ -108,7 +108,7 @@ export const getAllHabits = async (req: AuthRequest, res: Response) => {
         });
     } catch (error) {
         console.error('Get habits error:', error);
-        res.status(500).json({ message: 'Server error while retrieving habits' });
+        res.status(400).json({ message: 'Server error while retrieving habits' });
     }
 };
 
@@ -138,7 +138,7 @@ export const getHabitById = async (req: AuthRequest, res: Response) => {
 
     } catch (error) {
         console.error('Get habit by ID error:', error);
-        res.status(500).json({ message: 'Server error while retrieving habit' });
+        res.status(400).json({ message: 'Server error while retrieving habit' });
     }
 };
 
@@ -204,7 +204,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        res.status(500).json({ message: 'Server error during habit update' });
+        res.status(400).json({ message: 'Server error during habit update' });
     }
 };
 
@@ -282,7 +282,7 @@ export const updateDayTitle = async (req: AuthRequest, res: Response) => {
 
     } catch (error) {
         console.error('Update day title error:', error);
-        res.status(500).json({ message: 'Server error during day title update' });
+        res.status(400).json({ message: 'Server error during day title update' });
     }
 };
 
@@ -312,7 +312,7 @@ export const deleteHabit = async (req: AuthRequest, res: Response) => {
 
     } catch (error) {
         console.error('Delete habit error:', error);
-        res.status(500).json({ message: 'Server error during habit deletion' });
+        res.status(400).json({ message: 'Server error during habit deletion' });
     }
 };
 
@@ -412,6 +412,6 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
 
     } catch (error) {
         console.error('Mark habit completion error:', error);
-        res.status(500).json({ message: 'Server error while marking habit completion' });
+        res.status(400).json({ message: 'Server error while marking habit completion' });
     }
 };
