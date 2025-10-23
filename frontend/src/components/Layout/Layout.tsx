@@ -8,7 +8,7 @@ import { useLocation } from 'react-router';
 export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
 
-  const pagesWithoutAppBar = ['/login', '/register'];
+  const pagesWithoutAppBar = ['/login', '/register', '/createhabit'];
   const shouldHideAppBar = pagesWithoutAppBar.includes(location.pathname);
 
   return (

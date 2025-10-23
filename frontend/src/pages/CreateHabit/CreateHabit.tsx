@@ -4,7 +4,7 @@ import EmojiPicker from '@components/EmojiPicker/EmojiPicker';
 import Input from '@components/Input/Input';
 import WeekDatePicker from '@components/WeekDatePicker/WeekDatePicker';
 import HabitTypePicker from '@components/HabitTypePicker/HabitTypePicker';
-// import Button from '@components/Button/Button';
+import Button from '@components/Button/Button';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
 import * as Yup from "yup";
@@ -156,7 +156,7 @@ export default function CreateHabit() {
                             />
                         </div>
 
-                        {/* <div className={styles.buttonContainer}>
+                        <div className={styles.buttonContainer}>
                             <Button
                                 type="primary"
                                 size="large"
@@ -165,7 +165,8 @@ export default function CreateHabit() {
                             >
                                 Create Habit
                             </Button>
-                        </div> */}
+                            
+                        </div>
                     </Form>
                 )}
             </Formik>
