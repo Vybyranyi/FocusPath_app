@@ -8,13 +8,22 @@ import { useLocation } from 'react-router';
 export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
 
-  const pagesWithoutAppBar = ['/login', '/register', '/createhabit'];
-  const shouldHideAppBar = pagesWithoutAppBar.includes(location.pathname);
+  const pagesWithoutMobileAppBar = ['/login', '/register', '/createhabit'];
+  const pagesWithoutDesktopAppBar = ['/login', '/register'];
+
+  const shouldHideMobileAppBar = pagesWithoutMobileAppBar.some((p) => location.pathname.startsWith(p));
+  const shouldHideDesktopAppBar = pagesWithoutDesktopAppBar.some((p) => location.pathname.startsWith(p));
+
+  const bothAppBarsHidden = shouldHideMobileAppBar && shouldHideDesktopAppBar;
 
   return (
-    <div className={`${styles.appContainer} ${shouldHideAppBar ? styles.noAppBar : ''}`}>
-      {!shouldHideAppBar && <AppBarMobile />}
-      {!shouldHideAppBar && <AppBarDecktop />}
+    <div
+      className={`${styles.appContainer} ${
+        bothAppBarsHidden ? styles.noAppBar : ''
+      }`}
+    >
+      {!shouldHideMobileAppBar && <AppBarMobile />}
+      {!shouldHideDesktopAppBar && <AppBarDecktop />}
       <div className={styles.mainContainer}>
         <ResponsiveHeader />
         <main>{children}</main>
