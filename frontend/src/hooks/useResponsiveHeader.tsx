@@ -64,12 +64,16 @@ export const useResponsiveHeader = () => {
         '/main': {
             mobile: {
                 visible: true,
-                title: "Label",
                 leftButtonIcon: (
                     <IconButton
                         size='large'
-                        icon={arrow_left}
-                        onClick={() => navigate(-1)}
+                        icon={calendar}
+                    />
+                ),
+                rightButtonIcon: (
+                    <IconButton
+                        size='large'
+                        icon={notification}
                     />
                 ),
                 topContent: true,
@@ -102,18 +106,18 @@ export const useResponsiveHeader = () => {
                 leftButtonIcon: (
                     <IconButton
                         size='large'
-                        icon={notification}
+                        icon={calendar}
                     />
                 ),
                 rightButtonIcon: (
                     <IconButton
                         size='large'
-                        icon={calendar}
+                        icon={notification}
                     />
                 ),
                 topContent: true,
                 profile: true,
-                segmentControl: true,                
+                segmentControl: true,
             }
         }
     }), [navigate]);
