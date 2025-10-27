@@ -14,13 +14,14 @@ export default function Switch(props: ISwitch) {
             className={`${styles.toggleSwitch} ${props.toggled ? styles.toggled : ''} ${props.disabled ? styles.disabled : ''}`}
             onClick={props.onClick}
             disabled={props.disabled}
+            type="button"
         >
             <div className={styles.toggleThumb}></div>
         </button>
     )
 };
 
-// import { Field } from "formik";
+// import { Field } from "formik";r
 
 // <Field 
 //   name="acceptTerms"
