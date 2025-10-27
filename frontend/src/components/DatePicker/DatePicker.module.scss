@@ -1,7 +1,9 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
 .datePicker {
-    width: 48px;
+    width: auto;
+    // max-width: 48px;
+    // min-width: 44px;
     height: 64px;
     background-color: var(--Base-White);
     box-sizing: border-box;
