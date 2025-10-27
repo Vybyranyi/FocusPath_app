@@ -83,89 +83,92 @@ export default function CreateHabit() {
                 {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched, isValid, dirty }) => (
                     <Form>
                         <div className={styles.form}>
-                            <ColorPicker
-                                error={touched.color ? errors.color : ''}
-                                value={values.color}
-                                onChange={(value) => handleChange('color')(value)}
-                                onBlur={() => handleBlur('color')}
-                            />
+                            <div className={styles.columnLeft}>
+                                <ColorPicker
+                                    error={touched.color ? errors.color : ''}
+                                    value={values.color}
+                                    onChange={(value) => handleChange('color')(value)}
+                                    onBlur={() => handleBlur('color')}
+                                />
 
-                            <EmojiPicker
-                                error={touched.emoji ? errors.emoji : ''}
-                                value={values.emoji}
-                                onChange={(value) => handleChange('emoji')(value)}
-                                onBlur={() => handleBlur('emoji')}
-                            />
+                                <EmojiPicker
+                                    error={touched.emoji ? errors.emoji : ''}
+                                    value={values.emoji}
+                                    onChange={(value) => handleChange('emoji')(value)}
+                                    onBlur={() => handleBlur('emoji')}
+                                />
 
-                            <Input
-                                label='Habit Name'
-                                placeholder='Enter Habit Name'
-                                type='text'
-                                value={values.habitName}
-                                onChange={handleChange('habitName')}
-                                onBlur={handleBlur('habitName')}
-                                error={touched.habitName ? errors.habitName : ''}
-                            />
+                                <Input
+                                    label='Habit Name'
+                                    placeholder='Enter Habit Name'
+                                    type='text'
+                                    value={values.habitName}
+                                    onChange={handleChange('habitName')}
+                                    onBlur={handleBlur('habitName')}
+                                    error={touched.habitName ? errors.habitName : ''}
+                                />
 
-                            <Input
-                                label='Habit Description'
-                                placeholder='Describe your habit'
-                                type='text'
-                                value={values.habitDescription}
-                                onChange={handleChange('habitDescription')}
-                                onBlur={handleBlur('habitDescription')}
-                                error={touched.habitDescription ? errors.habitDescription : ''}
-                            />
+                                <Input
+                                    label='Habit Description'
+                                    placeholder='Describe your habit'
+                                    type='text'
+                                    value={values.habitDescription}
+                                    onChange={handleChange('habitDescription')}
+                                    onBlur={handleBlur('habitDescription')}
+                                    error={touched.habitDescription ? errors.habitDescription : ''}
+                                />
+                            </div>
 
-                            <WeekDatePicker
-                                label="When you want to start?"
-                                selectedDate={values.startDate}
-                                onDateSelect={(date) => {
-                                    setFieldValue('startDate', date, true);
-                                    setFieldTouched('startDate', true, false);
-                                }}
-                                error={touched.startDate ? errors.startDate : ''}
-                            />
+                            <div className={styles.columnRight}>
+                                <WeekDatePicker
+                                    label="When you want to start?"
+                                    selectedDate={values.startDate}
+                                    onDateSelect={(date) => {
+                                        setFieldValue('startDate', date, true);
+                                        setFieldTouched('startDate', true, false);
+                                    }}
+                                    error={touched.startDate ? errors.startDate : ''}
+                                />
 
-                            <DurationPicker
-                                aiEnabled={values.aiEnabled}
-                                duration={values.duration}
-                                onAiToggle={() => {
-                                    setFieldValue('aiEnabled', !values.aiEnabled);
-                                    if (!values.aiEnabled) {
-                                        setFieldValue('duration', '');
-                                        setFieldTouched('duration', false);
-                                    }
-                                }}
-                                onDurationChange={(e) => {
-                                    setFieldValue('duration', e.target.value);
-                                }}
-                                onDurationBlur={() => {
-                                    setFieldTouched('duration', true);
-                                }}
-                                error={touched.duration ? errors.duration : ''}
-                            />
+                                <DurationPicker
+                                    aiEnabled={values.aiEnabled}
+                                    duration={values.duration}
+                                    onAiToggle={() => {
+                                        setFieldValue('aiEnabled', !values.aiEnabled);
+                                        if (!values.aiEnabled) {
+                                            setFieldValue('duration', '');
+                                            setFieldTouched('duration', false);
+                                        }
+                                    }}
+                                    onDurationChange={(e) => {
+                                        setFieldValue('duration', e.target.value);
+                                    }}
+                                    onDurationBlur={() => {
+                                        setFieldTouched('duration', true);
+                                    }}
+                                    error={touched.duration ? errors.duration : ''}
+                                />
 
-                            <HabitTypePicker
-                                value={values.habitType}
-                                onSelect={(type) => {
-                                    setFieldValue('habitType', type);
-                                    setFieldTouched('habitType', true);
-                                }}
-                                error={touched.habitType ? errors.habitType : ''}
-                            />
-                        </div>
+                                <HabitTypePicker
+                                    value={values.habitType}
+                                    onSelect={(type) => {
+                                        setFieldValue('habitType', type);
+                                        setFieldTouched('habitType', true);
+                                    }}
+                                    error={touched.habitType ? errors.habitType : ''}
+                                />
 
-                        <div className={styles.buttonContainer}>
-                            <Button
-                                type="primary"
-                                size="large"
-                                htmlType="submit"
-                                disabled={!(isValid && dirty)}
-                            >
-                                Create Habit
-                            </Button>
-                            
+                                <div className={styles.buttonContainer}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        htmlType="submit"
+                                        disabled={!(isValid && dirty)}
+                                    >
+                                        Create Habit
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </Form>
                 )}
