@@ -80,7 +80,7 @@ export default function CreateHabit() {
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
             >
-                {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched, isValid, dirty }) => (
+                {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched }) => (
                     <Form>
                         <div className={styles.form}>
                             <div className={styles.columnLeft}>
@@ -163,7 +163,6 @@ export default function CreateHabit() {
                                         type="primary"
                                         size="large"
                                         htmlType="submit"
-                                        disabled={!(isValid && dirty)}
                                     >
                                         Create Habit
                                     </Button>
