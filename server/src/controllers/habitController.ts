@@ -7,7 +7,7 @@ interface AuthRequest extends Request {
     body: {
         title?: string;
         startDate?: string;
-        duration?: number;
+        duration?: number | null;
         type?: 'build' | 'quit';
         color?: string;
         icon?: string;
