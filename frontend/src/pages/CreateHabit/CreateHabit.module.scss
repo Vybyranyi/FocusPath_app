@@ -1,11 +1,16 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
 .createHabitPage {
+    .createHabitTitle {
+        display: none;
+    }
+
     .form {
         display: flex;
         flex-direction: column;
         gap: 16px;
         padding-top: 8px;
+        padding-bottom: 112px;
     }
 
     .columnLeft,
@@ -16,23 +21,30 @@
     }
 
     .buttonContainer {
-        margin-top: 48px;
-        padding-bottom: 12px;
-        display: flex;
-        justify-content: flex-start;
+        position: fixed;
+        bottom: 12px;
+        left: 24px;
+        right: 24px;
     }
 
     @media screen and (min-width: 769px) {
+        .createHabitTitle {
+            display: block;
+        }
+
         .form {
             display: grid;
             grid-template-columns: 1fr 1fr;
             column-gap: 24px;
             align-items: start;
+            padding-top: 16px;
+            padding-bottom: 0;
         }
 
         .buttonContainer {
+            position: static;
             margin-top: 16px;
-            padding-bottom: 0;
+            padding-bottom: 16px;
         }
     }
 }

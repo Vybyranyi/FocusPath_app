@@ -74,7 +74,7 @@ export default function CreateHabit() {
 
     return (
         <div className={`container ${styles.createHabitPage}`}>
-            {/* <h5 className={styles.createHabitTitle}>Create Habit</h5> */}
+            <h5 className={styles.createHabitTitle}>Create Habit</h5>
             <Formik
                 initialValues={initialValues}
                 validationSchema={validationSchema}
