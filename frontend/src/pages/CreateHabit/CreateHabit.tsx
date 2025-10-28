@@ -8,6 +8,9 @@ import Button from '@components/Button/Button';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
 import * as Yup from "yup";
+import { createHabit } from '@store/habitSlice';
+import { useNavigate } from 'react-router';
+import { useAppDispatch, useAppSelector } from "@store/hooks";
 
 export interface IHabit {
     color: string;
@@ -21,6 +24,11 @@ export interface IHabit {
 }
 
 export default function CreateHabit() {
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+
+    const { error, loading } = useAppSelector(state => state.habit);
+
     const initialValues: IHabit = {
         color: '',
         emoji: '',
@@ -69,6 +77,7 @@ export default function CreateHabit() {
     });
 
     const handleSubmit = (values: IHabit) => {
+        dispatch(createHabit(values));
         console.log('Habit data:', values);
     }
 
@@ -167,6 +176,8 @@ export default function CreateHabit() {
                                         Create Habit
                                     </Button>
                                 </div>
+                                {loading && <div className={styles.infoMessage}>Creating habit...</div>}
+                                {error && <div className={styles.errorMessage}>{error}</div>}
                             </div>
                         </div>
                     </Form>
