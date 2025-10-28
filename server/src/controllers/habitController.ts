@@ -9,6 +9,8 @@ interface AuthRequest extends Request {
         startDate?: string;
         duration?: number;
         type?: 'build' | 'quit';
+        color?: string;
+        icon?: string;
         completed?: boolean;
         date?: string;
         dayTitle?: string;
@@ -17,10 +19,10 @@ interface AuthRequest extends Request {
 
 export const createHabit = async (req: AuthRequest, res: Response) => {
     try {
-        const { title, startDate, duration, type } = req.body;
+        const { title, startDate, duration, type, color, icon } = req.body;
         const { userId } = req;
 
-        if (!title || !startDate || !duration || !type || !userId) {
+        if (!title || !startDate || !duration || !type || !userId || !color || !icon) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
@@ -64,6 +66,8 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
             duration,
             type,
             userId,
+            color,
+            icon,
             currentStreak: 0,
             isCompleted: false,
             dailyCompletions
@@ -146,7 +150,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
     try {
         const { userId } = req;
         const { id } = req.params;
-        const { title, startDate, duration, type } = req.body;
+        const { title, startDate, duration, type, color, icon } = req.body;
 
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
@@ -182,6 +186,8 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
         if (title) habit.title = title.trim();
         if (duration) habit.duration = duration;
         if (type) habit.type = type;
+        if (color) habit.color = color;
+        if (icon) habit.icon = icon;
         habit.updatedAt = new Date();
 
         await habit.save();
