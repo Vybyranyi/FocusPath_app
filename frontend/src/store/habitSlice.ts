@@ -71,6 +71,34 @@ export const createHabit = createAsyncThunk(
     }
 );
 
+export const getAllHabits = createAsyncThunk(
+    "habit/getAllHabits",
+    async (_, { getState, rejectWithValue }) => {
+        try {
+            const state = getState() as RootState;
+
+            const res = await fetch(`${API_URL}/habits/`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${state.auth.token}`,
+                },
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                return rejectWithValue(data.message || "Failed to fetch habits");
+            }
+
+            return data;
+        } catch (error) {
+            console.error("Error fetching habits:", error);
+            return rejectWithValue("Network error during habit fetching");
+        }
+    }
+);
+
 const habitSlice = createSlice({
     name: "habit",
     initialState,
@@ -85,6 +113,19 @@ const habitSlice = createSlice({
                 state.habits.push(action.payload);
             })
             .addCase(createHabit.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+        builder
+            .addCase(getAllHabits.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getAllHabits.fulfilled, (state, action) => {
+                state.loading = false;
+                state.habits = action.payload.habits;
+            })
+            .addCase(getAllHabits.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });
