@@ -15,14 +15,34 @@ const API_URL = import.meta.env.VITE_API_URL;
 //     habitType: 'build' | 'quit';
 // }
 
+interface DayInfo {
+    dayTitle: string;
+    date: Date;
+    completed: boolean;
+    _id: string;
+}
+
+export interface habitForDate {
+    _id: string;
+    title: string;
+    type: string;
+    color: string;
+    icon: string;
+    currentStreak: number;
+    isCompleted: boolean;
+    dayInfo: DayInfo;
+}
+
 export interface IHabitSlice {
     habits: IHabit[];
+    habitsForDate: habitForDate[];
     loading: boolean;
     error: string | null;
 };
 
 const initialState: IHabitSlice = {
     habits: [],
+    habitsForDate: [],
     loading: false,
     error: null,
 };
@@ -45,7 +65,6 @@ export const createHabit = createAsyncThunk(
                 type: habitData.habitType,
                 color: habitData.color,
                 icon: habitData.emoji,
-                userID: user,
             };
 
             const res = await fetch(`${API_URL}/habits/`, {
@@ -67,6 +86,34 @@ export const createHabit = createAsyncThunk(
         } catch (error) {
             console.error("Habit creation error:", error);
             return rejectWithValue("Network error during habit creation");
+        }
+    }
+);
+
+export const getHabitsForDate = createAsyncThunk(
+    "habit/getHabitsForDate",
+    async (date: string, { getState, rejectWithValue }) => {
+        try {
+            const state = getState() as RootState;
+
+            const res = await fetch(`${API_URL}/habits/daily`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${state.auth.token}`,
+                },
+                body: JSON.stringify({ date }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                return rejectWithValue(data.message || "Failed to fetch habits for the date");
+            }
+            return data;
+        } catch (error) {
+            console.error("Error fetching habits for date:", error);
+            return rejectWithValue("Network error during fetching habits for date");
         }
     }
 );
@@ -99,6 +146,16 @@ export const getAllHabits = createAsyncThunk(
     }
 );
 
+// export const getHabitById = createAsyncThunk();
+
+// export const updateHabit = createAsyncThunk();
+
+// export const deleteHabit = createAsyncThunk();
+
+// export const updateDayTitle = createAsyncThunk();
+
+// export const markHabitCompletion = createAsyncThunk();
+
 const habitSlice = createSlice({
     name: "habit",
     initialState,
@@ -113,6 +170,19 @@ const habitSlice = createSlice({
                 state.habits.push(action.payload);
             })
             .addCase(createHabit.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+            
+        builder
+            .addCase(getHabitsForDate.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getHabitsForDate.fulfilled, (state, action) => {
+                state.loading = false;
+                state.habitsForDate = action.payload.habits;
+            })
+            .addCase(getHabitsForDate.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });
