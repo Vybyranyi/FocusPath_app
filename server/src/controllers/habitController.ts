@@ -96,6 +96,85 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const getHabitsForDate = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { date } = req.query;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const targetDate = date ? new Date(date as string) : new Date();
+        targetDate.setUTCHours(0, 0, 0, 0);
+
+        const endDate = new Date(targetDate);
+        endDate.setUTCHours(23, 59, 59, 999);
+
+        const habits = await Habit.aggregate([
+            {
+                $match: {
+                    userId: new mongoose.Types.ObjectId(userId as string),
+                    startDate: { $lte: targetDate }
+                }
+            },
+            {
+                $addFields: {
+                    endDate: {
+                        $dateAdd: {
+                            startDate: "$startDate",
+                            unit: "day",
+                            amount: { $subtract: ["$duration", 1] }
+                        }
+                    }
+                }
+            },
+            {
+                $match: {
+                    endDate: { $gte: targetDate }
+                }
+            },
+            {
+                $addFields: {
+                    dayInfo: {
+                        $first: {
+                            $filter: {
+                                input: "$dailyCompletions",
+                                cond: {
+                                    $and: [
+                                        { $gte: ["$$this.date", targetDate] },
+                                        { $lte: ["$$this.date", endDate] }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    title: 1,
+                    type: 1,
+                    color: 1,
+                    icon: 1,
+                    currentStreak: 1,
+                    isCompleted: 1,
+                    dayInfo: 1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            message: 'Habits for date retrieved successfully',
+            date: targetDate,
+            habits
+        });
+    } catch (error) {
+        console.error('Get habits for date error:', error);
+        res.status(500).json({ message: 'Server error while retrieving habits for date' });
+    }
+};
+
 export const getAllHabits = async (req: AuthRequest, res: Response) => {
     try {
         const { userId } = req;
@@ -214,6 +293,36 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const deleteHabit = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { id } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        };
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid habit ID' });
+        };
+
+        const habit = await Habit.findOneAndDelete({ _id: id, userId });
+
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        };
+
+        res.status(200).json({
+            message: 'Habit deleted successfully',
+            habitId: id
+        });
+
+    } catch (error) {
+        console.error('Delete habit error:', error);
+        res.status(400).json({ message: 'Server error during habit deletion' });
+    }
+};
+
 export const updateDayTitle = async (req: AuthRequest, res: Response) => {
     try {
         const { userId } = req;
@@ -289,36 +398,6 @@ export const updateDayTitle = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Update day title error:', error);
         res.status(400).json({ message: 'Server error during day title update' });
-    }
-};
-
-export const deleteHabit = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req;
-        const { id } = req.params;
-
-        if (!userId) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        };
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: 'Invalid habit ID' });
-        };
-
-        const habit = await Habit.findOneAndDelete({ _id: id, userId });
-
-        if (!habit) {
-            return res.status(404).json({ message: 'Habit not found' });
-        };
-
-        res.status(200).json({
-            message: 'Habit deleted successfully',
-            habitId: id
-        });
-
-    } catch (error) {
-        console.error('Delete habit error:', error);
-        res.status(400).json({ message: 'Server error during habit deletion' });
     }
 };
 
@@ -419,84 +498,5 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Mark habit completion error:', error);
         res.status(400).json({ message: 'Server error while marking habit completion' });
-    }
-};
-
-export const getHabitsForDate = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req;
-        const { date } = req.query;
-
-        if (!userId) {
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-
-        const targetDate = date ? new Date(date as string) : new Date();
-        targetDate.setUTCHours(0, 0, 0, 0);
-
-        const endDate = new Date(targetDate);
-        endDate.setUTCHours(23, 59, 59, 999);
-
-        const habits = await Habit.aggregate([
-            {
-                $match: {
-                    userId: new mongoose.Types.ObjectId(userId as string),
-                    startDate: { $lte: targetDate }
-                }
-            },
-            {
-                $addFields: {
-                    endDate: {
-                        $dateAdd: {
-                            startDate: "$startDate",
-                            unit: "day",
-                            amount: { $subtract: ["$duration", 1] }
-                        }
-                    }
-                }
-            },
-            {
-                $match: {
-                    endDate: { $gte: targetDate }
-                }
-            },
-            {
-                $addFields: {
-                    dayInfo: {
-                        $first: {
-                            $filter: {
-                                input: "$dailyCompletions",
-                                cond: {
-                                    $and: [
-                                        { $gte: ["$$this.date", targetDate] },
-                                        { $lte: ["$$this.date", endDate] }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $project: {
-                    title: 1,
-                    type: 1,
-                    color: 1,
-                    icon: 1,
-                    currentStreak: 1,
-                    isCompleted: 1,
-                    dayInfo: 1
-                }
-            }
-        ]);
-
-        res.status(200).json({
-            message: 'Habits for date retrieved successfully',
-            date: targetDate,
-            habits
-        });
-    } catch (error) {
-        console.error('Get habits for date error:', error);
-        res.status(500).json({ message: 'Server error while retrieving habits for date' });
     }
 };
