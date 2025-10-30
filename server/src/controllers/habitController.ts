@@ -421,3 +421,82 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
         res.status(400).json({ message: 'Server error while marking habit completion' });
     }
 };
+
+export const getHabitsForDate = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { date } = req.query;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const targetDate = date ? new Date(date as string) : new Date();
+        targetDate.setUTCHours(0, 0, 0, 0);
+
+        const endDate = new Date(targetDate);
+        endDate.setUTCHours(23, 59, 59, 999);
+
+        const habits = await Habit.aggregate([
+            {
+                $match: {
+                    userId: new mongoose.Types.ObjectId(userId as string),
+                    startDate: { $lte: targetDate }
+                }
+            },
+            {
+                $addFields: {
+                    endDate: {
+                        $dateAdd: {
+                            startDate: "$startDate",
+                            unit: "day",
+                            amount: { $subtract: ["$duration", 1] }
+                        }
+                    }
+                }
+            },
+            {
+                $match: {
+                    endDate: { $gte: targetDate }
+                }
+            },
+            {
+                $addFields: {
+                    dayInfo: {
+                        $first: {
+                            $filter: {
+                                input: "$dailyCompletions",
+                                cond: {
+                                    $and: [
+                                        { $gte: ["$$this.date", targetDate] },
+                                        { $lte: ["$$this.date", endDate] }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    title: 1,
+                    type: 1,
+                    color: 1,
+                    icon: 1,
+                    currentStreak: 1,
+                    isCompleted: 1,
+                    dayInfo: 1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            message: 'Habits for date retrieved successfully',
+            date: targetDate,
+            habits
+        });
+    } catch (error) {
+        console.error('Get habits for date error:', error);
+        res.status(500).json({ message: 'Server error while retrieving habits for date' });
+    }
+};
