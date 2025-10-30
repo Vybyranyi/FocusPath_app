@@ -96,13 +96,15 @@ export const getHabitsForDate = createAsyncThunk(
         try {
             const state = getState() as RootState;
 
-            const res = await fetch(`${API_URL}/habits/daily`, {
+            const formattedDate = new Date(date).toISOString().split('T')[0];
+            const url = `${API_URL}/habits/daily?date=${formattedDate}`;
+
+            const res = await fetch(url, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${state.auth.token}`,
                 },
-                body: JSON.stringify({ date }),
             });
 
             const data = await res.json();
@@ -164,6 +166,7 @@ const habitSlice = createSlice({
         builder
             .addCase(createHabit.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(createHabit.fulfilled, (state, action) => {
                 state.loading = false;
@@ -177,10 +180,11 @@ const habitSlice = createSlice({
         builder
             .addCase(getHabitsForDate.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(getHabitsForDate.fulfilled, (state, action) => {
                 state.loading = false;
-                state.habitsForDate = action.payload.habits;
+                state.habitsForDate = action.payload.habits || [];
             })
             .addCase(getHabitsForDate.rejected, (state, action) => {
                 state.loading = false;
@@ -190,10 +194,11 @@ const habitSlice = createSlice({
         builder
             .addCase(getAllHabits.pending, (state) => {
                 state.loading = true;
+                state.error = null;
             })
             .addCase(getAllHabits.fulfilled, (state, action) => {
                 state.loading = false;
-                state.habits = action.payload.habits;
+                state.habits = action.payload.habits || [];
             })
             .addCase(getAllHabits.rejected, (state, action) => {
                 state.loading = false;
