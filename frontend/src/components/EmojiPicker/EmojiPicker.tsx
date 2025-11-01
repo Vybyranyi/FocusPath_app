@@ -10,13 +10,13 @@ export interface IEmojiOption {
 }
 
 const defaultEmojiOptions: IEmojiOption[] = [
-  { label: 'Running', value: 'runner', emoji: 'person running' },
-  { label: 'Gym', value: 'weightlifter', emoji: 'person lifting weights' },
-  { label: 'Meditation', value: 'lotus', emoji: 'person in lotus position' },
+  { label: 'Running', value: 'person running', emoji: 'person running' },
+  { label: 'Gym', value: 'person lifting weights', emoji: 'person lifting weights' },
+  { label: 'Meditation', value: 'person in lotus position', emoji: 'person in lotus position' },
   { label: 'Biking', value: 'bicycle', emoji: 'bicycle' },
   { label: 'Walking', value: 'footprints', emoji: 'footprints' },
   { label: 'Basketball', value: 'basketball', emoji: 'basketball' },
-  { label: 'Soccer', value: 'soccer', emoji: 'soccer ball' },
+  { label: 'Soccer', value: 'soccer ball', emoji: 'soccer ball' },
 
   { label: 'Writing', value: 'pencil', emoji: 'pencil' },
   { label: 'Studying', value: 'notebook', emoji: 'notebook' },
@@ -24,24 +24,24 @@ const defaultEmojiOptions: IEmojiOption[] = [
   { label: 'Reading', value: 'books', emoji: 'books' },
 
   { label: 'Cooking', value: 'cooking', emoji: 'cooking' },
-  { label: 'Coffee', value: 'coffee', emoji: 'hot beverage' },
+  { label: 'Coffee', value: 'hot beverage', emoji: 'hot beverage' },
   { label: 'Vegetables', value: 'broccoli', emoji: 'broccoli' },
   { label: 'Fruit', value: 'banana', emoji: 'banana' },
 
   { label: 'Sleeping', value: 'bed', emoji: 'bed' },
-  { label: 'Relaxing', value: 'spa', emoji: 'person getting massage' },
+  { label: 'Relaxing', value: 'person getting massage', emoji: 'person getting massage' },
 
-  { label: 'Shopping', value: 'shopping', emoji: 'shopping bags' },
-  { label: 'Money', value: 'money', emoji: 'money bag' },
+  { label: 'Shopping', value: 'shopping bags', emoji: 'shopping bags' },
+  { label: 'Money', value: 'money bag', emoji: 'money bag' },
 
   { label: 'Cleaning', value: 'broom', emoji: 'broom' },
-  { label: 'Plant Care', value: 'plant', emoji: 'seedling' },
+  { label: 'Plant Care', value: 'seedling', emoji: 'seedling' },
 
-  { label: 'Dog', value: 'dog', emoji: 'dog face' },
-  { label: 'Cat', value: 'cat', emoji: 'cat face' },
+  { label: 'Dog', value: 'dog face', emoji: 'dog face' },
+  { label: 'Cat', value: 'cat face', emoji: 'cat face' },
 
-  { label: 'Travel', value: 'world', emoji: 'globe showing americas' },
-  { label: 'Map', value: 'map', emoji: 'world map' },
+  { label: 'Travel', value: 'globe showing americas', emoji: 'globe showing americas' },
+  { label: 'Map', value: 'world map', emoji: 'world map' },
 
   { label: 'Water Drop', value: 'droplet', emoji: 'droplet' },
   { label: 'Fire', value: 'fire', emoji: 'fire' },
