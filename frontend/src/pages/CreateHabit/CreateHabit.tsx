@@ -56,7 +56,14 @@ export default function CreateHabit() {
         startDate: Yup.date()
             .nullable()
             .required("Start date is required")
-            .min(new Date(), "Start date cannot be in the past"),
+            .test('not-past', 'Start date cannot be in the past', (value) => {
+                if (!value) return false;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const selectedDate = new Date(value);
+                selectedDate.setHours(0, 0, 0, 0);
+                return selectedDate >= today;
+            }),
         aiEnabled: Yup.boolean(),
         duration: Yup.string()
             .when('aiEnabled', {
@@ -76,9 +83,18 @@ export default function CreateHabit() {
             .required("Habit type is required"),
     });
 
-    const handleSubmit = (values: IHabit) => {
-        dispatch(createHabit(values));
-        console.log('Habit data:', values);
+    const handleSubmit = async (values: IHabit) => {
+        try {
+            if (values.aiEnabled) {
+                // await dispatch(createHabitByAI(values)).unwrap();
+                console.log('AI Habit Creation is not implemented yet.');
+            } else {
+                await dispatch(createHabit(values)).unwrap();
+            }
+            navigate('/main');
+        } catch (err) {
+            console.error('Failed to create habit:', err);
+        }
     }
 
     return (
@@ -172,8 +188,9 @@ export default function CreateHabit() {
                                         type="primary"
                                         size="large"
                                         htmlType="submit"
+                                        disabled={loading}
                                     >
-                                        Create Habit
+                                        {loading ? 'Creating...' : 'Create Habit'}
                                     </Button>
                                 </div>
                                 {loading && <div className={styles.infoMessage}>Creating habit...</div>}
