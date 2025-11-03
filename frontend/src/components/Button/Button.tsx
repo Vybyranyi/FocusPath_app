@@ -1,7 +1,7 @@
 import styles from '@components/Button/Button.module.scss'
 
 export interface IButtonProps {
-    type: "primary" | "secondary" | "outline";
+    type: "primary" | "secondary" | "outline" | "ai";
     disabled?: boolean;
     size: "small" | "medium" | "large";
     htmlType?: "button" | "submit" | "reset";

@@ -188,10 +188,21 @@ export default function CreateHabit() {
                                         type="primary"
                                         size="large"
                                         htmlType="submit"
+                                        disabled={loading || values.aiEnabled}
+                                    >
+                                        {loading ? 'Creating...' : 'Create'}
+                                    </Button>
+
+                                    <Button
+                                        type="ai"
+                                        size="large"
+                                        htmlType="submit"
                                         disabled={loading}
                                     >
-                                        {loading ? 'Creating...' : 'Create Habit'}
+                                        {loading ? 'Creating...' : 'Create by AI'}
                                     </Button>
+
+
                                 </div>
                                 {loading && <div className={styles.infoMessage}>Creating habit...</div>}
                                 {error && <div className={styles.errorMessage}>{error}</div>}
