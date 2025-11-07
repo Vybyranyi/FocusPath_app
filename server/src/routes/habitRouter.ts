@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { 
     createHabit, 
+    createAIHabit,
     getAllHabits, 
     getHabitById, 
     updateHabit, 
@@ -13,8 +14,11 @@ import { verifyTokenMiddleware } from '@middlewares/auth';
 
 const router = Router();
 
-// Створення звички
+// Створення звички вручну
 router.post('/', verifyTokenMiddleware, createHabit);
+
+// Створення звички через AI
+router.post('/ai', verifyTokenMiddleware, createAIHabit);
 
 // Отримання звичок на конкретну дату (основний ендпоінт для щоденного відображення)
 router.get('/daily', verifyTokenMiddleware, getHabitsForDate);
