@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { 
     createHabit, 
-    createAIHabit,
     getAllHabits, 
     getHabitById, 
     updateHabit, 
@@ -10,6 +9,7 @@ import {
     markHabitCompletion,
     getHabitsForDate,
 } from '@controllers/habitController';
+import { createAIHabit } from '@controllers/aiHabitController';
 import { verifyTokenMiddleware } from '@middlewares/auth';
 
 const router = Router();
