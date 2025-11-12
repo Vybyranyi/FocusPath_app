@@ -30,7 +30,8 @@
       "@components/*": ["components/*"],
       "@pages/*": ["pages/*"],
       "@store/*": ["store/*"],
-      "@hooks/*": ["hooks/*"]
+      "@hooks/*": ["hooks/*"],
+      "@animation/*": ["animation/*"],
     }
   },
   "include": ["src"]

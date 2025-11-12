@@ -8,9 +8,11 @@ import Button from '@components/Button/Button';
 import styles from '@pages/CreateHabit/CreateHabit.module.scss';
 import { Form, Formik } from 'formik';
 import * as Yup from "yup";
-import { createHabit } from '@store/habitSlice';
+import { createHabit, createAIHabit } from '@store/habitSlice';
 import { useNavigate } from 'react-router';
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { useState } from 'react';
+import AILoadingAnimation from '@animation/AILoadingAnimation';
 
 export interface IHabit {
     color: string;
@@ -26,6 +28,7 @@ export interface IHabit {
 export default function CreateHabit() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const [isAICreating, setIsAICreating] = useState(false);
 
     const { error, loading } = useAppSelector(state => state.habit);
 
@@ -86,131 +89,138 @@ export default function CreateHabit() {
     const handleSubmit = async (values: IHabit) => {
         try {
             if (values.aiEnabled) {
-                // await dispatch(createHabitByAI(values)).unwrap();
-                console.log('AI Habit Creation is not implemented yet.');
+                setIsAICreating(true);
+                await dispatch(createAIHabit(values)).unwrap();
             } else {
                 await dispatch(createHabit(values)).unwrap();
             }
             navigate('/main');
         } catch (err) {
             console.error('Failed to create habit:', err);
+        } finally {
+            setIsAICreating(false);
         }
     }
 
     return (
-        <div className={`container ${styles.createHabitPage}`}>
-            <h5 className={styles.createHabitTitle}>Create Habit</h5>
-            <Formik
-                initialValues={initialValues}
-                validationSchema={validationSchema}
-                onSubmit={handleSubmit}
-            >
-                {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched }) => (
-                    <Form>
-                        <div className={styles.form}>
-                            <div className={styles.columnLeft}>
-                                <ColorPicker
-                                    error={touched.color ? errors.color : ''}
-                                    value={values.color}
-                                    onChange={(value) => handleChange('color')(value)}
-                                    onBlur={() => handleBlur('color')}
-                                />
+        <>
+            {isAICreating && <AILoadingAnimation />}
 
-                                <EmojiPicker
-                                    error={touched.emoji ? errors.emoji : ''}
-                                    value={values.emoji}
-                                    onChange={(value) => handleChange('emoji')(value)}
-                                    onBlur={() => handleBlur('emoji')}
-                                />
+            <div className={`container ${styles.createHabitPage}`}>
+                <h5 className={styles.createHabitTitle}>Create Habit</h5>
+                <Formik
+                    initialValues={initialValues}
+                    validationSchema={validationSchema}
+                    onSubmit={handleSubmit}
+                >
+                    {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched }) => (
+                        <Form>
+                            <div className={styles.form}>
+                                <div className={styles.columnLeft}>
+                                    <ColorPicker
+                                        error={touched.color ? errors.color : ''}
+                                        value={values.color}
+                                        onChange={(value) => handleChange('color')(value)}
+                                        onBlur={() => handleBlur('color')}
+                                    />
 
-                                <Input
-                                    label='Habit Name'
-                                    placeholder='Enter Habit Name'
-                                    type='text'
-                                    value={values.habitName}
-                                    onChange={handleChange('habitName')}
-                                    onBlur={handleBlur('habitName')}
-                                    error={touched.habitName ? errors.habitName : ''}
-                                />
+                                    <EmojiPicker
+                                        error={touched.emoji ? errors.emoji : ''}
+                                        value={values.emoji}
+                                        onChange={(value) => handleChange('emoji')(value)}
+                                        onBlur={() => handleBlur('emoji')}
+                                    />
 
-                                <Input
-                                    label='Habit Description'
-                                    placeholder='Describe your habit'
-                                    type='text'
-                                    value={values.habitDescription}
-                                    onChange={handleChange('habitDescription')}
-                                    onBlur={handleBlur('habitDescription')}
-                                    error={touched.habitDescription ? errors.habitDescription : ''}
-                                />
-                            </div>
+                                    <Input
+                                        label='Habit Name'
+                                        placeholder='Enter Habit Name'
+                                        type='text'
+                                        value={values.habitName}
+                                        onChange={handleChange('habitName')}
+                                        onBlur={handleBlur('habitName')}
+                                        error={touched.habitName ? errors.habitName : ''}
+                                    />
 
-                            <div className={styles.columnRight}>
-                                <WeekDatePicker
-                                    label="When you want to start?"
-                                    selectedDate={values.startDate}
-                                    onDateSelect={(date) => {
-                                        setFieldValue('startDate', date, true);
-                                        setFieldTouched('startDate', true, false);
-                                    }}
-                                    error={touched.startDate ? errors.startDate : ''}
-                                />
-
-                                <DurationPicker
-                                    aiEnabled={values.aiEnabled}
-                                    duration={values.duration}
-                                    onAiToggle={() => {
-                                        setFieldValue('aiEnabled', !values.aiEnabled);
-                                        if (!values.aiEnabled) {
-                                            setFieldValue('duration', '');
-                                            setFieldTouched('duration', false);
-                                        }
-                                    }}
-                                    onDurationChange={(e) => {
-                                        setFieldValue('duration', e.target.value);
-                                    }}
-                                    onDurationBlur={() => {
-                                        setFieldTouched('duration', true);
-                                    }}
-                                    error={touched.duration ? errors.duration : ''}
-                                />
-
-                                <HabitTypePicker
-                                    value={values.habitType}
-                                    onSelect={(type) => {
-                                        setFieldValue('habitType', type);
-                                        setFieldTouched('habitType', true);
-                                    }}
-                                    error={touched.habitType ? errors.habitType : ''}
-                                />
-
-                                <div className={styles.buttonContainer}>
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        htmlType="submit"
-                                        disabled={loading || values.aiEnabled}
-                                    >
-                                        {loading ? 'Creating...' : 'Create'}
-                                    </Button>
-
-                                    <Button
-                                        type="ai"
-                                        size="large"
-                                        htmlType="submit"
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Creating...' : 'Create by AI'}
-                                    </Button>
-
-
+                                    <Input
+                                        label='Habit Description'
+                                        placeholder='Describe your habit'
+                                        type='text'
+                                        value={values.habitDescription}
+                                        onChange={handleChange('habitDescription')}
+                                        onBlur={handleBlur('habitDescription')}
+                                        error={touched.habitDescription ? errors.habitDescription : ''}
+                                    />
                                 </div>
-                                {loading && <div className={styles.infoMessage}>Creating habit...</div>}
-                                {error && <div className={styles.errorMessage}>{error}</div>}
+
+                                <div className={styles.columnRight}>
+                                    <WeekDatePicker
+                                        label="When you want to start?"
+                                        selectedDate={values.startDate}
+                                        onDateSelect={(date) => {
+                                            setFieldValue('startDate', date, true);
+                                            setFieldTouched('startDate', true, false);
+                                        }}
+                                        error={touched.startDate ? errors.startDate : ''}
+                                    />
+
+                                    <DurationPicker
+                                        aiEnabled={values.aiEnabled}
+                                        duration={values.duration}
+                                        onAiToggle={() => {
+                                            setFieldValue('aiEnabled', !values.aiEnabled);
+                                            if (!values.aiEnabled) {
+                                                setFieldValue('duration', '');
+                                                setFieldTouched('duration', false);
+                                            }
+                                        }}
+                                        onDurationChange={(e) => {
+                                            setFieldValue('duration', e.target.value);
+                                        }}
+                                        onDurationBlur={() => {
+                                            setFieldTouched('duration', true);
+                                        }}
+                                        error={touched.duration ? errors.duration : ''}
+                                    />
+
+                                    <HabitTypePicker
+                                        value={values.habitType}
+                                        onSelect={(type) => {
+                                            setFieldValue('habitType', type);
+                                            setFieldTouched('habitType', true);
+                                        }}
+                                        error={touched.habitType ? errors.habitType : ''}
+                                    />
+
+                                    <div className={styles.buttonContainer}>
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            htmlType="submit"
+                                            disabled={loading || values.aiEnabled}
+                                            onClick={() => setFieldValue('aiEnabled', false)}
+                                        >
+                                            {loading && !values.aiEnabled ? 'Creating...' : 'Create'}
+                                        </Button>
+
+                                        <Button
+                                            type="ai"
+                                            size="large"
+                                            htmlType="submit"
+                                            disabled={loading}
+                                            onClick={() => setFieldValue('aiEnabled', true)}
+                                        >
+                                            {loading && values.aiEnabled ? 'Creating...' : 'Create by AI'}
+                                        </Button>
+                                    </div>
+
+                                    {loading && <div className={styles.infoMessage}>Creating habit...</div>}
+                                    {error && <div className={styles.errorMessage}>{error}</div>}
+                                </div>
                             </div>
-                        </div>
-                    </Form>
-                )}
-            </Formik>
-        </div>
-    )
+                        </Form>
+                    )}
+                </Formik>
+            </div>
+        </>
+    );
 }
