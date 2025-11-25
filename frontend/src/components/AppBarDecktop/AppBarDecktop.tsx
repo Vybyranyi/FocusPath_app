@@ -28,6 +28,7 @@ export default function AppBarDecktop() {
                         type='outline'
                         size='medium'
                         icon={home}
+                        onClick={() => navigate('/main')}
                     >
                         Home
                     </Button>

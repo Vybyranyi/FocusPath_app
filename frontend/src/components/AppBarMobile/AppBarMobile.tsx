@@ -16,7 +16,7 @@ export default function AppBarMobile() {
     return (
         isMobile && (
             <menu className={styles.mobileAppBar}>
-                <MenuButton icon='home' active onClick={unavailablePage}/>
+                <MenuButton icon='home' active onClick={() => navigate('/main')}/>
                 <MenuButton icon='explore' onClick={unavailablePage}/>
                 <button
                     className={styles.addButton}
