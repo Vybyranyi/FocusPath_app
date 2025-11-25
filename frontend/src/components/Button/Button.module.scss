@@ -29,12 +29,11 @@
         }
 
         &:disabled {
-            background-color: var(--Primary-Blue);
-            opacity: 0.5;
+            background-color: var(--Primary-Blue-60);
             cursor: not-allowed;
 
             span {
-                color: var(--Primary-Black-40);
+                color: var(--Primary-Black-20);
             }
         }
     }
