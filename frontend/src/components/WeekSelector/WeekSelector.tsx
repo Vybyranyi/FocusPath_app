@@ -1,21 +1,21 @@
 import styles from '@components/WeekSelector/WeekSelector.module.scss';
-import { useState } from 'react';
-import { format, startOfWeek, endOfWeek, addWeeks, differenceInCalendarWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, differenceInCalendarWeeks } from "date-fns";
 import IconButton from '@components/IconButton/IconButton';
 import arrow_left from '@assets/images/icons/arrow-left.svg';
 import arrow_right from '@assets/images/icons/arrow-right.svg';
+import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { nextWeek, prevWeek } from '@store/calendarSlice';
 
 export default function WeekSelector() {
-    const today = new Date();
-    const [currentWeek, setCurrentWeek] = useState(today);
+    const dispatch = useAppDispatch();
+    const { currentWeekStart } = useAppSelector(state => state.calendar);
+    const currentWeek = new Date(currentWeekStart);
 
     const start = startOfWeek(currentWeek, { weekStartsOn: 1 });
     const end = endOfWeek(currentWeek, { weekStartsOn: 1 });
     const formattedRange = `${format(start, "MMM d")} - ${format(end, "MMM d")}`;
 
-    const goPrevWeek = () => setCurrentWeek(addWeeks(currentWeek, -1));
-    const goNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
-
+    const today = new Date();
     const diff = differenceInCalendarWeeks(currentWeek, today, { weekStartsOn: 1 });
 
     let label = "This week";
@@ -34,12 +34,12 @@ export default function WeekSelector() {
                 <IconButton
                     size='medium'
                     icon={arrow_left}
-                    onClick={goPrevWeek}
+                    onClick={() => dispatch(prevWeek())}
                 />
                 <IconButton
                     size='medium'
                     icon={arrow_right}
-                    onClick={goNextWeek}
+                    onClick={() => dispatch(nextWeek())}
                 />
             </div>
         </div>

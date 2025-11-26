@@ -3,50 +3,86 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getHabitsForDate } from "@store/habitSlice";
 import HabitCard from "@components/HabitCard/HabitCard";
 import styles from "./Main.module.scss";
+import DatePicker from "@components/DatePicker/DatePicker";
 
 export default function Main() {
     const dispatch = useAppDispatch();
     const { habitsForDate, loading, error } = useAppSelector(state => state.habit);
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const { currentWeekStart } = useAppSelector(state => state.calendar);
+    const [dates, setDates] = useState<Date[]>([]);
+    const [selectedDate, setSelectedDate] = useState(new Date()); // Keep selectedDate for fetching habits
 
     useEffect(() => {
         dispatch(getHabitsForDate(selectedDate.toISOString()));
     }, [dispatch, selectedDate]);
 
-    if (loading) {
-        return (
-            <div className={`container ${styles.mainPage}`}>
-                <p className="body-bold">Loading habits...</p>
-            </div>
-        );
-    }
+    useEffect(() => {
+        const start = new Date(currentWeekStart);
+        const tempDates = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + i);
+            tempDates.push(date);
+        }
+        setDates(tempDates);
+    }, [currentWeekStart]);
 
-    if (error) {
-        return (
-            <div className={`container ${styles.mainPage}`}>
-                <p className="body-bold" style={{ color: 'var(--Primary-Red-error)' }}>
-                    Error: {error}
-                </p>
-            </div>
-        );
-    }
+    const isSameDay = (d1: Date, d2: Date) => {
+        return d1.getDate() === d2.getDate() &&
+            d1.getMonth() === d2.getMonth() &&
+            d1.getFullYear() === d2.getFullYear();
+    };
+
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <div className={styles.emptyState}>
+                    <p className="body-bold">Loading habits...</p>
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className={styles.emptyState}>
+                    <p className={`body-bold ${styles.errorMessage}`}>
+                        Error: {error}
+                    </p>
+                </div>
+            );
+        }
+
+        if (habitsForDate.length === 0) {
+            return (
+                <div className={styles.emptyState}>
+                    <p className="body-bold">No habits for this day</p>
+                    <p className="alternative">Create your first habit to get started!</p>
+                </div>
+            );
+        }
+
+        return habitsForDate.map((habit) => (
+            <HabitCard
+                key={habit._id}
+                habit={habit}
+            />
+        ));
+    };
 
     return (
         <div className={`container ${styles.mainPage}`}>
             <div className={styles.habitsContainer}>
-                {habitsForDate.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <p className="body-bold">No habits for this day</p>
-                        <p className="alternative">Create your first habit to get started!</p>
-                    </div>
-                ) : (
-                    habitsForDate.map((habit) => (
-                        <HabitCard 
-                            key={habit._id}
-                            habit={habit}
+                <div className={styles.dateSelector}>
+                    {dates.map((date, index) => (
+                        <DatePicker
+                            key={index}
+                            date={date}
+                            active={isSameDay(date, selectedDate)}
+                            onClick={() => setSelectedDate(date)}
                         />
-                    ))
-                )}
+                    ))}
+                </div>
+                {renderContent()}
             </div>
         </div>
     );

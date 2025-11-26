@@ -86,7 +86,7 @@ export const useResponsiveHeader = () => {
                 topContent: true,
                 profile: true,
                 segmentControl: true,
-                // showWeekController: true,
+                showWeekController: true,
             }
         },
         '/createhabit': {
