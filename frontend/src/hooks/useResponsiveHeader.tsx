@@ -79,6 +79,7 @@ export const useResponsiveHeader = () => {
                 topContent: true,
                 profile: true,
                 segmentControl: true,
+                showWeekController: true,
             },
             desktop: {
                 visible: true,

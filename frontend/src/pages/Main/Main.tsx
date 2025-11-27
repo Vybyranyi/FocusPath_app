@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getHabitsForDate } from "@store/habitSlice";
+import { nextWeek, prevWeek } from "@store/calendarSlice";
+import { useSwipeable } from "react-swipeable";
 import HabitCard from "@components/HabitCard/HabitCard";
 import styles from "./Main.module.scss";
 import DatePicker from "@components/DatePicker/DatePicker";
@@ -11,6 +13,12 @@ export default function Main() {
     const { currentWeekStart } = useAppSelector(state => state.calendar);
     const [dates, setDates] = useState<Date[]>([]);
     const [selectedDate, setSelectedDate] = useState(new Date()); // Keep selectedDate for fetching habits
+
+    const swipeHandlers = useSwipeable({
+        onSwipedLeft: () => dispatch(nextWeek()),
+        onSwipedRight: () => dispatch(prevWeek()),
+        trackMouse: true
+    });
 
     useEffect(() => {
         dispatch(getHabitsForDate(selectedDate.toISOString()));
@@ -72,7 +80,7 @@ export default function Main() {
     return (
         <div className={`container ${styles.mainPage}`}>
             <div className={styles.habitsContainer}>
-                <div className={styles.dateSelector}>
+                <div className={styles.dateSelector} {...swipeHandlers}>
                     {dates.map((date, index) => (
                         <DatePicker
                             key={index}
