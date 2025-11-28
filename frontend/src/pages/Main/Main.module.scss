@@ -26,5 +26,18 @@
         .errorMessage {
             color: var(--Primary-Red-error);
         }
+
+        .habitsContainer {
+            display: grid;
+            grid-template-columns: auto;
+            column-gap: 24px;
+            row-gap: 12px;
+        }
+
+        @media (min-width: 1024px) {
+            .habitsContainer {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     }
 }

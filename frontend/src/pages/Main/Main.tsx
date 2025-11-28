@@ -69,12 +69,16 @@ export default function Main() {
             );
         }
 
-        return habitsForDate.map((habit) => (
-            <HabitCard
-                key={habit._id}
-                habit={habit}
-            />
-        ));
+        return (
+            <div className={styles.habitsContainer}>
+                {habitsForDate.map((habit) => (
+                    <HabitCard
+                        key={habit._id}
+                        habit={habit}
+                    />
+                ))}
+            </div>
+        );
     };
 
     return (
