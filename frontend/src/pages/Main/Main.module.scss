@@ -1,6 +1,7 @@
 @use '@assets/styles/colorVariables.scss' as *;
 
 .mainPage {
+    overflow: hidden;
 
     .habitsContainer {
         display: flex;

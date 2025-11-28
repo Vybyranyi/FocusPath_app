@@ -2,7 +2,7 @@ import styles from "@pages/RegisterPage/RegisterPage.module.scss";
 import IconButton from "@components/IconButton/IconButton";
 import Input from "@components/Input/Input";
 import Button from "@components/Button/Button";
-import Header from "@components/Header/Header";
+
 import arrow_left from "@assets/images/icons/arrow-left.svg";
 import { useNavigate } from "react-router";
 import Select from "@components/Select/Select";
@@ -71,21 +71,21 @@ export default function RegisterPage() {
     });
 
     const handleSubmit = async (values: IinitialValues) => {
-                        if (step === 1) {
-                            setStep(2);
-                        } else {
-                            dispatch(
-                                registerUser({
-                                    name: values.name,
-                                    surname: values.surname,
-                                    birthday: new Date(values.birthdate),
-                                    gender: values.gender as "male" | "female",
-                                    email: values.email,
-                                    password: values.password,
-                                })
-                            );
-                        }
-                    }
+        if (step === 1) {
+            setStep(2);
+        } else {
+            dispatch(
+                registerUser({
+                    name: values.name,
+                    surname: values.surname,
+                    birthday: new Date(values.birthdate),
+                    gender: values.gender as "male" | "female",
+                    email: values.email,
+                    password: values.password,
+                })
+            );
+        }
+    }
     return (
         <div className={styles.RegisterPage}>
             {/* <div className={styles.headerContainer}>

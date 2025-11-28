@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getHabitsForDate } from "@store/habitSlice";
 import { nextWeek, prevWeek } from "@store/calendarSlice";
@@ -11,20 +12,25 @@ export default function Main() {
     const dispatch = useAppDispatch();
     const { habitsForDate, loading, error } = useAppSelector(state => state.habit);
     const { currentWeekStart } = useAppSelector(state => state.calendar);
-    const [dates, setDates] = useState<Date[]>([]);
-    const [selectedDate, setSelectedDate] = useState(new Date()); // Keep selectedDate for fetching habits
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [direction, setDirection] = useState(0);
+    const prevWeekStart = useRef(currentWeekStart);
 
-    const swipeHandlers = useSwipeable({
-        onSwipedLeft: () => dispatch(nextWeek()),
-        onSwipedRight: () => dispatch(prevWeek()),
-        trackMouse: true
-    });
+    // Derive calendar direction
+    let calendarDirection = 0;
+    if (currentWeekStart > prevWeekStart.current) {
+        calendarDirection = 1;
+    } else if (currentWeekStart < prevWeekStart.current) {
+        calendarDirection = -1;
+    }
 
+    // Update ref after render
     useEffect(() => {
-        dispatch(getHabitsForDate(selectedDate.toISOString()));
-    }, [dispatch, selectedDate]);
+        prevWeekStart.current = currentWeekStart;
+    }, [currentWeekStart]);
 
-    useEffect(() => {
+    // Derive dates
+    const dates = useMemo(() => {
         const start = new Date(currentWeekStart);
         const tempDates = [];
         for (let i = 0; i < 7; i++) {
@@ -32,8 +38,46 @@ export default function Main() {
             date.setDate(start.getDate() + i);
             tempDates.push(date);
         }
-        setDates(tempDates);
+        return tempDates;
     }, [currentWeekStart]);
+
+    const swipeHandlers = useSwipeable({
+        onSwipedLeft: () => {
+            dispatch(nextWeek());
+        },
+        onSwipedRight: () => {
+            dispatch(prevWeek());
+        },
+        trackMouse: true
+    });
+
+    const variants: Variants = {
+        enter: (direction: number) => ({
+            x: direction > 0 ? 50 : -50,
+            opacity: 0
+        }),
+        center: {
+            zIndex: 1,
+            x: 0,
+            opacity: 1
+        },
+        exit: (direction: number) => ({
+            zIndex: 0,
+            x: direction < 0 ? 50 : -50,
+            opacity: 0
+        })
+    };
+
+    const handleDateClick = (date: Date) => {
+        setDirection(date > selectedDate ? 1 : -1);
+        setSelectedDate(date);
+    };
+
+    useEffect(() => {
+        dispatch(getHabitsForDate(selectedDate.toISOString()));
+    }, [dispatch, selectedDate]);
+
+
 
     const isSameDay = (d1: Date, d2: Date) => {
         return d1.getDate() === d2.getDate() &&
@@ -70,31 +114,61 @@ export default function Main() {
         }
 
         return (
-            <div className={styles.habitsContainer}>
+            <motion.div
+                key={selectedDate.toISOString()}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                    x: { type: "spring", stiffness: 300, damping: 30 },
+                    opacity: { duration: 0.2 }
+                }}
+                className={styles.habitsContainer}
+            >
                 {habitsForDate.map((habit) => (
                     <HabitCard
                         key={habit._id}
                         habit={habit}
                     />
                 ))}
-            </div>
+            </motion.div>
         );
     };
 
     return (
         <div className={`container ${styles.mainPage}`}>
             <div className={styles.habitsContainer}>
-                <div className={styles.dateSelector} {...swipeHandlers}>
-                    {dates.map((date, index) => (
-                        <DatePicker
-                            key={index}
-                            date={date}
-                            active={isSameDay(date, selectedDate)}
-                            onClick={() => setSelectedDate(date)}
-                        />
-                    ))}
+                <div className={styles.dateSelectorWrapper} {...swipeHandlers}>
+                    <AnimatePresence mode="wait" custom={calendarDirection}>
+                        <motion.div
+                            key={currentWeekStart}
+                            custom={calendarDirection}
+                            variants={variants}
+                            initial="enter"
+                            animate="center"
+                            exit="exit"
+                            transition={{
+                                x: { type: "spring", stiffness: 300, damping: 30 },
+                                opacity: { duration: 0.2 }
+                            }}
+                            className={styles.dateSelector}
+                        >
+                            {dates.map((date, index) => (
+                                <DatePicker
+                                    key={index}
+                                    date={date}
+                                    active={isSameDay(date, selectedDate)}
+                                    onClick={() => handleDateClick(date)}
+                                />
+                            ))}
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
-                {renderContent()}
+                <AnimatePresence mode="wait" custom={direction}>
+                    {renderContent()}
+                </AnimatePresence>
             </div>
         </div>
     );
