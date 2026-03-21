@@ -4,6 +4,7 @@ export interface IDatePicker {
   date: Date | string | number;
   active?: boolean;
   error?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }
 
@@ -13,6 +14,7 @@ export default function DatePicker({
   date,
   active,
   error,
+  disabled,
   onClick,
 }: IDatePicker) {
   const parsed = new Date(date);
@@ -23,15 +25,16 @@ export default function DatePicker({
 
   return (
     <div
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       className={cn(
         "flex flex-col items-center justify-center h-16 rounded-2xl cursor-pointer",
         "bg-base-white transition-all duration-150",
         active && "active",
+        disabled && "opacity-40 cursor-not-allowed pointer-events-none",
         active
           ? isActiveError
-            ? "border-2 border-error **:text-error"
-            : "border-2 border-primary-blue **:text-primary-blue"
+            ? "ring-2 ring-inset ring-error **:text-error"
+            : "ring-2 ring-inset ring-primary-blue **:text-primary-blue"
           : "border border-primary-black-10",
       )}
     >

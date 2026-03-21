@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
-import DatePicker from "@components/DatePicker/DatePicker";
 import { cn } from "@/lib/utils";
+import arrow_left from "@assets/images/icons/arrow-left.svg";
+import arrow_right from "@assets/images/icons/arrow-right.svg";
+import DatePicker from "@components/DatePicker/DatePicker";
+import { useMemo, useState } from "react";
 
 export interface IWeekDatePickerProps {
   label: string;
@@ -13,7 +15,9 @@ export interface IWeekDatePickerProps {
 function getWeekStart(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
+  // Monday as first day
   d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
+  d.setHours(0, 0, 0, 0);
   return d;
 }
 
@@ -54,10 +58,18 @@ export default function WeekDatePicker({
   error,
 }: IWeekDatePickerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  // viewDate tracks which month is shown in the expanded grid
+  const [viewDate, setViewDate] = useState(new Date(startDate ?? new Date()));
+  // currentWeekStart tracks which week is shown in the collapsed row
+  const [currentWeekStart, setCurrentWeekStart] = useState(
+    getWeekStart(new Date(startDate ?? new Date())),
+  );
 
-  const weekStart = getWeekStart(startDate ?? new Date());
-  const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
-  const monthDates = useMemo(() => getMonthDates(weekStart), [weekStart]);
+  const weekDates = useMemo(
+    () => getWeekDates(currentWeekStart),
+    [currentWeekStart],
+  );
+  const monthDates = useMemo(() => getMonthDates(viewDate), [viewDate]);
 
   const selectedStr = selectedDate
     ? new Date(selectedDate).toDateString()
@@ -68,7 +80,41 @@ export default function WeekDatePicker({
     monthWeeks.push(monthDates.slice(i, i + 7));
   }
 
-  const currentMonth = weekStart.toLocaleString("default", { month: "long" });
+  const currentMonth = viewDate.toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const handlePrevMonth = () => {
+    const d = new Date(viewDate);
+    d.setMonth(d.getMonth() - 1);
+    setViewDate(d);
+  };
+
+  const handleNextMonth = () => {
+    const d = new Date(viewDate);
+    d.setMonth(d.getMonth() + 1);
+    setViewDate(d);
+  };
+
+  const handlePrevWeek = () => {
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() - 7);
+    setCurrentWeekStart(d);
+  };
+
+  const handleNextWeek = () => {
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() + 7);
+    setCurrentWeekStart(d);
+  };
+
+  const handleDateSelectInternal = (date: Date) => {
+    onDateSelect(date);
+    // When a date is selected, make sure both views follow it
+    setCurrentWeekStart(getWeekStart(date));
+    setViewDate(new Date(date));
+  };
 
   const datesRowClass = cn(
     "flex gap-2 w-full items-center",
@@ -82,22 +128,41 @@ export default function WeekDatePicker({
       <p className="chip mb-1">{label}</p>
 
       {!isExpanded && (
-        <div className={datesRowClass}>
-          {weekDates.map((date, i) => (
-            <DatePicker
-              key={i}
-              date={date}
-              active={selectedStr === date.toDateString()}
-              error={!!error}
-              onClick={() => onDateSelect(date)}
-            />
-          ))}
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={handlePrevWeek} className="p-1">
+            <img src={arrow_left} alt="Previous week" className="w-5 h-5" />
+          </button>
+          <div className={datesRowClass}>
+            {weekDates.map((date, i) => (
+              <DatePicker
+                key={i}
+                date={date}
+                active={selectedStr === date.toDateString()}
+                error={!!error}
+                onClick={() => handleDateSelectInternal(date)}
+              />
+            ))}
+          </div>
+          <button type="button" onClick={handleNextWeek} className="p-1">
+            <img src={arrow_right} alt="Next week" className="w-5 h-5" />
+          </button>
         </div>
       )}
 
       {isExpanded && (
         <div className="flex flex-col gap-2">
-          <p className="body-bold text-center mb-2">{currentMonth}</p>
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <button type="button" onClick={handlePrevMonth} className="p-1">
+              <img src={arrow_left} alt="Previous month" className="w-5 h-5" />
+            </button>
+            <p className="body-bold min-w-[120px] text-center">
+              {currentMonth}
+            </p>
+            <button type="button" onClick={handleNextMonth} className="p-1">
+              <img src={arrow_right} alt="Next month" className="w-5 h-5" />
+            </button>
+          </div>
+
           {monthWeeks.map((week, wi) => (
             <div key={wi} className={datesRowClass}>
               {week.map((date, di) => (
@@ -106,7 +171,8 @@ export default function WeekDatePicker({
                   date={date}
                   active={selectedStr === date.toDateString()}
                   error={!!error}
-                  onClick={() => onDateSelect(date)}
+                  disabled={date.getMonth() !== viewDate.getMonth()}
+                  onClick={() => handleDateSelectInternal(date)}
                 />
               ))}
             </div>
@@ -116,7 +182,13 @@ export default function WeekDatePicker({
 
       <button
         type="button"
-        onClick={() => setIsExpanded((v) => !v)}
+        onClick={() => {
+          setIsExpanded((v) => !v);
+          if (!isExpanded) {
+            // Sync month view to either the selected date or current week when opening
+            setViewDate(new Date(selectedDate ?? currentWeekStart));
+          }
+        }}
         className="alternative text-center mt-4 cursor-pointer text-primary-black-60 hover:text-primary-blue transition-colors"
       >
         {isExpanded ? "Show less" : "Show more"}
