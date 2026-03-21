@@ -1,6 +1,6 @@
-import AppBarDecktop from "@components/AppBarDecktop/AppBarDecktop";
-import AppBarMobile from "@components/AppBarMobile/AppBarMobile";
-import ResponsiveHeader from "@components/Header/ResponsiveHeader";
+import AppBarDecktop from "@components/layout/AppBarDecktop";
+import AppBarMobile from "@components/layout/AppBarMobile";
+import ResponsiveHeader from "@components/layout/ResponsiveHeader";
 import type { ReactNode } from "react";
 import { useLocation } from "react-router";
 import { cn } from "@/lib/utils";

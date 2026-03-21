@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useMediaQuery } from 'react-responsive';
-import IconButton from '@components/IconButton/IconButton';
+import IconButton from '@components/ui/IconButton';
 import arrow_left from '@assets/images/icons/arrow-left.svg';
 import notification from '@assets/images/icons/notification.svg';
 import calendar from '@assets/images/icons/calendar.svg';
