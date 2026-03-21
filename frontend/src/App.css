@@ -1,11 +1,1 @@
-.container {
-    margin: 0 24px;
-}
-
-* {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-}
+/* All global styles moved to index.css — this file is intentionally empty */

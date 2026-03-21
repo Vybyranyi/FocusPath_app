@@ -1,30 +1,32 @@
-import AppBarDecktop from '@components/AppBarDecktop/AppBarDecktop';
-import AppBarMobile from '@components/AppBarMobile/AppBarMobile';
-import ResponsiveHeader from '@components/Header/ResponsiveHeader';
-import type { ReactNode } from 'react';
-import styles from '@components/Layout/Layout.module.scss';
-import { useLocation } from 'react-router';
+import AppBarDecktop from "@components/AppBarDecktop/AppBarDecktop";
+import AppBarMobile from "@components/AppBarMobile/AppBarMobile";
+import ResponsiveHeader from "@components/Header/ResponsiveHeader";
+import type { ReactNode } from "react";
+import { useLocation } from "react-router";
+import { cn } from "@/lib/utils";
 
 export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
 
-  const pagesWithoutMobileAppBar = ['/login', '/register', '/createhabit'];
-  const pagesWithoutDesktopAppBar = ['/login', '/register'];
-
-  const shouldHideMobileAppBar = pagesWithoutMobileAppBar.some((p) => location.pathname.startsWith(p));
-  const shouldHideDesktopAppBar = pagesWithoutDesktopAppBar.some((p) => location.pathname.startsWith(p));
-
-  const bothAppBarsHidden = shouldHideMobileAppBar && shouldHideDesktopAppBar;
+  const hideMobileBar = ["/login", "/register", "/createhabit"].some((p) =>
+    location.pathname.startsWith(p),
+  );
+  const hideDesktopBar = ["/login", "/register"].some((p) =>
+    location.pathname.startsWith(p),
+  );
+  const bothHidden = hideMobileBar && hideDesktopBar;
 
   return (
     <div
-      className={`${styles.appContainer} ${
-        bothAppBarsHidden ? styles.noAppBar : ''
-      }`}
+      className={cn(
+        "min-h-screen w-full bg-base-bg",
+        !bothHidden && "md:grid md:grid-cols-[minmax(160px,240px)_1fr]",
+      )}
     >
-      {!shouldHideMobileAppBar && <AppBarMobile />}
-      {!shouldHideDesktopAppBar && <AppBarDecktop />}
-      <div className={styles.mainContainer}>
+      {!hideMobileBar && <AppBarMobile />}
+      {!hideDesktopBar && <AppBarDecktop />}
+
+      <div className="w-full max-w-full box-border">
         <ResponsiveHeader />
         <main>{children}</main>
       </div>

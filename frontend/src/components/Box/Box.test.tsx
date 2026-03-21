@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import Box from './Box';
-import styles from './Box.module.scss';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-apple-emojis', () => ({
@@ -11,7 +10,7 @@ describe('Box component', () => {
   const defaultProps = {
     emoji: 'rocket',
     title: 'Test Title',
-    text: 'Test text',
+    text:  'Test text',
     color: 'blue' as const,
   };
 
@@ -22,9 +21,9 @@ describe('Box component', () => {
     expect(screen.getByTestId('emoji')).toBeInTheDocument();
   });
 
-  it('applies correct color class', () => {
+  it('applies correct color class for blue', () => {
     const { container } = render(<Box {...defaultProps} />);
-    expect(container.firstChild).toHaveClass(styles.blue);
+    expect(container.firstChild).toHaveClass('bg-primary-blue-20');
   });
 
   it('calls onClick when clicked', () => {
@@ -34,15 +33,14 @@ describe('Box component', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('applies gradient styles correctly', () => {
-    const { container } = render(
-      <Box {...defaultProps} color="gradient" />
-    );
-    expect(container.firstChild).toHaveClass(styles.gradient);
+  it('applies gradient class for gradient color', () => {
+    const { container } = render(<Box {...defaultProps} color="gradient" />);
+    expect(container.firstChild).toHaveClass('bg-blue-gradient');
+  });
 
-    const title = screen.getByText('Test Title');
-    const text = screen.getByText('Test text');
-    expect(title).toHaveClass(styles.title);
-    expect(text).toHaveClass(styles.text);
+  it('applies white text on gradient variant', () => {
+    render(<Box {...defaultProps} color="gradient" />);
+    expect(screen.getByText('Test Title')).toHaveClass('text-base-white');
+    expect(screen.getByText('Test text')).toHaveClass('text-base-white');
   });
 });

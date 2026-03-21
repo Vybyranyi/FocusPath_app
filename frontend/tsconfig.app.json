@@ -26,12 +26,13 @@
     /* Path aliases - ADDED HERE */
     "baseUrl": "./src",
     "paths": {
-      "@assets/*": ["assets/*"],
+      "@assets/*":     ["assets/*"],
       "@components/*": ["components/*"],
-      "@pages/*": ["pages/*"],
-      "@store/*": ["store/*"],
-      "@hooks/*": ["hooks/*"],
-      "@animation/*": ["animation/*"],
+      "@pages/*":      ["pages/*"],
+      "@store/*":      ["store/*"],
+      "@hooks/*":      ["hooks/*"],
+      "@animation/*":  ["animation/*"],
+      "@/*":           ["./*"]
     }
   },
   "include": ["src"]

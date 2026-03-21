@@ -1,26 +1,44 @@
-import styles from '@components/DatePicker/DatePicker.module.scss';
+import { cn } from "@/lib/utils";
 
 export interface IDatePicker {
-    date: Date | string | number;
-    active?: boolean;
-    error?: boolean
-    onClick?: () => void;
-};
+  date: Date | string | number;
+  active?: boolean;
+  error?: boolean;
+  onClick?: () => void;
+}
 
 const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-export default function DatePicker(props: IDatePicker) {
-    const parsedDate = new Date(props.date);
-    const day = parsedDate.getDate();
-    const weekday = weekdays[parsedDate.getDay()];
+export default function DatePicker({
+  date,
+  active,
+  error,
+  onClick,
+}: IDatePicker) {
+  const parsed = new Date(date);
+  const day = parsed.getDate();
+  const weekday = weekdays[parsed.getDay()];
 
-    return (
-        <div
-            className={`${styles.datePicker} ${props.active ? styles.active : ""} ${props.error ? styles.error : ""}`}
-            onClick={props.onClick}
-        >
-            <h6 className={styles.day}>{day}</h6>
-            <div className={`chip ${styles.weekday}`}>{weekday}</div>
-        </div>
-    )
+  const isActiveError = active && error;
+
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center justify-center h-16 rounded-2xl cursor-pointer",
+        "bg-base-white transition-all duration-150",
+        active && "active",
+        active
+          ? isActiveError
+            ? "border-2 border-error **:text-error"
+            : "border-2 border-primary-blue **:text-primary-blue"
+          : "border border-primary-black-10",
+      )}
+    >
+      <h6>{day}</h6>
+      <span className={cn("chip", !active && "text-primary-black-40")}>
+        {weekday}
+      </span>
+    </div>
+  );
 }

@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+/* ─── Fonts ─────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/fonts/Montserrat-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Design Tokens ──────────────────────────────────────────────── */
+@theme {
+  --font-sans: 'Montserrat', sans-serif;
+
+  /* Base */
+  --color-base-white: #ffffff;
+  --color-base-black: #000000;
+  --color-base-bg:    #F6F9FF;
+
+  /* Primary Black */
+  --color-primary-black:    #040415;
+  --color-primary-black-80: #363644;
+  --color-primary-black-60: #686873;
+  --color-primary-black-40: #9B9BA1;
+  --color-primary-black-20: #CDCDD0;
+  --color-primary-black-10: #EAECF0;
+
+  /* Primary Blue */
+  --color-primary-blue:    #3843FF;
+  --color-primary-blue-80: #6069FF;
+  --color-primary-blue-60: #888EFF;
+  --color-primary-blue-40: #AFB4FF;
+  --color-primary-blue-20: #D7D9FF;
+  --color-primary-blue-10: #EBECFF;
+
+  /* Blue Info */
+  --color-blue-info:    #12A4ED;
+  --color-blue-info-80: #34B1F0;
+  --color-blue-info-60: #56BEF2;
+  --color-blue-info-40: #78CBF5;
+  --color-blue-info-20: #BBE5FA;
+  --color-blue-info-10: #DDF2FC;
+
+  /* Status */
+  --color-error:      #E3524F;
+  --color-error-20:   #F7CECD;
+  --color-success:    #3BA935;
+  --color-success-20: #C3EBC0;
+  --color-warning:    #FEA800;
+  --color-warning-10: #FFF3DA;
+  --color-warning-20: #FFE6B6;
+
+  /* Secondary */
+  --color-s-orange:    #F15223;
+  --color-s-orange-20: #FCDCD3;
+  --color-s-purple:    #8A24FF;
+  --color-s-purple-60: #B97CFF;
+  --color-s-purple-20: #E8D3FF;
+  --color-s-pink:      #FF7D7D;
+  --color-s-pink-60:   #FFB1B1;
+  --color-s-teal:      #2D9E64;
+  --color-s-teal-20:   #D5ECE0;
+  --color-s-yellow-20: #FFF4CC;
+  --color-s-darkblue:    #878EA8;
+  --color-s-darkblue-10: #F3F4F6;
+  --color-s-darkblue-20: #E7E8EE;
+
+  /* Shadows */
+  --shadow-box:    58px 26px 68px 0 rgba(35, 44, 93, 0.06);
+  --shadow-medium: 0px 12px 24px 0 rgba(35, 44, 93, 0.06);
+  --shadow-small:  0px 3px 6px 0 rgba(11, 43, 81, 0.2);
+
+  /* Animations */
+  --animate-ai-gradient: aiGradientShift 4s ease infinite;
+  --animate-spin-app:    spinApp 1s linear infinite;
+}
+
+/* ─── Keyframes ──────────────────────────────────────────────────── */
+@keyframes aiGradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes spinApp {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ─── Base ───────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    color: #040415;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  body { background-color: #F6F9FF; }
+
+  button { background: none; border: none; cursor: pointer; }
+
+  input, select, textarea { font-family: inherit; }
+
+  h1 { font-size: 48px; font-weight: 700; line-height: 56px; }
+  h2 { font-size: 40px; font-weight: 700; line-height: 48px; }
+  h3 { font-size: 36px; font-weight: 700; line-height: 40px; }
+  h4 { font-size: 32px; font-weight: 700; line-height: 40px; }
+  h5 { font-size: 24px; font-weight: 700; line-height: 32px; }
+  h6 { font-size: 20px; font-weight: 500; line-height: 24px; }
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────── */
+@layer utilities {
+  /* Typography scale — kept as global classes used throughout JSX */
+  .title       { font-size: 18px; font-weight: 500; line-height: 24px; }
+  .body-light  { font-size: 14px; font-weight: 400; line-height: 20px; }
+  .body-bold   { font-size: 14px; font-weight: 500; line-height: 20px; }
+  .alternative { font-size: 12px; font-weight: 300; line-height: 16px; }
+  .chip        { font-size: 10px; font-weight: 700; line-height: 16px; text-transform: uppercase; }
+
+  /* Layout */
+  .container { width: 100%; padding-left: 24px; padding-right: 24px; margin-left: auto; margin-right: auto; max-width: none; }
+
+  /* Gradient fills */
+  .bg-blue-gradient {
+    background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+  }
+
+  /* AI animated gradient button */
+  .btn-ai {
+    background: linear-gradient(135deg, #888EFF 0%, #56BEF2 35%, #B97CFF 70%, #FFB1B1 100%);
+    background-size: 200% 200%;
+    animation: aiGradientShift 4s ease infinite;
+    box-shadow: 0 0 12px rgba(56, 67, 255, 0.35), 0 0 24px rgba(138, 36, 255, 0.25);
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      background-position: 100% 0;
+      box-shadow: 0 0 20px rgba(56, 67, 255, 0.6), 0 0 30px rgba(138, 36, 255, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      background: linear-gradient(135deg, #D7D9FF 0%, #BBE5FA 50%, #E8D3FF 100%);
+      animation: none;
+      box-shadow: none;
+    }
+  }
+
+  /* Inset ring helpers — cleaner than long arbitrary shadow strings */
+  .ring-card        { box-shadow: inset 0 0 0 1px #EAECF0; }
+  .ring-card-hover  { box-shadow: inset 0 0 0 1px #3843FF; }
+  .ring-card-focus  { box-shadow: inset 0 0 0 2px #3843FF; }
+  .ring-input       { box-shadow: inset 0 -1px 0 #CDCDD0; }
+  .ring-input-focus { box-shadow: inset 0 -2px 0 #3BA935; }
+  .ring-input-error { box-shadow: inset 0 -2px 0 #E3524F; }
+}

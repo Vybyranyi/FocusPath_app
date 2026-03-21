@@ -28,7 +28,7 @@ describe('CircleLoader component', () => {
   it('renders tick icon when percentages is 100 and no emoji', () => {
     render(<CircleLoader percentages={100} />);
 
-    const tickIcon = screen.getByRole('img', { name: 'tick' });
+    const tickIcon = screen.getByRole('img', { name: 'done' });
     expect(tickIcon).toBeInTheDocument();
     expect(tickIcon).toHaveAttribute('src', 'tick.svg');
   });
@@ -54,7 +54,7 @@ describe('CircleLoader component', () => {
 
     expect(screen.getByText('%37')).toBeInTheDocument();
     expect(screen.queryByTestId('emoji')).not.toBeInTheDocument();
-    expect(screen.queryByRole('img', { name: 'tick' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'done' })).not.toBeInTheDocument();
   });
 
   it('handles edge case percentages correctly', () => {
@@ -62,7 +62,7 @@ describe('CircleLoader component', () => {
     expect(screen.getByText('%0')).toBeInTheDocument();
 
     rerender(<CircleLoader percentages={100} />);
-    expect(screen.getByRole('img', { name: 'tick' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'done' })).toBeInTheDocument();
 
     rerender(<CircleLoader percentages={1} />);
     expect(screen.getByText('%1')).toBeInTheDocument();

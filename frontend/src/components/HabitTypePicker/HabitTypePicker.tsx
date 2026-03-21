@@ -1,31 +1,26 @@
 import SegmentControl from '@components/SegmentControl/SegmentControl';
-import styles from './HabitTypePicker.module.scss';
 
 export interface IHabitTypePickerProps {
-    value?: 'build' | 'quit';
-    onSelect: (type: 'build' | 'quit') => void;
-    error?: string;
+  value?: 'build' | 'quit';
+  onSelect: (type: 'build' | 'quit') => void;
+  error?: string;
 }
 
-export default function HabitTypePicker(props: IHabitTypePickerProps) {
-    const segments = [
-        { id: 'build', label: 'Build' },
-        { id: 'quit', label: 'Quit' },
-    ];
+const segments = [
+  { id: 'build', label: 'Build' },
+  { id: 'quit',  label: 'Quit' },
+];
 
-    return (
-        <div className={styles.wrapper}>
-            <p className={`chip ${styles.label}`}>Habit type</p>
-            <SegmentControl
-                segments={segments}
-                defaultSelectedId={props.value || 'build'}
-                onSelect={(id) => props.onSelect(id as 'build' | 'quit')}
-            />
-            {props.error && (
-                <div className={styles.errorPopup}>
-                    <span className="alternative">{props.error}</span>
-                </div>
-            )}
-        </div>
-    )
+export default function HabitTypePicker({ value, onSelect, error }: IHabitTypePickerProps) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="chip mb-1">Habit type</p>
+      <SegmentControl
+        segments={segments}
+        defaultSelectedId={value ?? 'build'}
+        onSelect={id => onSelect(id as 'build' | 'quit')}
+      />
+      {error && <p className="alternative text-error">{error}</p>}
+    </div>
+  );
 }

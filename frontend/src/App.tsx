@@ -1,6 +1,4 @@
-import '@assets/styles/resetStyles.scss';
-import '@assets/styles/typography.scss';
-import './App.css';
+// Global styles are in src/index.css
 import { verifyToken } from '@store/authSlice';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
 import { useEffect, useState, Suspense } from 'react';
