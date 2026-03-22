@@ -159,7 +159,16 @@ export const getHabitsForDate = async (req: AuthRequest, res: Response) => {
                     icon: 1,
                     currentStreak: 1,
                     isCompleted: 1,
-                    dayInfo: 1
+                    dayInfo: 1,
+                    duration: 1,
+                    completedCount: {
+                        $size: {
+                            $filter: {
+                                input: "$dailyCompletions",
+                                cond: "$$this.completed"
+                            }
+                        }
+                    }
                 }
             }
         ]);
