@@ -30,6 +30,8 @@ export interface habitForDate {
   icon: string;
   currentStreak: number;
   isCompleted: boolean;
+  duration: number;
+  completedCount: number;
   dayInfo: DayInfo;
 }
 
@@ -197,15 +199,35 @@ export const getAllHabits = createAsyncThunk(
   },
 );
 
-// export const getHabitById = createAsyncThunk();
-
-// export const updateHabit = createAsyncThunk();
-
-// export const deleteHabit = createAsyncThunk();
-
-// export const updateDayTitle = createAsyncThunk();
-
-// export const markHabitCompletion = createAsyncThunk();
+export const markHabitCompletion = createAsyncThunk(
+  "habit/markHabitCompletion",
+  async (
+    { habitId, date, completed }: { habitId: string; date: Date | string; completed: boolean },
+    { getState, rejectWithValue },
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const res = await fetch(`${API_URL}/habits/${habitId}/complete`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${state.auth.token}`,
+        },
+        body: JSON.stringify({
+          date: new Date(date).toISOString(),
+          completed,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return rejectWithValue(data.message || "Failed to update habit completion");
+      }
+      return { habitId, completed, updatedHabit: data.habit || data };
+    } catch (error) {
+      return rejectWithValue("Network error during habit completion update");
+    }
+  },
+);
 
 const habitSlice = createSlice({
   name: "habit",
@@ -267,6 +289,22 @@ const habitSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+
+    builder.addCase(markHabitCompletion.fulfilled, (state, action) => {
+      const { habitId, completed, updatedHabit } = action.payload;
+      const habit = state.habitsForDate.find((h) => h._id === habitId);
+      if (habit) {
+        const wasCompleted = habit.dayInfo.completed;
+        habit.dayInfo.completed = completed;
+        if (updatedHabit) {
+          habit.currentStreak  = updatedHabit.currentStreak;
+          habit.isCompleted    = updatedHabit.isCompleted;
+        }
+        // Update completedCount locally based on the change
+        if (completed && !wasCompleted) habit.completedCount += 1;
+        if (!completed && wasCompleted) habit.completedCount  = Math.max(0, habit.completedCount - 1);
+      }
+    });
   },
 });
 

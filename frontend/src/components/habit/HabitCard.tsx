@@ -1,84 +1,147 @@
 import CircleLoader from '@components/habit/CircleLoader';
-import IconButton   from '@components/ui/IconButton';
 import tick_success from '@assets/images/icons/tick_success.svg';
-import eye_blue     from '@assets/images/icons/eye_blue.svg';
 import cross_red    from '@assets/images/icons/cross_red.svg';
-import arrow_right  from '@assets/images/icons/arrow-right.svg';
 import { useSwipeable } from 'react-swipeable';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { habitForDate } from '@store/habitSlice';
-import { motion } from 'framer-motion';
+import { markHabitCompletion } from '@store/habitSlice';
+import { useAppDispatch } from '@store/hooks';
+import { motion, AnimatePresence } from 'framer-motion';
+import HabitDetailPopup from '@components/habit/HabitDetailPopup';
 
 interface IHabitCardProps {
   habit: habitForDate;
 }
 
-const actionPanelBase = [
-  'absolute top-0 bottom-0 z-10 flex gap-3 items-center px-4',
-  'bg-base-white ring-card rounded-2xl w-max',
-].join(' ');
+type Status = 'idle' | 'done' | 'failed';
+
+function getDateOnly(d: Date | string) {
+  const date = new Date(d);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
 
 export default function HabitCard({ habit }: IHabitCardProps) {
-  const [offset, setOffset] = useState(0);
-  const progress = habit.isCompleted ? 100 : Math.floor((habit.currentStreak / 21) * 100);
+  const dispatch   = useAppDispatch();
+  const [showDetail, setShowDetail] = useState(false);
+  const [swipeDelta, setSwipeDelta] = useState(0);
+  const wasSwipedRef = useRef(false);
+
+  const today     = getDateOnly(new Date());
+  const habitDate = getDateOnly(habit.dayInfo.date);
+  const isFuture  = habitDate > today;
+  const isPast    = habitDate < today;
+
+  const getInitialStatus = (): Status => {
+    if (habit.dayInfo.completed) return 'done';
+    if (isPast) return 'failed';
+    return 'idle';
+  };
+
+  const [status, setStatus] = useState<Status>(getInitialStatus);
+
+  // Sync status when Redux updates the habit
+  useEffect(() => {
+    if (habit.dayInfo.completed) {
+      setStatus('done');
+    } else if (isPast) {
+      setStatus('failed');
+    }
+    // For today + completed=false: preserve local 'failed' state set by user
+  }, [habit.dayInfo.completed, habit.dayInfo.date, isPast]);
+
+  // Circle: completed tasks out of total duration
+  const progress = habit.duration > 0
+    ? Math.min(100, Math.floor((habit.completedCount / habit.duration) * 100))
+    : 0;
+
+  const handleComplete = (completed: boolean) => {
+    dispatch(markHabitCompletion({
+      habitId: habit._id,
+      date: habit.dayInfo.date,
+      completed,
+    }));
+    setStatus(completed ? 'done' : 'failed');
+  };
 
   const handlers = useSwipeable({
-    onSwiping: e => setOffset(Math.min(Math.max(e.deltaX, -129), 129)),
-    onSwiped:  () => {
-      if (offset > 80)       setOffset(129);
-      else if (offset < -80) setOffset(-129);
-      else                   setOffset(0);
+    onSwiping: e => {
+      if (isFuture) return;
+      setSwipeDelta(e.deltaX);
+      if (Math.abs(e.deltaX) > 10) wasSwipedRef.current = true;
     },
-    trackMouse: true,
+    onSwiped: e => {
+      if (!isFuture) {
+        if (e.deltaX > 80)       handleComplete(true);
+        else if (e.deltaX < -80) handleComplete(false);
+      }
+      setSwipeDelta(0);
+      setTimeout(() => { wasSwipedRef.current = false; }, 300);
+    },
+    trackMouse: false,
   });
 
+  const handleClick = () => {
+    if (wasSwipedRef.current) return;
+    setShowDetail(true);
+  };
+
+  const ringStyle: React.CSSProperties =
+    status === 'done'   ? { boxShadow: 'inset 0 0 0 1.5px #3BA935' } :
+    status === 'failed' ? { boxShadow: 'inset 0 0 0 1.5px #E3524F' } :
+    { boxShadow: 'inset 0 0 0 1px #EAECF0' };
+
+  const swipeBgClass =
+    swipeDelta > 30  ? 'bg-success-20' :
+    swipeDelta < -30 ? 'bg-error-20'   :
+    '';
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Left action panel */}
-      <div className={`${actionPanelBase} left-0`}>
-        <ActionButton icon={eye_blue}    label="View" />
-        <Separator />
-        <ActionButton icon={tick_success} label="Done" />
-      </div>
-
-      {/* Right action panel */}
-      <div className={`${actionPanelBase} right-0`}>
-        <ActionButton icon={cross_red}  label="Fail" />
-        <Separator />
-        <ActionButton icon={arrow_right} label="Skip" />
-      </div>
-
-      {/* Swipeable card */}
-      <motion.div
-        {...handlers}
-        animate={{ x: offset }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="relative z-20 flex items-center justify-between p-4 bg-base-white ring-card rounded-2xl"
-      >
-        <div className="flex items-center gap-3">
-          <CircleLoader percentages={progress} emoji={habit.icon} isWhite />
-          <div>
-            <p className="body-bold">{habit.title}</p>
-            <p className="alternative text-primary-black-40">
-              {habit.dayInfo.dayTitle || `Day ${habit.currentStreak}`}
-            </p>
+    <>
+      <div className={`relative overflow-hidden rounded-2xl transition-colors duration-150 ${swipeBgClass}`}>
+        <motion.div
+          {...handlers}
+          animate={{ x: isFuture ? 0 : Math.min(Math.max(swipeDelta * 0.2, -24), 24) }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          style={ringStyle}
+          className={`relative z-20 flex items-center justify-between p-4 rounded-2xl cursor-pointer bg-base-white ${isFuture ? 'opacity-50' : ''}`}
+          onClick={handleClick}
+        >
+          <div className="flex items-center gap-3">
+            <CircleLoader percentages={progress} emoji={habit.icon} isWhite />
+            <div>
+              <p className="body-bold">{habit.title}</p>
+              <p className="alternative text-primary-black-40">
+                {habit.dayInfo.dayTitle || `Day ${habit.currentStreak}`}
+              </p>
+            </div>
           </div>
-        </div>
-        <IconButton size="small" icon={tick_success} />
-      </motion.div>
-    </div>
-  );
-}
 
-function ActionButton({ icon, label }: { icon: string; label: string }) {
-  return (
-    <button className="flex flex-col items-center w-8">
-      <img src={icon} alt={label} className="w-5 h-5" />
-      <p className="alternative text-primary-black-40">{label}</p>
-    </button>
-  );
-}
+          {/* Desktop: Done / Fail buttons (hidden on mobile, hidden for future habits) */}
+          {!isFuture && (
+            <div className="hidden lg:flex items-center gap-1 shrink-0">
+              <button
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-success-20 transition-colors"
+                onClick={e => { e.stopPropagation(); handleComplete(true); }}
+              >
+                <img src={tick_success} className="w-4 h-4" alt="Done" />
+              </button>
+              <button
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-error-20 transition-colors"
+                onClick={e => { e.stopPropagation(); handleComplete(false); }}
+              >
+                <img src={cross_red} className="w-4 h-4" alt="Fail" />
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </div>
 
-function Separator() {
-  return <span className="w-px h-8 bg-primary-black-10 block" />;
+      <AnimatePresence>
+        {showDetail && (
+          <HabitDetailPopup habit={habit} onClose={() => setShowDetail(false)} />
+        )}
+      </AnimatePresence>
+    </>
+  );
 }

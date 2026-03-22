@@ -9,8 +9,9 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getHabitsForDate } from "@store/habitSlice";
 import { nextWeek, prevWeek } from "@store/calendarSlice";
 import { useSwipeable } from "react-swipeable";
-import HabitCard from "@components/habit/HabitCard";
-import DatePicker from "@components/pickers/DatePicker";
+import HabitCard      from "@components/habit/HabitCard";
+import DatePicker     from "@components/pickers/DatePicker";
+import ProgressBanner from "@components/habit/ProgressBanner";
 
 const slideVariants: Variants = {
   enter: (dir: number) => ({ x: dir > 0 ? 50 : -50, opacity: 0 }),
@@ -112,11 +113,14 @@ export default function Main() {
         animate="center"
         exit="exit"
         transition={springTransition}
-        className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-x-6"
+        className="flex flex-col gap-3"
       >
-        {habitsForDate.map((habit) => (
-          <HabitCard key={habit._id} habit={habit} />
-        ))}
+        <ProgressBanner />
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-x-6">
+          {habitsForDate.map((habit) => (
+            <HabitCard key={habit._id} habit={habit} />
+          ))}
+        </div>
       </motion.div>
     );
   };
