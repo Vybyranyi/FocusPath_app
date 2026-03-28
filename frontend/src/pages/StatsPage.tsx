@@ -1,16 +1,12 @@
+import type { FullHabit } from "@components/stats/FullHabit";
 import HabitGroup from "@components/stats/HabitGroup";
 import StatsSummary from "@components/stats/StatsSummary";
-import type { FullHabit } from "@components/stats/FullHabit";
-import IconButton from "@components/ui/IconButton";
-import arrow_left from "@assets/images/icons/arrow-left.svg";
 import { getAllHabits } from "@store/habitSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
 
 export default function StatsPage() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { habits, loading } = useAppSelector((s) => s.habit);
   const fullHabits = habits as unknown as FullHabit[];
 
@@ -23,9 +19,7 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-base-bg pb-28 md:pb-12">
-
       <div className="container max-w-120 mx-auto pt-6 md:pt-10 flex flex-col gap-6">
-
         {loading && fullHabits.length === 0 ? (
           <div className="flex justify-center py-16">
             <p className="body-bold text-primary-black-40">Loading...</p>

@@ -68,7 +68,7 @@ export const useResponsiveHeader = () => {
           leftButtonIcon: <IconButton size="large" icon={calendar} />,
           rightButtonIcon: <IconButton size="large" icon={notification} />,
           topContent: true,
-          profile: true,
+          // profile: true,
           // segmentControl: false,
           showWeekController: true,
         },
