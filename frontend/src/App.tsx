@@ -9,6 +9,7 @@ import RegisterPage from "@pages/RegisterPage";
 import Main from "@pages/Main";
 import CreateHabit from "@pages/CreateHabit";
 import ProfilePage from "@pages/ProfilePage";
+import StatsPage from "@pages/StatsPage";
 import AppLoading from "@components/habit/AppLoading";
 import ProtectedRoute from "@components/layout/ProtectedRoute";
 
@@ -68,6 +69,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/stats"
+            element={
+              <ProtectedRoute>
+                <StatsPage />
               </ProtectedRoute>
             }
           />

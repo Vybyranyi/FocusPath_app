@@ -69,7 +69,7 @@ export const useResponsiveHeader = () => {
           rightButtonIcon: <IconButton size="large" icon={notification} />,
           topContent: true,
           profile: true,
-          segmentControl: true,
+          // segmentControl: false,
           showWeekController: true,
         },
         desktop: {
@@ -77,7 +77,7 @@ export const useResponsiveHeader = () => {
           title: "Label Decktop",
           topContent: true,
           profile: true,
-          segmentControl: true,
+          // segmentControl: true,
           showWeekController: true,
         },
       },
@@ -99,13 +99,33 @@ export const useResponsiveHeader = () => {
           rightButtonIcon: <IconButton size="large" icon={notification} />,
           topContent: true,
           profile: true,
-          segmentControl: true,
+          // segmentControl: true,
         },
       },
       "/profile": {
         mobile: {
           visible: true,
           title: "Profile",
+          leftButtonIcon: (
+            <IconButton
+              size="large"
+              icon={arrow_left}
+              onClick={() => navigate(-1)}
+            />
+          ),
+        },
+        desktop: {
+          visible: true,
+          leftButtonIcon: <IconButton size="large" icon={calendar} />,
+          rightButtonIcon: <IconButton size="large" icon={notification} />,
+          topContent: true,
+          profile: true,
+        },
+      },
+      "/stats": {
+        mobile: {
+          visible: true,
+          title: "Activity",
           leftButtonIcon: (
             <IconButton
               size="large"

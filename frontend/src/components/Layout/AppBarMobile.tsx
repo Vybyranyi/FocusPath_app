@@ -8,11 +8,10 @@ export default function AppBarMobile() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const unavailable = () => alert("Unavailable Page");
-
   if (!isMobile) return null;
 
   const isHome = location.pathname.startsWith("/main");
+  const isActivity = location.pathname === "/stats";
   const isProfile = location.pathname === "/profile";
 
   return (
@@ -25,7 +24,7 @@ export default function AppBarMobile() {
       ].join(" ")}
     >
       <MenuButton icon="home" active={isHome} onClick={() => navigate("/main")} />
-      <MenuButton icon="explore" onClick={unavailable} />
+      <MenuButton icon="explore" />
 
       <button
         onClick={() => navigate("/createhabit")}
@@ -34,7 +33,7 @@ export default function AppBarMobile() {
         <img src={plus} alt="add" />
       </button>
 
-      <MenuButton icon="activity" dot onClick={unavailable} />
+      <MenuButton icon="activity" active={isActivity} onClick={() => navigate("/stats")} />
       <MenuButton icon="profile" active={isProfile} onClick={() => navigate("/profile")} />
     </menu>
   );
