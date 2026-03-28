@@ -3,15 +3,21 @@ import explore from "@assets/images/icons/explore.svg";
 import home from "@assets/images/icons/home.svg";
 import plus from "@assets/images/icons/plus.svg";
 import profile from "@assets/images/icons/profile.svg";
+import profileActive from "@assets/images/icons/profile_active.svg";
+import homeActive from "@assets/images/icons/home_active.svg";
 import Button from "@components/ui/Button";
 import { useMediaQuery } from "react-responsive";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 
 export default function AppBarDecktop() {
   const isDesktop = useMediaQuery({ query: "(min-width: 769px)" });
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!isDesktop) return null;
+
+  const isProfile = location.pathname === "/profile";
+  const isHome = location.pathname.startsWith("/main");
 
   return (
     <menu className="bg-base-white shadow-[inset_-1px_0_0_#EAECF0] px-8 h-screen sticky top-0 left-0">
@@ -25,9 +31,9 @@ export default function AppBarDecktop() {
           New habbit
         </Button>
         <Button
-          type="outline"
+          type={isHome ? "primary" : "outline"}
           size="medium"
-          icon={home}
+          icon={isHome ? homeActive : home}
           onClick={() => navigate("/main")}
         >
           Home
@@ -38,7 +44,12 @@ export default function AppBarDecktop() {
         <Button type="outline" size="medium" icon={activity}>
           Activity
         </Button>
-        <Button type="outline" size="medium" icon={profile}>
+        <Button
+          type={isProfile ? "primary" : "outline"}
+          size="medium"
+          icon={isProfile ? profileActive : profile}
+          onClick={() => navigate("/profile")}
+        >
           Profile
         </Button>
       </div>

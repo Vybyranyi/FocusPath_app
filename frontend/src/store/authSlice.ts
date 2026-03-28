@@ -9,6 +9,7 @@ export interface IUser {
     birthday: string;
     gender: "male" | "female";
     email: string;
+    avatar?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -64,6 +65,68 @@ export const loginUser = createAsyncThunk(
         } catch (error) {
             return rejectWithValue("Network error during login");
         };
+    }
+);
+
+export const updateProfile = createAsyncThunk(
+    "auth/updateProfile",
+    async (data: { name: string; surname: string; birthday: string; gender: "male" | "female"; email: string; avatar?: string }, { getState, rejectWithValue }) => {
+        try {
+            const state = getState() as { auth: IAuthSlice };
+            const res = await fetch(`${API_URL}/auth/profile`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.auth.token}`,
+                },
+                body: JSON.stringify(data),
+            });
+            const json = await res.json();
+            if (!res.ok) return rejectWithValue(json.message || "Update failed");
+            return json;
+        } catch {
+            return rejectWithValue("Network error during profile update");
+        }
+    }
+);
+
+export const changePassword = createAsyncThunk(
+    "auth/changePassword",
+    async (data: { currentPassword: string; newPassword: string }, { getState, rejectWithValue }) => {
+        try {
+            const state = getState() as { auth: IAuthSlice };
+            const res = await fetch(`${API_URL}/auth/password`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.auth.token}`,
+                },
+                body: JSON.stringify(data),
+            });
+            const json = await res.json();
+            if (!res.ok) return rejectWithValue(json.message || "Password change failed");
+            return json;
+        } catch {
+            return rejectWithValue("Network error during password change");
+        }
+    }
+);
+
+export const deleteAccount = createAsyncThunk(
+    "auth/deleteAccount",
+    async (_, { getState, rejectWithValue }) => {
+        try {
+            const state = getState() as { auth: IAuthSlice };
+            const res = await fetch(`${API_URL}/auth/`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${state.auth.token}` },
+            });
+            const json = await res.json();
+            if (!res.ok) return rejectWithValue(json.message || "Delete failed");
+            return json;
+        } catch {
+            return rejectWithValue("Network error during account deletion");
+        }
     }
 );
 
@@ -129,6 +192,49 @@ const authSlice = createSlice({
                 localStorage.setItem("token", action.payload.token);
             })
             .addCase(loginUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+        builder
+            .addCase(updateProfile.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+            })
+            .addCase(updateProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+        builder
+            .addCase(changePassword.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(changePassword.fulfilled, (state) => {
+                state.loading = false;
+            })
+            .addCase(changePassword.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            });
+
+        builder
+            .addCase(deleteAccount.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(deleteAccount.fulfilled, (state) => {
+                state.loading = false;
+                state.user = null;
+                state.token = null;
+                localStorage.removeItem("token");
+            })
+            .addCase(deleteAccount.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             });
