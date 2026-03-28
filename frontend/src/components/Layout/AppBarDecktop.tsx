@@ -1,6 +1,7 @@
 import activity from "@assets/images/icons/activity.svg";
 import activityActive from "@assets/images/icons/activity_active.svg";
 import explore from "@assets/images/icons/explore.svg";
+import exploreActive from "@assets/images/icons/explore_active.svg";
 import home from "@assets/images/icons/home.svg";
 import homeActive from "@assets/images/icons/home_active.svg";
 import plus from "@assets/images/icons/plus.svg";
@@ -18,6 +19,7 @@ export default function AppBarDecktop() {
   if (!isDesktop) return null;
 
   const isHome = location.pathname.startsWith("/main");
+  const isExplore = location.pathname === "/explore";
   const isActivity = location.pathname === "/stats";
   const isProfile = location.pathname === "/profile";
 
@@ -33,18 +35,26 @@ export default function AppBarDecktop() {
           New habbit
         </Button>
         <Button
-          type={isHome ? "primary" : "outline"}
+          type="outline"
+          isActive={isHome}
           size="medium"
           icon={isHome ? homeActive : home}
           onClick={() => navigate("/main")}
         >
           Home
         </Button>
-        <Button type="outline" size="medium" icon={explore}>
+        <Button
+          type="outline"
+          isActive={isExplore}
+          size="medium"
+          icon={isExplore ? exploreActive : explore}
+          onClick={() => navigate("/explore")}
+        >
           Explore
         </Button>
         <Button
-          type={isActivity ? "primary" : "outline"}
+          type="outline"
+          isActive={isActivity}
           size="medium"
           icon={isActivity ? activityActive : activity}
           onClick={() => navigate("/stats")}
@@ -52,7 +62,8 @@ export default function AppBarDecktop() {
           Activity
         </Button>
         <Button
-          type={isProfile ? "primary" : "outline"}
+          type="outline"
+          isActive={isProfile}
           size="medium"
           icon={isProfile ? profileActive : profile}
           onClick={() => navigate("/profile")}
