@@ -7,6 +7,7 @@ export interface IUser extends Document {
     gender: "male" | "female";
     email: string;
     password: string;
+    avatar?: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -18,6 +19,7 @@ const UserSchema: Schema = new Schema({
     gender: { type: String, enum: ["male", "female"], required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true, minlength: 8 },
+    avatar: { type: String, required: false },
 }, { timestamps: true });
 
 const User = mongoose.model<IUser>('User', UserSchema);

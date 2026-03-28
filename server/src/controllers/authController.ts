@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '@models/User';
+import Habit from '@models/Habit';
 import mongoose from 'mongoose';
 
 const jwtSecret = process.env.JWT_SECRET as string;
@@ -110,5 +111,87 @@ export const verifyToken = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Error verifying token:', error);
         res.status(500).json({ message: 'Server error during token verification' });
+    }
+};
+
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { name, surname, birthday, gender, email, avatar } = req.body;
+
+        if (email) {
+            const existing = await User.findOne({ email, _id: { $ne: userId } });
+            if (existing) {
+                return res.status(400).json({ message: 'Email already in use' });
+            }
+        }
+
+        const updated = await User.findByIdAndUpdate(
+            userId,
+            { name, surname, birthday, gender, email, avatar },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!updated) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'Profile updated successfully',
+            user: updated.toObject(),
+        });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        if (error instanceof mongoose.Error.ValidationError) {
+            return res.status(400).json({ message: 'Validation error', errors: error.errors });
+        }
+        res.status(500).json({ message: 'Server error during profile update' });
+    }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Current and new password are required' });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ message: 'New password must be at least 8 characters' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isValid) {
+            return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await User.findByIdAndUpdate(userId, { password: hashed });
+
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ message: 'Server error during password change' });
+    }
+};
+
+export const deleteAccount = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+
+        await Habit.deleteMany({ userId });
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({ message: 'Server error during account deletion' });
     }
 };
