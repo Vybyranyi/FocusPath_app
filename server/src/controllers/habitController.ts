@@ -6,6 +6,9 @@ interface AuthRequest extends Request {
     userId?: string;
     body: {
         title?: string;
+        description?: string;
+        category?: string;
+        steps?: Array<{ title: string; completed?: boolean }>;
         startDate?: string;
         duration?: number | null;
         type?: 'build' | 'quit';
@@ -19,7 +22,7 @@ interface AuthRequest extends Request {
 
 export const createHabit = async (req: AuthRequest, res: Response) => {
     try {
-        const { title, startDate, duration, type, color, icon } = req.body;
+        const { title, description, category, steps, startDate, duration, type, color, icon } = req.body;
         const { userId } = req;
 
         if (!title || !startDate || !duration || !type || !userId || !color || !icon) {
@@ -62,6 +65,9 @@ export const createHabit = async (req: AuthRequest, res: Response) => {
 
         const newHabit = new Habit({
             title: title.trim(),
+            description: description?.trim() || '',
+            category: category?.trim() || '',
+            steps: steps || [],
             startDate: parsedStartDate,
             duration,
             type,
@@ -154,6 +160,10 @@ export const getHabitsForDate = async (req: AuthRequest, res: Response) => {
             {
                 $project: {
                     title: 1,
+                    description: 1,
+                    category: 1,
+                    steps: 1,
+                    startDate: 1,
                     type: 1,
                     color: 1,
                     icon: 1,
@@ -238,7 +248,7 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
     try {
         const { userId } = req;
         const { id } = req.params;
-        const { title, startDate, duration, type, color, icon } = req.body;
+        const { title, description, category, steps, startDate, duration, type, color, icon } = req.body;
 
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
@@ -272,6 +282,9 @@ export const updateHabit = async (req: AuthRequest, res: Response) => {
         };
 
         if (title) habit.title = title.trim();
+        if (description !== undefined) habit.description = description.trim();
+        if (category !== undefined) habit.category = category.trim();
+        if (steps) habit.steps = steps as any; // Cast for mongoose array
         if (duration) habit.duration = duration;
         if (type) habit.type = type;
         if (color) habit.color = color;
@@ -507,5 +520,52 @@ export const markHabitCompletion = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Mark habit completion error:', error);
         res.status(400).json({ message: 'Server error while marking habit completion' });
+    }
+};
+
+export const toggleStep = async (req: AuthRequest, res: Response) => {
+    try {
+        const { userId } = req;
+        const { id, stepId } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(stepId)) {
+            return res.status(400).json({ message: 'Invalid ID format' });
+        }
+
+        const habit = await Habit.findOne({ _id: id, userId });
+        if (!habit) {
+            return res.status(404).json({ message: 'Habit not found' });
+        }
+
+        if (!habit.steps) {
+            return res.status(404).json({ message: 'No steps found' });
+        }
+
+        const step = habit.steps.find((s) => s._id?.toString() === stepId);
+        if (!step) {
+            return res.status(404).json({ message: 'Step not found' });
+        }
+
+        step.completed = !step.completed;
+        habit.updatedAt = new Date();
+        await habit.save();
+
+        res.status(200).json({
+            message: 'Step toggled successfully',
+            stepId,
+            completed: step.completed,
+            habit: {
+                ...habit.toObject(),
+                userId: undefined
+            }
+        });
+
+    } catch (error) {
+        console.error('Toggle step error:', error);
+        res.status(400).json({ message: 'Server error while toggling step' });
     }
 };

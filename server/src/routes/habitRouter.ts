@@ -8,6 +8,7 @@ import {
     deleteHabit, 
     markHabitCompletion,
     getHabitsForDate,
+    toggleStep,
 } from '@controllers/habitController';
 import { createAIHabit } from '@controllers/aiHabitController';
 import { verifyTokenMiddleware } from '@middlewares/auth';
@@ -36,5 +37,8 @@ router.patch('/:id/day', verifyTokenMiddleware, updateDayTitle);
 
 // Відмітка виконання
 router.patch('/:id/complete', verifyTokenMiddleware, markHabitCompletion);
+
+// Оновлення кроку (переключення статусу)
+router.patch('/:id/steps/:stepId', verifyTokenMiddleware, toggleStep);
 
 export default router;

@@ -15,6 +15,13 @@ export interface IHabit extends Document {
         date: Date;
         completed: boolean;
     }>;
+    description?: string;
+    category?: string;
+    steps?: Array<{
+        _id?: mongoose.Types.ObjectId;
+        title: string;
+        completed: boolean;
+    }>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -33,6 +40,12 @@ const HabitSchema: Schema = new Schema({
         dayTitle: { type: String, required: true },
         date: { type: Date, required: true },
         completed: { type: Boolean, required: true }
+    }],
+    description: { type: String, default: '' },
+    category: { type: String, default: '' },
+    steps: [{
+        title: { type: String, required: true },
+        completed: { type: Boolean, default: false }
     }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
