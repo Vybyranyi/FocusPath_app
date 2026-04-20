@@ -22,9 +22,19 @@ interface DayInfo {
   _id: string;
 }
 
+export interface Step {
+  _id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface habitForDate {
   _id: string;
   title: string;
+  description?: string;
+  category?: string;
+  steps?: Step[];
+  startDate: string;
   type: string;
   color: string;
   icon: string;
@@ -229,6 +239,54 @@ export const markHabitCompletion = createAsyncThunk(
   },
 );
 
+export const toggleHabitStep = createAsyncThunk(
+  "habit/toggleHabitStep",
+  async (
+    { habitId, stepId }: { habitId: string; stepId: string },
+    { getState, rejectWithValue },
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const res = await fetch(`${API_URL}/habits/${habitId}/steps/${stepId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${state.auth.token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return rejectWithValue(data.message || "Failed to toggle step");
+      }
+      return { habitId, stepId, completed: data.completed };
+    } catch (error) {
+      return rejectWithValue("Network error during toggling step");
+    }
+  },
+);
+
+export const deleteHabit = createAsyncThunk(
+  "habit/deleteHabit",
+  async (habitId: string, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as RootState;
+      const res = await fetch(`${API_URL}/habits/${habitId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${state.auth.token}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return rejectWithValue(data.message || "Failed to delete habit");
+      }
+      return habitId;
+    } catch (error) {
+      return rejectWithValue("Network error during habit deletion");
+    }
+  },
+);
+
 const habitSlice = createSlice({
   name: "habit",
   initialState,
@@ -305,6 +363,57 @@ const habitSlice = createSlice({
         if (!completed && wasCompleted) habit.completedCount  = Math.max(0, habit.completedCount - 1);
       }
     });
+
+    builder
+      .addCase(toggleHabitStep.pending, (state, action) => {
+        // Optimistic update
+        const { habitId, stepId } = action.meta.arg;
+        const habit = state.habitsForDate.find((h) => h._id === habitId);
+        if (habit && habit.steps) {
+          const step = habit.steps.find((s) => s._id === stepId);
+          if (step) {
+            step.completed = !step.completed;
+          }
+        }
+      })
+      .addCase(toggleHabitStep.fulfilled, (state, action) => {
+        // Confirmation from server (we already optimistically updated, if anything mismatch we can correct here)
+        const { habitId, stepId, completed } = action.payload;
+        const habit = state.habitsForDate.find((h) => h._id === habitId);
+        if (habit && habit.steps) {
+          const step = habit.steps.find((s) => s._id === stepId);
+          if (step) {
+            step.completed = completed;
+          }
+        }
+      })
+      .addCase(toggleHabitStep.rejected, (state, action) => {
+        // Rollback on failure
+        const { habitId, stepId } = action.meta.arg;
+        const habit = state.habitsForDate.find((h) => h._id === habitId);
+        if (habit && habit.steps) {
+          const step = habit.steps.find((s) => s._id === stepId);
+          if (step) {
+            // Revert back
+            step.completed = !step.completed;
+          }
+        }
+      });
+
+    builder
+      .addCase(deleteHabit.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteHabit.fulfilled, (state, action) => {
+        state.loading = false;
+        // Remove from habits and habitsForDate
+        state.habits = state.habits.filter((h) => h._id !== action.payload);
+        state.habitsForDate = state.habitsForDate.filter((h) => h._id !== action.payload);
+      })
+      .addCase(deleteHabit.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
