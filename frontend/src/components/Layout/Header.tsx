@@ -79,12 +79,12 @@ export default function Header({
               alt="User profile"
               className="w-14 h-14 rounded-full md:w-12 md:h-12"
             />
-            <div>
+            <div className="flex items-center">
               <p className="title">{`${user?.name} ${user?.surname}`}</p>
-              <span className="inline-flex items-center gap-1 bg-warning-10 px-1 py-0.5 rounded-lg mt-1 md:mt-0">
+              {/* <span className="inline-flex items-center gap-1 bg-warning-10 px-1 py-0.5 rounded-lg mt-1 md:mt-0">
                 <img src={medal_gold} alt="" className="w-4 h-4" />
                 <p className="body-bold text-warning">1452 Points</p>
-              </span>
+              </span> */}
             </div>
             {/* Desktop action buttons */}
             <div className="hidden md:flex gap-2 mr-15">

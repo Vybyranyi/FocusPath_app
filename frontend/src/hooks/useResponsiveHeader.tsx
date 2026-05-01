@@ -65,8 +65,8 @@ export const useResponsiveHeader = () => {
       "/main": {
         mobile: {
           visible: true,
-          leftButtonIcon: <IconButton size="large" icon={calendar} />,
-          rightButtonIcon: <IconButton size="large" icon={notification} />,
+          // leftButtonIcon: <IconButton size="large" icon={calendar} />,
+          // rightButtonIcon: <IconButton size="large" icon={notification} />,
           topContent: true,
           // profile: true,
           // segmentControl: false,
@@ -95,8 +95,8 @@ export const useResponsiveHeader = () => {
         },
         desktop: {
           visible: true,
-          leftButtonIcon: <IconButton size="large" icon={calendar} />,
-          rightButtonIcon: <IconButton size="large" icon={notification} />,
+          // leftButtonIcon: <IconButton size="large" icon={calendar} />,
+          // rightButtonIcon: <IconButton size="large" icon={notification} />,
           topContent: true,
           profile: true,
           // segmentControl: true,
@@ -116,8 +116,8 @@ export const useResponsiveHeader = () => {
         },
         desktop: {
           visible: true,
-          leftButtonIcon: <IconButton size="large" icon={calendar} />,
-          rightButtonIcon: <IconButton size="large" icon={notification} />,
+          // leftButtonIcon: <IconButton size="large" icon={calendar} />,
+          // rightButtonIcon: <IconButton size="large" icon={notification} />,
           topContent: true,
           profile: true,
         },
@@ -136,8 +136,8 @@ export const useResponsiveHeader = () => {
         },
         desktop: {
           visible: true,
-          leftButtonIcon: <IconButton size="large" icon={calendar} />,
-          rightButtonIcon: <IconButton size="large" icon={notification} />,
+          // leftButtonIcon: <IconButton size="large" icon={calendar} />,
+          // rightButtonIcon: <IconButton size="large" icon={notification} />,
           topContent: true,
           profile: true,
         },

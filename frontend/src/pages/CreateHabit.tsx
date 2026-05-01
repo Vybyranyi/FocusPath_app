@@ -155,6 +155,9 @@ export default function CreateHabit() {
                       touched.habitDescription ? errors.habitDescription : ""
                     }
                   />
+                  <p className="text-xs font-normal text-gray-500">
+                    Provide more details about your habit to help the AI generate a better personalized plan.
+                  </p>
                 </div>
 
                 <div className="flex flex-col gap-4">
