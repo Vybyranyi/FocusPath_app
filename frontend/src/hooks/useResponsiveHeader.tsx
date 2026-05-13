@@ -1,6 +1,4 @@
 import arrow_left from "@assets/images/icons/arrow-left.svg";
-import calendar from "@assets/images/icons/calendar.svg";
-import notification from "@assets/images/icons/notification.svg";
 import IconButton from "@components/ui/IconButton";
 import { useMemo } from "react";
 import { useMediaQuery } from "react-responsive";

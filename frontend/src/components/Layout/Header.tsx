@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { useAppSelector } from "@store/hooks";
 import { Emoji } from "react-apple-emojis";
 import default_user from "@assets/images/default_user.png";
-import medal_gold from "@assets/images/icons/medal_gold.svg";
 import SegmentControl from "@components/ui/SegmentControl";
 import WeekSelector from "@components/layout/WeekSelector";
 

@@ -14,6 +14,7 @@ import { useNavigate } from "react-router";
 import * as Yup from "yup";
 
 export interface IHabit {
+  _id?: string;
   color: string;
   emoji: string;
   habitName: string;
