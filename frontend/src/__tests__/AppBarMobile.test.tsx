@@ -1,76 +1,87 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import AppBarMobile from '@components/layout/AppBarMobile';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { useMediaQuery } from 'react-responsive';
+import { fireEvent, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useLocation } from "react-router";
+import { useMediaQuery } from "react-responsive";
+import AppBarMobile from "@components/layout/AppBarMobile";
+import { renderWithProviders } from "../testUtils";
+// Compared by identity rather than by filename: Vite inlines these as data URIs,
+// so the path never reaches the rendered src.
+import home from "@assets/images/icons/home.svg";
+import homeActive from "@assets/images/icons/home_active.svg";
+import profileActive from "@assets/images/icons/profile_active.svg";
 
-vi.mock('react-responsive');
-
-vi.mock('@assets/images/icons/plus.svg', () => ({
-  default: 'plus.svg',
-}));
-
-global.alert = vi.fn();
+vi.mock("react-responsive", () => ({ useMediaQuery: vi.fn() }));
 
 const mockUseMediaQuery = vi.mocked(useMediaQuery);
 
-describe('AppBarMobile component', () => {
+/** Surfaces the router's current path so navigation can be asserted on. */
+function LocationProbe() {
+  return <span data-testid="location">{useLocation().pathname}</span>;
+}
+
+const renderBar = (route = "/main") =>
+  renderWithProviders(
+    <>
+      <AppBarMobile />
+      <LocationProbe />
+    </>,
+    { route },
+  );
+
+describe("AppBarMobile", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseMediaQuery.mockReturnValue(true);
   });
 
-  it('does not render when screen is desktop size', () => {
+  it("renders nothing above the mobile breakpoint", () => {
     mockUseMediaQuery.mockReturnValue(false);
-    
-    const { container } = render(<AppBarMobile />);
-    
-    expect(container.firstChild).toBeNull();
+
+    renderBar();
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it('renders all menu buttons', () => {
-    mockUseMediaQuery.mockReturnValue(true);
-    
-    render(<AppBarMobile />);
-    
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(5);
+  it("renders the four nav destinations plus the add button", () => {
+    renderBar();
+
+    expect(screen.getAllByRole("button")).toHaveLength(5);
+    for (const icon of ["home", "explore", "activity", "profile"]) {
+      expect(screen.getByAltText(icon)).toBeInTheDocument();
+    }
+    expect(screen.getByAltText("add")).toBeInTheDocument();
   });
 
-  it('renders add button with plus icon', () => {
-    mockUseMediaQuery.mockReturnValue(true);
-    
-    render(<AppBarMobile />);
-    
-    const addButton = screen.getByRole('img', { name: 'add button' });
-    expect(addButton).toBeInTheDocument();
-    expect(addButton).toHaveAttribute('src', 'plus.svg');
+  it("marks the destination matching the current route as active", () => {
+    renderBar("/profile");
+
+    expect(screen.getByAltText("profile")).toHaveAttribute("src", profileActive);
+    expect(screen.getByAltText("home")).toHaveAttribute("src", home);
   });
 
-  it('shows alert when menu buttons are clicked', () => {
-    mockUseMediaQuery.mockReturnValue(true);
-    
-    render(<AppBarMobile />);
-    
-    const buttons = screen.getAllByRole('button');
-    fireEvent.click(buttons[0]);
-    
-    expect(global.alert).toHaveBeenCalledWith('Unavailable Page');
+  it("treats any /main sub-route as home", () => {
+    renderBar("/main/today");
+
+    expect(screen.getByAltText("home")).toHaveAttribute("src", homeActive);
   });
 
-  it('renders MenuButton with active state', () => {
-    mockUseMediaQuery.mockReturnValue(true);
-    
-    render(<AppBarMobile />);
-    
-    const buttons = screen.getAllByRole('button');
-    expect(buttons[0]).toBeInTheDocument();
+  it("navigates to habit creation from the add button", () => {
+    renderBar();
+
+    fireEvent.click(screen.getByAltText("add").closest("button")!);
+
+    expect(screen.getByTestId("location")).toHaveTextContent("/createhabit");
   });
 
-  it('renders MenuButton with dot notification', () => {
-    mockUseMediaQuery.mockReturnValue(true);
-    
-    render(<AppBarMobile />);
-    
-    const buttons = screen.getAllByRole('button');
-    expect(buttons[3]).toBeInTheDocument();
+  it.each([
+    ["home", "/main"],
+    ["activity", "/stats"],
+    ["profile", "/profile"],
+  ])("navigates to %s", (icon, path) => {
+    renderBar("/");
+
+    fireEvent.click(screen.getByAltText(icon).closest("button")!);
+
+    expect(screen.getByTestId("location")).toHaveTextContent(path);
   });
 });

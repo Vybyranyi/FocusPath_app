@@ -1,8 +1,22 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+let client: OpenAI | null = null;
+
+/**
+ * Built on first use rather than at import time. Constructing eagerly threw
+ * whenever OPENAI_API_KEY was absent, which took down the entire server — and
+ * the test suite — over a key that only this one endpoint needs.
+ */
+const getClient = (): OpenAI => {
+    if (!client) {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+            throw new Error('OpenAI is not configured: OPENAI_API_KEY is missing');
+        }
+        client = new OpenAI({ apiKey });
+    }
+    return client;
+};
 
 interface DailyTask {
     dayTitle: string;
@@ -65,7 +79,7 @@ Rules:
 - Each dayTitle must be specific and actionable
 - CRITICAL: dailyTasks array length MUST EXACTLY match the duration number you choose`;
 
-        const completion = await openai.chat.completions.create({
+        const completion = await getClient().chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
                 {

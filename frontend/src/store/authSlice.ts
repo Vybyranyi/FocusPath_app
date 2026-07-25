@@ -1,21 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import type { User } from "@shared/index";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-export interface IUser {
-    _id: string;
-    name: string;
-    surname: string;
-    birthday: string;
-    gender: "male" | "female";
-    email: string;
-    avatar?: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
 export interface IAuthSlice {
-    user: IUser | null;
+    user: User | null;
     token: string | null;
     loading: boolean,
     error: string | null,

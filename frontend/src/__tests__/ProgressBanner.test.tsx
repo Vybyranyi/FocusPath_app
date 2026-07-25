@@ -1,56 +1,91 @@
-import { render, screen } from '@testing-library/react';
-import ProgressBanner from '@components/habit/ProgressBanner';
-import { describe, expect, it, vi } from 'vitest';
+import { screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import ProgressBanner from "@components/habit/ProgressBanner";
+import { makeHabitForDate, renderWithProviders } from "../testUtils";
+import type { habitForDate } from "@store/habitSlice";
 
-vi.mock('@components/habit/CircleLoader', () => ({
-  default: (props: any) => (
-    <div data-testid="circle-loader" data-percentages={props.percentages} data-iswhite={props.isWhite}>
-      Progress: {props.percentages}%
-    </div>
+// The emoji package resolves sprite data through its own context provider,
+// which a unit test has no reason to stand up.
+vi.mock("react-apple-emojis", () => ({
+  Emoji: ({ name, className }: { name: string; className?: string }) => (
+    <span data-testid="emoji" data-name={name} className={className} />
   ),
 }));
 
-vi.mock('react-apple-emojis', () => ({
-  Emoji: (props: any) => (
-    <span data-testid="emoji" data-name={props.name} className={props.className}>🔥</span>
-  ),
-}));
-
-describe('ProgressBanner component', () => {
-  it('renders all banner content', () => {
-    render(<ProgressBanner />);
-    expect(screen.getByText('Your daily goals almost done!')).toBeInTheDocument();
-    expect(screen.getByText('1 of 4 completed')).toBeInTheDocument();
-    expect(screen.getByTestId('circle-loader')).toBeInTheDocument();
-    expect(screen.getByTestId('emoji')).toBeInTheDocument();
+const habit = (id: string, completed: boolean) =>
+  makeHabitForDate({
+    _id: id,
+    dayInfo: {
+      _id: `${id}-day`,
+      dayTitle: "task",
+      date: new Date("2025-01-06T00:00:00.000Z"),
+      completed,
+    },
   });
 
-  it('passes correct props to CircleLoader', () => {
-    render(<ProgressBanner />);
-    const loader = screen.getByTestId('circle-loader');
-    expect(loader).toHaveAttribute('data-percentages', '56');
-    expect(loader).toHaveAttribute('data-iswhite', 'true');
+const withHabits = (habits: habitForDate[]) => ({
+  habit: { habits: [], habitsForDate: habits, loading: false, error: null },
+});
+
+describe("ProgressBanner", () => {
+  it("renders nothing when the day has no habits", () => {
+    const { container } = renderWithProviders(<ProgressBanner />, {
+      preloadedState: withHabits([]),
+    });
+
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders fire emoji', () => {
-    render(<ProgressBanner />);
-    expect(screen.getByTestId('emoji')).toHaveAttribute('data-name', 'fire');
+  it("counts how many of the day's habits are done", () => {
+    renderWithProviders(<ProgressBanner />, {
+      preloadedState: withHabits([
+        habit("a", true),
+        habit("b", false),
+        habit("c", false),
+      ]),
+    });
+
+    expect(screen.getByText("1 of 3 completed")).toBeInTheDocument();
+    expect(screen.getByText("Your daily goals almost done!")).toBeInTheDocument();
   });
 
-  it('main text has body-bold class', () => {
-    render(<ProgressBanner />);
-    expect(screen.getByText('Your daily goals almost done!').className).toContain('body-bold');
+  it("shows the completed share as a rounded percentage", () => {
+    renderWithProviders(<ProgressBanner />, {
+      preloadedState: withHabits([
+        habit("a", true),
+        habit("b", false),
+        habit("c", false),
+      ]),
+    });
+
+    // 1 of 3 rounds to 33.
+    expect(screen.getByText("%33")).toBeInTheDocument();
   });
 
-  it('secondary text has alternative class and blue color', () => {
-    render(<ProgressBanner />);
-    const secondary = screen.getByText('1 of 4 completed');
-    expect(secondary.className).toContain('alternative');
-    expect(secondary.className).toContain('text-primary-blue-40');
+  it("switches the message once every habit is done", () => {
+    renderWithProviders(<ProgressBanner />, {
+      preloadedState: withHabits([habit("a", true), habit("b", true)]),
+    });
+
+    expect(screen.getByText("All goals completed!")).toBeInTheDocument();
+    expect(screen.getByText("2 of 2 completed")).toBeInTheDocument();
+    // At 100% the loader swaps its label for a tick.
+    expect(screen.getByAltText("done")).toBeInTheDocument();
   });
 
-  it('banner has blue gradient background', () => {
-    const { container } = render(<ProgressBanner />);
-    expect(container.firstChild).toHaveClass('bg-blue-gradient');
+  it("renders the fire emoji alongside the message", () => {
+    renderWithProviders(<ProgressBanner />, {
+      preloadedState: withHabits([habit("a", false)]),
+    });
+
+    expect(screen.getByTestId("emoji")).toHaveAttribute("data-name", "fire");
+  });
+
+  it("uses the blue gradient background", () => {
+    const { container } = renderWithProviders(<ProgressBanner />, {
+      preloadedState: withHabits([habit("a", false)]),
+    });
+
+    expect(container.firstChild).toHaveClass("bg-blue-gradient");
   });
 });

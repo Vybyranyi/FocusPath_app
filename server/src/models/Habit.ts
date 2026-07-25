@@ -1,22 +1,22 @@
 import mongoose, { Document, Schema } from "mongoose";
+import type { Habit } from '@shared/index';
 
-export interface IHabit extends Document {
-    title: string;
+/**
+ * The stored habit. Scalar fields and the `type` union come from the shared
+ * `Habit` contract; restated below are only the parts that differ in storage —
+ * dates as `Date`, subdocument ids as `ObjectId`, and the `userId` owner link,
+ * which is stripped from every response.
+ */
+export interface IHabit
+    extends Document,
+    Omit<Habit, '_id' | 'startDate' | 'steps' | 'dailyCompletions' | 'createdAt' | 'updatedAt'> {
     startDate: Date;
-    duration: number;
-    type: 'build' | 'quit';
-    color: string;
-    icon: string;
     userId: mongoose.Types.ObjectId;
-    currentStreak: number;
-    isCompleted: boolean;
     dailyCompletions: Array<{
         dayTitle: string;
         date: Date;
         completed: boolean;
     }>;
-    description?: string;
-    category?: string;
     steps?: Array<{
         _id?: mongoose.Types.ObjectId;
         title: string;

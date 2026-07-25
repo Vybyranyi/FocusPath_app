@@ -32,6 +32,7 @@
       "@store/*":      ["store/*"],
       "@hooks/*":      ["hooks/*"],
       "@animation/*":  ["animation/*"],
+      "@shared/*":     ["../../shared/src/*"],
       "@/*":           ["./*"]
     }
   },

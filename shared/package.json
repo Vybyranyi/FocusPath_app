@@ -1,0 +1,7 @@
+{
+  "name": "@focuspath/shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Type-only contracts shared by frontend and server. Sources are .d.ts on purpose: declaration files cannot hold runtime code and are never emitted, so neither app gains a build step or a runtime dependency. Consumed via the @shared/* path alias in both tsconfigs.",
+  "types": "./src/index.d.ts"
+}

@@ -3,43 +3,51 @@ import app from '@app';
 import User from '@models/User';
 import mongoose from 'mongoose';
 
+// Route paths follow authRoutes.ts: registration is POST /auth/, and the token
+// is treated as a resource — POST /auth/token to mint one, GET /auth/token to
+// validate it.
+
+const validUser = {
+    name: 'Test',
+    surname: 'User',
+    birthday: '1990-01-01T00:00:00.000Z',
+    gender: 'male',
+    email: 'testuser@example.com',
+    password: 'password123',
+};
+
 describe('Auth Controller', () => {
 
-    describe('POST /auth/register', () => {
+    describe('POST /auth/', () => {
         it('should register a new user successfully', async () => {
-            const userData = {
-                name: 'Test',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'male',
-                email: 'testuser@example.com',
-                password: 'password123'
-            };
-
             const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
+                .post('/auth/')
+                .send(validUser)
                 .expect(201);
 
             expect(response.body.message).toBe('User registered successfully');
             expect(response.body).toHaveProperty('token');
-            expect(response.body.user.email).toBe(userData.email);
+            expect(response.body.user.email).toBe(validUser.email);
 
-            const user = await User.findOne({ email: userData.email });
-            expect(user).toBeDefined();
-            expect(user?.email).toBe(userData.email);
+            const user = await User.findOne({ email: validUser.email });
+            expect(user).not.toBeNull();
+            expect(user?.email).toBe(validUser.email);
+        });
+
+        it('should not expose the password hash in the response', async () => {
+            const response = await request(app)
+                .post('/auth/')
+                .send(validUser)
+                .expect(201);
+
+            expect(response.body.user).not.toHaveProperty('password');
         });
 
         it('should return 400 if required fields are missing', async () => {
-            const incompleteData = {
-                name: 'Test',
-                birthday: '1990-01-01T00:00:00.000Z',
-                email: 'testuser@example.com',
-                password: 'password123'
-            };
+            const { surname, gender, ...incompleteData } = validUser;
 
             const response = await request(app)
-                .post('/auth/register')
+                .post('/auth/')
                 .send(incompleteData)
                 .expect(400);
 
@@ -47,120 +55,20 @@ describe('Auth Controller', () => {
         });
 
         it('should return 400 if user with email already exists', async () => {
-            const userData = {
-                name: 'Existing',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'male',
-                email: 'existinguser@example.com',
-                password: 'password123'
-            };
-
-            await request(app)
-                .post('/auth/register')
-                .send(userData);
+            await request(app).post('/auth/').send(validUser).expect(201);
 
             const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
+                .post('/auth/')
+                .send(validUser)
                 .expect(400);
 
             expect(response.body.message).toBe('User already exists');
         });
 
         it('should return 400 if password is less than 8 characters', async () => {
-            const userData = {
-                name: 'Test',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'male',
-                email: 'testuser@example.com',
-                password: 'pass'
-            };
-
             const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
-                .expect(400);
-
-            expect(response.body.message).toBe('Password must be at least 8 characters long');
-        });
-
-        it('should register a new user successfully', async () => {
-            const userData = {
-                name: 'Test',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'male',
-                email: 'testuser@example.com',
-                password: 'password123'
-            };
-
-            const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
-                .expect(201);
-
-            expect(response.body.message).toBe('User registered successfully');
-            expect(response.body).toHaveProperty('token');
-            expect(response.body.user.email).toBe(userData.email);
-
-            const user = await User.findOne({ email: userData.email });
-            expect(user).toBeDefined();
-            expect(user?.email).toBe(userData.email);
-        });
-
-        it('should return 400 if required fields are missing', async () => {
-            const incompleteData = {
-                name: 'Test',
-                birthday: '1990-01-01T00:00:00.000Z',
-                email: 'testuser@example.com',
-                password: 'password123'
-            };
-
-            const response = await request(app)
-                .post('/auth/register')
-                .send(incompleteData)
-                .expect(400);
-
-            expect(response.body.message).toBe('All fields are required');
-        });
-
-        it('should return 400 if user with email already exists', async () => {
-            const userData = {
-                name: 'Existing',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'male',
-                email: 'existinguser@example.com',
-                password: 'password123'
-            };
-
-            await request(app)
-                .post('/auth/register')
-                .send(userData);
-
-            const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
-                .expect(400);
-
-            expect(response.body.message).toBe('User already exists');
-        });
-
-        it('should return 400 if password is less than 8 characters', async () => {
-            const userData = {
-                name: 'Test',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'male',
-                email: 'testuser@example.com',
-                password: 'pass'
-            };
-
-            const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
+                .post('/auth/')
+                .send({ ...validUser, password: 'pass' })
                 .expect(400);
 
             expect(response.body.message).toBe('Password must be at least 8 characters long');
@@ -172,26 +80,17 @@ describe('Auth Controller', () => {
                 gender: new mongoose.Error.ValidatorError({
                     message: 'Gender is not valid',
                     path: 'gender',
-                    value: 'invalid'
-                })
+                    value: 'invalid',
+                }),
             };
 
             jest.spyOn(User.prototype, 'save').mockImplementationOnce(() => {
                 throw mockValidationError;
             });
 
-            const userData = {
-                name: 'Test',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'invalid',
-                email: 'test@example.com',
-                password: 'password123'
-            };
-
             const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
+                .post('/auth/')
+                .send({ ...validUser, gender: 'invalid' })
                 .expect(400);
 
             expect(response.body.message).toBe('Validation error');
@@ -205,18 +104,9 @@ describe('Auth Controller', () => {
                 throw new Error('Simulated database connection error');
             });
 
-            const userData = {
-                name: 'Error',
-                surname: 'User',
-                birthday: '1990-01-01T00:00:00.000Z',
-                gender: 'male',
-                email: 'erroruser@example.com',
-                password: 'password123'
-            };
-
             const response = await request(app)
-                .post('/auth/register')
-                .send(userData)
+                .post('/auth/')
+                .send(validUser)
                 .expect(500);
 
             expect(response.body.message).toBe('Server error during registration');
@@ -225,46 +115,25 @@ describe('Auth Controller', () => {
         });
     });
 
-    describe('POST /auth/login', () => {
-        const RegisterData = {
-            name: 'Test',
-            surname: 'User',
-            birthday: '1990-01-01T00:00:00.000Z',
-            gender: 'male',
-            email: 'testuser@example.com',
-            password: 'password123'
-        };
-
-        it('should return 200 if logined successfully', async () => {
-            await request(app)
-                .post('/auth/register')
-                .send(RegisterData)
-                .expect(201);
+    describe('POST /auth/token', () => {
+        it('should return 200 if logged in successfully', async () => {
+            await request(app).post('/auth/').send(validUser).expect(201);
 
             const response = await request(app)
-                .post('/auth/login')
-                .send({
-                    email: RegisterData.email,
-                    password: RegisterData.password
-                })
+                .post('/auth/token')
+                .send({ email: validUser.email, password: validUser.password })
                 .expect(200);
-
 
             expect(response.body.message).toBe('Login successful');
             expect(response.body).toHaveProperty('token');
-            expect(response.body.user.email).toBe(RegisterData.email);
-
-            const user = await User.findOne({ email: RegisterData.email });
-            expect(user).toBeDefined();
-            expect(user?.email).toBe(RegisterData.email);
+            expect(response.body.user.email).toBe(validUser.email);
+            expect(response.body.user).not.toHaveProperty('password');
         });
 
         it('should return 400 if email or password is missing', async () => {
             const response = await request(app)
-                .post('/auth/login')
-                .send({
-                    email: RegisterData.email,
-                })
+                .post('/auth/token')
+                .send({ email: validUser.email })
                 .expect(400);
 
             expect(response.body.message).toBe('Email and password are required');
@@ -272,28 +141,19 @@ describe('Auth Controller', () => {
 
         it('should return 404 if user not found', async () => {
             const response = await request(app)
-                .post('/auth/login')
-                .send({
-                    email: 'nonexistent@example.com',
-                    password: 'password123'
-                })
+                .post('/auth/token')
+                .send({ email: 'nonexistent@example.com', password: 'password123' })
                 .expect(404);
 
             expect(response.body.message).toBe('User not found');
         });
 
         it('should return 400 if password is invalid', async () => {
-            await request(app)
-                .post('/auth/register')
-                .send(RegisterData)
-                .expect(201);
+            await request(app).post('/auth/').send(validUser).expect(201);
 
             const response = await request(app)
-                .post('/auth/login')
-                .send({
-                    email: RegisterData.email,
-                    password: 'wrongpassword'
-                })
+                .post('/auth/token')
+                .send({ email: validUser.email, password: 'wrongpassword' })
                 .expect(400);
 
             expect(response.body.message).toBe('Invalid credentials');
@@ -304,14 +164,9 @@ describe('Auth Controller', () => {
                 throw new Error('Simulated database find error');
             });
 
-            const userData = {
-                email: 'anyuser@example.com',
-                password: 'anypassword'
-            };
-
             const response = await request(app)
-                .post('/auth/login')
-                .send(userData)
+                .post('/auth/token')
+                .send({ email: 'anyuser@example.com', password: 'anypassword' })
                 .expect(500);
 
             expect(response.body.message).toBe('Server error during login');
@@ -320,22 +175,13 @@ describe('Auth Controller', () => {
         });
     });
 
-    describe('GET /auth/verify-token', () => {
-        const RegisterData = {
-            name: 'Verify',
-            surname: 'User',
-            birthday: '1990-01-01T00:00:00.000Z',
-            gender: 'male',
-            email: 'verifyuser@example.com',
-            password: 'password123'
-        };
-
+    describe('GET /auth/token', () => {
         let token: string;
 
         beforeEach(async () => {
             const res = await request(app)
-                .post('/auth/register')
-                .send(RegisterData)
+                .post('/auth/')
+                .send(validUser)
                 .expect(201);
 
             token = res.body.token;
@@ -343,17 +189,17 @@ describe('Auth Controller', () => {
 
         it('should return 200 if token is valid', async () => {
             const response = await request(app)
-                .get('/auth/verify-token')
+                .get('/auth/token')
                 .set('Authorization', `Bearer ${token}`)
                 .expect(200);
 
             expect(response.body.message).toBe('Token is valid');
-            expect(response.body.user.email).toBe(RegisterData.email);
+            expect(response.body.user.email).toBe(validUser.email);
         });
 
         it('should return 401 if no token provided', async () => {
             const response = await request(app)
-                .get('/auth/verify-token')
+                .get('/auth/token')
                 .expect(401);
 
             expect(response.body.message).toBe('No token provided');
@@ -361,31 +207,19 @@ describe('Auth Controller', () => {
 
         it('should return 401 if token is invalid', async () => {
             const response = await request(app)
-                .get('/auth/verify-token')
+                .get('/auth/token')
                 .set('Authorization', 'Bearer invalidtoken123')
                 .expect(401);
 
             expect(response.body.message).toBe('Invalid token');
         });
 
-        it('should return 404 if user not found', async () => {
-            // створюємо юзера і беремо токен
-            const res = await request(app)
-                .post('/auth/register')
-                .send({
-                    ...RegisterData,
-                    email: 'deleted@example.com'
-                })
-                .expect(201);
-
-            const tempToken = res.body.token;
-
-            // видаляємо користувача з БД
-            await User.deleteOne({ email: 'deleted@example.com' });
+        it('should return 404 if the user behind a valid token is gone', async () => {
+            await User.deleteOne({ email: validUser.email });
 
             const response = await request(app)
-                .get('/auth/verify-token')
-                .set('Authorization', `Bearer ${tempToken}`)
+                .get('/auth/token')
+                .set('Authorization', `Bearer ${token}`)
                 .expect(404);
 
             expect(response.body.message).toBe('User not found');
@@ -397,7 +231,7 @@ describe('Auth Controller', () => {
             });
 
             const response = await request(app)
-                .get('/auth/verify-token')
+                .get('/auth/token')
                 .set('Authorization', `Bearer ${token}`)
                 .expect(500);
 

@@ -1,134 +1,77 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import WeekSelector from '@components/layout/WeekSelector';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { fireEvent, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import WeekSelector from "@components/layout/WeekSelector";
+import { renderWithProviders } from "../testUtils";
 
-vi.mock('date-fns', () => ({
-  format: vi.fn(() => 'Jan 1'),
-  startOfWeek: vi.fn(() => new Date('2025-01-06')),
-  endOfWeek: vi.fn(() => new Date('2025-01-12')),
-  addWeeks: vi.fn((date, weeks) => {
-    const newDate = new Date(date);
-    newDate.setDate(newDate.getDate() + weeks * 7);
-    return newDate;
-  }),
-  differenceInCalendarWeeks: vi.fn(() => 0),
-}));
+// Wednesday 8 Jan 2025, so "this week" runs Mon 6 Jan – Sun 12 Jan.
+const NOW = new Date(2025, 0, 8, 12, 0, 0);
 
-vi.mock('@assets/images/icons/arrow-left.svg', () => ({
-  default: 'arrow-left.svg',
-}));
-vi.mock('@assets/images/icons/arrow-right.svg', () => ({
-  default: 'arrow-right.svg',
-}));
+const weekStarting = (year: number, month: number, day: number) => ({
+  calendar: { currentWeekStart: new Date(year, month, day).toISOString() },
+});
 
-import { format, startOfWeek, endOfWeek, addWeeks, differenceInCalendarWeeks } from 'date-fns';
+beforeEach(() => {
+  // Only Date is faked; timers stay real so React's scheduler is untouched.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW);
+});
 
-const mockFormat = vi.mocked(format);
-const mockStartOfWeek = vi.mocked(startOfWeek);
-const mockEndOfWeek = vi.mocked(endOfWeek);
-const mockAddWeeks = vi.mocked(addWeeks);
-const mockDifferenceInCalendarWeeks = vi.mocked(differenceInCalendarWeeks);
+afterEach(() => {
+  vi.useRealTimers();
+});
 
-describe('WeekSelector component', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockFormat.mockReturnValue('Jan 1');
-    mockStartOfWeek.mockReturnValue(new Date('2025-01-06'));
-    mockEndOfWeek.mockReturnValue(new Date('2025-01-12'));
-    mockAddWeeks.mockImplementation((date, weeks) => {
-      const newDate = new Date(date);
-      newDate.setDate(newDate.getDate() + weeks * 7);
-      return newDate;
+describe("WeekSelector", () => {
+  it("labels the current week and its date range", () => {
+    renderWithProviders(<WeekSelector />, {
+      preloadedState: weekStarting(2025, 0, 6),
     });
-    mockDifferenceInCalendarWeeks.mockReturnValue(0);
+
+    expect(screen.getByText("This week")).toBeInTheDocument();
+    expect(screen.getByText("Jan 6 - Jan 12")).toBeInTheDocument();
   });
 
-  it('renders week selector with default content', () => {
-    render(<WeekSelector />);
-    
-    expect(screen.getByText('This week')).toBeInTheDocument();
-    expect(screen.getByText('Jan 1 - Jan 1')).toBeInTheDocument();
+  it.each([
+    ["Previous week", [2024, 11, 30]],
+    ["Next week", [2025, 0, 13]],
+    ["3 weeks ago", [2024, 11, 16]],
+    ["In 2 weeks", [2025, 0, 20]],
+  ] as const)("labels a shifted week as %s", (label, [year, month, day]) => {
+    renderWithProviders(<WeekSelector />, {
+      preloadedState: weekStarting(year, month, day),
+    });
+
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
-  it('renders left and right arrow buttons', () => {
-    render(<WeekSelector />);
-    
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(2);
-    
-    const images = screen.getAllByRole('img');
-    expect(images).toHaveLength(2);
+  it("renders a back and a forward control", () => {
+    renderWithProviders(<WeekSelector />, {
+      preloadedState: weekStarting(2025, 0, 6),
+    });
+
+    expect(screen.getAllByRole("button")).toHaveLength(2);
   });
 
-  it('displays "Previous week" when diff is -1', () => {
-    mockDifferenceInCalendarWeeks.mockReturnValue(-1);
-    
-    render(<WeekSelector />);
-    
-    expect(screen.getByText('Previous week')).toBeInTheDocument();
+  it("moves the stored week forward a week on the right control", () => {
+    const { store } = renderWithProviders(<WeekSelector />, {
+      preloadedState: weekStarting(2025, 0, 6),
+    });
+
+    fireEvent.click(screen.getAllByRole("button")[1]);
+
+    expect(new Date(store.getState().calendar.currentWeekStart)).toEqual(
+      new Date(2025, 0, 13),
+    );
   });
 
-  it('displays "Next week" when diff is 1', () => {
-    mockDifferenceInCalendarWeeks.mockReturnValue(1);
-    
-    render(<WeekSelector />);
-    
-    expect(screen.getByText('Next week')).toBeInTheDocument();
-  });
+  it("moves the stored week back a week on the left control", () => {
+    const { store } = renderWithProviders(<WeekSelector />, {
+      preloadedState: weekStarting(2025, 0, 6),
+    });
 
-  it('displays weeks ago when diff is less than -1', () => {
-    mockDifferenceInCalendarWeeks.mockReturnValue(-3);
-    
-    render(<WeekSelector />);
-    
-    expect(screen.getByText('3 weeks ago')).toBeInTheDocument();
-  });
+    fireEvent.click(screen.getAllByRole("button")[0]);
 
-  it('displays weeks ahead when diff is greater than 1', () => {
-    mockDifferenceInCalendarWeeks.mockReturnValue(2);
-    
-    render(<WeekSelector />);
-    
-    expect(screen.getByText('In 2 weeks')).toBeInTheDocument();
-  });
-
-  it('calls navigation functions when buttons are clicked', () => {
-    render(<WeekSelector />);
-    
-    const buttons = screen.getAllByRole('button');
-    const leftButton = buttons[0];
-    const rightButton = buttons[1];
-    
-    fireEvent.click(leftButton);
-    expect(mockAddWeeks).toHaveBeenCalledWith(expect.any(Date), -1);
-    
-    fireEvent.click(rightButton);
-    expect(mockAddWeeks).toHaveBeenCalledWith(expect.any(Date), 1);
-  });
-
-  it('renders date range correctly', () => {
-    mockFormat.mockReturnValue('Jan 15');
-    
-    render(<WeekSelector />);
-    
-    expect(screen.getByText('Jan 15 - Jan 15')).toBeInTheDocument();
-    expect(mockFormat).toHaveBeenCalledWith(expect.any(Date), 'MMM d');
-  });
-
-  it('applies correct week start settings', () => {
-    render(<WeekSelector />);
-    
-    expect(mockStartOfWeek).toHaveBeenCalledWith(expect.any(Date), { weekStartsOn: 1 });
-    expect(mockEndOfWeek).toHaveBeenCalledWith(expect.any(Date), { weekStartsOn: 1 });
-  });
-
-  it('calculates week difference correctly', () => {
-    render(<WeekSelector />);
-    
-    expect(mockDifferenceInCalendarWeeks).toHaveBeenCalledWith(
-      expect.any(Date), 
-      expect.any(Date), 
-      { weekStartsOn: 1 }
+    expect(new Date(store.getState().calendar.currentWeekStart)).toEqual(
+      new Date(2024, 11, 30),
     );
   });
 });

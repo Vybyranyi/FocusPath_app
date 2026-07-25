@@ -23,6 +23,7 @@ export default defineConfig({
         "src/vite-env.d.ts",
         "src/**/*.test.{ts,tsx}",
         "src/setupTests.ts",
+        "src/testUtils.tsx",
         "vite.config.ts",
         "eslint.config.js",
       ],
@@ -38,6 +39,7 @@ export default defineConfig({
       '@store':     path.resolve(__dirname, './src/store'),
       '@hooks':     path.resolve(__dirname, './src/hooks'),
       '@animation': path.resolve(__dirname, './src/animation'),
+      '@shared':    path.resolve(__dirname, '../shared/src'),
     },
   },
 });
