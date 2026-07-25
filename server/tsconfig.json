@@ -25,5 +25,12 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    // ts-node compiles file by file and would otherwise never load ambient
+    // declarations that nothing imports — src/types/express.d.ts among them,
+    // which is what teaches Request about userId. Without this the dev server
+    // fails to start even though tsc and the test suite are perfectly happy.
+    "files": true
+  }
 }

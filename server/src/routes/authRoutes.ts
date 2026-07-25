@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { register, login, verifyToken, updateProfile, changePassword, deleteAccount } from '@controllers/authController';
 import { verifyTokenMiddleware } from '@middlewares/auth';
+import { authLimiter } from '@middlewares/rateLimit';
 
 const router = Router();
 
-router.post('/', register);
-router.post('/token', login);
+router.post('/', authLimiter, register);
+router.post('/token', authLimiter, login);
 router.get('/token', verifyTokenMiddleware, verifyToken);
 router.patch('/profile', verifyTokenMiddleware, updateProfile);
 router.patch('/password', verifyTokenMiddleware, changePassword);

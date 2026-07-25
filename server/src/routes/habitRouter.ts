@@ -12,14 +12,15 @@ import {
 } from '@controllers/habitController';
 import { createAIHabit } from '@controllers/aiHabitController';
 import { verifyTokenMiddleware } from '@middlewares/auth';
+import { aiLimiter } from '@middlewares/rateLimit';
 
 const router = Router();
 
 // Створення звички вручну
 router.post('/', verifyTokenMiddleware, createHabit);
 
-// Створення звички через AI
-router.post('/ai', verifyTokenMiddleware, createAIHabit);
+// Створення звички через AI (ліміт після авторизації — ключ рахується по користувачу)
+router.post('/ai', verifyTokenMiddleware, aiLimiter, createAIHabit);
 
 // Отримання звичок на конкретну дату (основний ендпоінт для щоденного відображення)
 router.get('/daily', verifyTokenMiddleware, getHabitsForDate);

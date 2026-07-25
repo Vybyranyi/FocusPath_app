@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '@models/User';
 import Habit from '@models/Habit';
 import mongoose from 'mongoose';
+import { hashPassword, validatePassword, verifyPassword } from '@utils/password';
+import { validateAvatar } from '@utils/avatar';
 
 const jwtSecret = process.env.JWT_SECRET as string;
 
@@ -15,20 +16,33 @@ export const register = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
+        // Rejects operator objects such as {"$ne": null} before they reach a
+        // query. sanitizeFilter would neutralise them anyway, but only by
+        // failing the cast — which surfaces as a 500 rather than a clear refusal.
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            return res.status(400).json({ message: 'Email and password must be strings' });
+        }
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        if (password.length < 8) {
-            return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+        const passwordProblem = validatePassword(password);
+        if (passwordProblem) {
+            return res.status(400).json({ message: passwordProblem });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
+        // Fields are listed rather than spread from the body: spreading let a
+        // caller set any schema path it liked, which becomes privilege
+        // escalation the moment a role or flag is added to the model.
         const newUser = new User({
-            ...req.body,
-            password: hashedPassword,
+            name,
+            surname,
+            birthday,
+            gender,
+            email,
+            password: await hashPassword(password),
         });
 
         await newUser.save();
@@ -38,10 +52,7 @@ export const register = async (req: Request, res: Response) => {
         res.status(201).json({
             message: 'User registered successfully',
             token,
-            user: {
-                ...newUser.toObject(),
-                password: undefined,
-            }
+            user: newUser,
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -56,17 +67,27 @@ export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
-
+        // Checked before the lookup rather than after, so a malformed request
+        // never reaches the database.
         if (!email || !password) {
             return res.status(400).json({ message: 'Email and password are required' });
         }
+
+        // Rejects operator objects such as {"$ne": null} before they reach a
+        // query. sanitizeFilter would neutralise them anyway, but only by
+        // failing the cast — which surfaces as a 500 rather than a clear refusal.
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            return res.status(400).json({ message: 'Email and password must be strings' });
+        }
+
+        // The hash is select:false on the schema, so it has to be asked for.
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const isValidPassword = await bcrypt.compare(password, user.password);
+        const isValidPassword = await verifyPassword(password, user.password);
         if (!isValidPassword) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -76,10 +97,7 @@ export const login = async (req: Request, res: Response) => {
         res.status(200).json({
             message: 'Login successful',
             token,
-            user: {
-                ...user.toObject(),
-                password: undefined,
-            }
+            user,
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -95,7 +113,7 @@ export const verifyToken = async (req: AuthRequest, res: Response) => {
     try {
         const { userId } = req;
 
-        const user = await User.findById(userId).select('-password');
+        const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -103,10 +121,7 @@ export const verifyToken = async (req: AuthRequest, res: Response) => {
 
         res.status(200).json({
             message: 'Token is valid',
-            user: {
-                ...user.toObject(),
-                password: undefined,
-            }
+            user,
         });
     } catch (error) {
         console.error('Error verifying token:', error);
@@ -119,6 +134,13 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
         const { userId } = req;
         const { name, surname, birthday, gender, email, avatar } = req.body;
 
+        if (avatar !== undefined) {
+            const avatarProblem = validateAvatar(avatar);
+            if (avatarProblem) {
+                return res.status(400).json({ message: avatarProblem });
+            }
+        }
+
         if (email) {
             const existing = await User.findOne({ email, _id: { $ne: userId } });
             if (existing) {
@@ -130,7 +152,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
             userId,
             { name, surname, birthday, gender, email, avatar },
             { new: true, runValidators: true }
-        ).select('-password');
+        );
 
         if (!updated) {
             return res.status(404).json({ message: 'User not found' });
@@ -138,7 +160,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
         res.status(200).json({
             message: 'Profile updated successfully',
-            user: updated.toObject(),
+            user: updated,
         });
     } catch (error) {
         console.error('Update profile error:', error);
@@ -158,22 +180,22 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: 'Current and new password are required' });
         }
 
-        if (newPassword.length < 8) {
-            return res.status(400).json({ message: 'New password must be at least 8 characters' });
+        const passwordProblem = validatePassword(newPassword);
+        if (passwordProblem) {
+            return res.status(400).json({ message: passwordProblem });
         }
 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).select('+password');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const isValid = await bcrypt.compare(currentPassword, user.password);
+        const isValid = await verifyPassword(currentPassword, user.password);
         if (!isValid) {
             return res.status(400).json({ message: 'Current password is incorrect' });
         }
 
-        const hashed = await bcrypt.hash(newPassword, 10);
-        await User.findByIdAndUpdate(userId, { password: hashed });
+        await User.findByIdAndUpdate(userId, { password: await hashPassword(newPassword) });
 
         res.status(200).json({ message: 'Password changed successfully' });
     } catch (error) {

@@ -6,3 +6,9 @@
 
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET ||= 'test-jwt-secret-not-used-outside-tests';
+
+// The lowest cost bcrypt accepts. Production uses 12; hashing at that cost in
+// every fixture would make the suite several times slower for no added signal.
+process.env.BCRYPT_ROUNDS ||= '4';
+
+process.env.CORS_ORIGIN ||= 'http://localhost:5173';

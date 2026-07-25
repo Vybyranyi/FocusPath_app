@@ -21,9 +21,21 @@ const UserSchema: Schema = new Schema({
     birthday: { type: Date, required: true },
     gender: { type: String, enum: ["male", "female"], required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true, minlength: 8 },
+    // Excluded from every query by default. The two places that genuinely need
+    // it — signing in and changing a password — ask for it with .select('+password').
+    password: { type: String, required: true, minlength: 8, select: false },
     avatar: { type: String, required: false },
 }, { timestamps: true });
+
+// Strips the hash on the way out so no controller has to remember to, and drops
+// __v, which the client has no use for.
+UserSchema.set('toJSON', {
+    transform: (_doc, ret: Record<string, unknown>) => {
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+    },
+});
 
 const User = mongoose.model<IUser>('User', UserSchema);
 

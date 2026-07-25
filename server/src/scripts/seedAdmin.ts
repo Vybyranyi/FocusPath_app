@@ -2,10 +2,10 @@ import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import { connectDB } from '@config/db';
 import User from '@models/User';
+import { hashPassword } from '@utils/password';
 
 const run = async () => {
     const email = process.env.ADMIN_EMAIL;
@@ -25,7 +25,7 @@ const run = async () => {
         return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hashPassword(password);
 
     await User.create({
         name: 'Admin',
