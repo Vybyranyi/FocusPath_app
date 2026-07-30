@@ -1,8 +1,8 @@
 import StatCard from "./StatCard";
-import type { FullHabit } from "./FullHabit";
+import type { Habit } from "@shared/index";
 
 interface StatsSummaryProps {
-  habits: FullHabit[];
+  habits: Habit[];
 }
 
 export default function StatsSummary({ habits }: StatsSummaryProps) {

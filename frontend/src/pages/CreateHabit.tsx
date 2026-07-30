@@ -9,21 +9,9 @@ import WeekDatePicker from "@components/pickers/WeekDatePicker";
 import { createAIHabit, createHabit } from "@store/habitSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { Form, Formik } from "formik";
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import * as Yup from "yup";
-
-export interface IHabit {
-  _id?: string;
-  color: string;
-  emoji: string;
-  habitName: string;
-  habitDescription: string;
-  startDate: Date | undefined;
-  aiEnabled: boolean;
-  duration: string;
-  habitType: "build" | "quit";
-}
+import type { CreateHabitFormValues } from "@/types/forms";
 
 const validationSchema = Yup.object({
   color: Yup.string().required("Color is required"),
@@ -62,7 +50,7 @@ const validationSchema = Yup.object({
     .required("Habit type is required"),
 });
 
-const initialValues: IHabit = {
+const initialValues: CreateHabitFormValues = {
   color: "",
   emoji: "",
   habitName: "",
@@ -76,28 +64,25 @@ const initialValues: IHabit = {
 export default function CreateHabit() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [isAICreating, setIsAICreating] = useState(false);
-  const { error, loading } = useAppSelector((state) => state.habit);
+  const error = useAppSelector((state) => state.habit.error);
+  // Which creation is running, rather than one flag for both: the shared flag
+  // put "Creating..." on whichever button the user had not pressed.
+  const creating = useAppSelector((state) => state.habit.creating);
 
-  const handleSubmit = async (values: IHabit) => {
+  const handleSubmit = async (values: CreateHabitFormValues) => {
     try {
-      if (values.aiEnabled) {
-        setIsAICreating(true);
-        await dispatch(createAIHabit(values)).unwrap();
-      } else {
-        await dispatch(createHabit(values)).unwrap();
-      }
+      await dispatch(
+        values.aiEnabled ? createAIHabit(values) : createHabit(values),
+      ).unwrap();
       navigate("/main");
-    } catch (err) {
-      console.error("Failed to create habit:", err);
-    } finally {
-      setIsAICreating(false);
+    } catch {
+      // The reason is already in the store and rendered under the form.
     }
   };
 
   return (
     <>
-      {isAICreating && <AILoadingAnimation />}
+      {creating === "ai" && <AILoadingAnimation />}
 
       <div className="container">
         <h5 className="hidden md:block mb-4">Create Habit</h5>
@@ -206,25 +191,23 @@ export default function CreateHabit() {
                       type="primary"
                       size="large"
                       htmlType="submit"
-                      disabled={loading || values.aiEnabled}
+                      disabled={creating !== null || values.aiEnabled}
                       onClick={() => setFieldValue("aiEnabled", false)}
                     >
-                      {loading && !values.aiEnabled ? "Creating..." : "Create"}
+                      {creating === "manual" ? "Creating..." : "Create"}
                     </Button>
                     <Button
                       type="ai"
                       size="large"
                       htmlType="submit"
-                      disabled={loading}
+                      disabled={creating !== null}
                       onClick={() => setFieldValue("aiEnabled", true)}
                     >
-                      {loading && values.aiEnabled
-                        ? "Creating..."
-                        : "Create by AI"}
+                      {creating === "ai" ? "Creating..." : "Create by AI"}
                     </Button>
                   </div>
 
-                  {loading && (
+                  {creating !== null && (
                     <p className="alternative text-primary-black-40 mt-1">
                       Creating habit...
                     </p>

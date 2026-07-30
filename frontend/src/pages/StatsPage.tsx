@@ -1,30 +1,36 @@
-import type { FullHabit } from "@components/stats/FullHabit";
 import HabitGroup from "@components/stats/HabitGroup";
 import StatsSummary from "@components/stats/StatsSummary";
 import { getAllHabits } from "@store/habitSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import {
+  selectAllHabits,
+  selectBuildHabits,
+  selectQuitHabits,
+} from "@store/selectors";
 import { useEffect } from "react";
 
 export default function StatsPage() {
   const dispatch = useAppDispatch();
-  const { habits, loading } = useAppSelector((s) => s.habit);
-  const fullHabits = habits as unknown as FullHabit[];
+  // The store holds the API's Habit, so this page reads it directly. It used to
+  // reach the shape it needed through a double cast, which switched off type
+  // checking for everything below it.
+  const habits = useAppSelector(selectAllHabits);
+  const buildHabits = useAppSelector(selectBuildHabits);
+  const quitHabits = useAppSelector(selectQuitHabits);
+  const loading = useAppSelector((state) => state.habit.loading);
 
   useEffect(() => {
     dispatch(getAllHabits());
   }, [dispatch]);
 
-  const buildHabits = fullHabits.filter((h) => h.type === "build");
-  const quitHabits = fullHabits.filter((h) => h.type === "quit");
-
   return (
     <div className="min-h-screen bg-base-bg pb-28 md:pb-12">
       <div className="container max-w-120 mx-auto pt-6 md:pt-10 flex flex-col gap-6">
-        {loading && fullHabits.length === 0 ? (
+        {loading && habits.length === 0 ? (
           <div className="flex justify-center py-16">
             <p className="body-bold text-primary-black-40">Loading...</p>
           </div>
-        ) : fullHabits.length === 0 ? (
+        ) : habits.length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-2">
             <p className="body-bold">No habits yet</p>
             <p className="alternative text-primary-black-40">
@@ -33,7 +39,7 @@ export default function StatsPage() {
           </div>
         ) : (
           <>
-            <StatsSummary habits={fullHabits} />
+            <StatsSummary habits={habits} />
             <HabitGroup habits={buildHabits} type="build" />
             <HabitGroup habits={quitHabits} type="quit" />
           </>

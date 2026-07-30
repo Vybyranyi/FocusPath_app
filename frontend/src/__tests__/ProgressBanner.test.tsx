@@ -1,8 +1,8 @@
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import ProgressBanner from "@components/habit/ProgressBanner";
-import { makeHabitForDate, renderWithProviders } from "../testUtils";
-import type { habitForDate } from "@store/habitSlice";
+import { habitState, makeHabitSummary, renderWithProviders } from "../testUtils";
+import type { HabitSummary } from "@shared/index";
 
 // The emoji package resolves sprite data through its own context provider,
 // which a unit test has no reason to stand up.
@@ -13,19 +13,17 @@ vi.mock("react-apple-emojis", () => ({
 }));
 
 const habit = (id: string, completed: boolean) =>
-  makeHabitForDate({
+  makeHabitSummary({
     _id: id,
     dayInfo: {
       _id: `${id}-day`,
       dayTitle: "task",
-      date: new Date("2025-01-06T00:00:00.000Z"),
+      date: "2025-01-06T00:00:00.000Z",
       completed,
     },
   });
 
-const withHabits = (habits: habitForDate[]) => ({
-  habit: { habits: [], habitsForDate: habits, loading: false, error: null },
-});
+const withHabits = (habits: HabitSummary[]) => habitState({ habitsForDate: habits });
 
 describe("ProgressBanner", () => {
   it("renders nothing when the day has no habits", () => {

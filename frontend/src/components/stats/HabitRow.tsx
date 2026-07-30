@@ -1,9 +1,9 @@
 import CircleLoader from "@components/habit/CircleLoader";
 import { Emoji } from "react-apple-emojis";
-import type { FullHabit } from "./FullHabit";
+import type { Habit } from "@shared/index";
 
 interface HabitRowProps {
-  habit: FullHabit;
+  habit: Habit;
 }
 
 export default function HabitRow({ habit }: HabitRowProps) {

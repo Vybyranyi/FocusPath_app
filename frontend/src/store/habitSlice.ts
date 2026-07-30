@@ -1,42 +1,20 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import type { Habit } from "@shared/index";
-import type { IHabit } from "@pages/CreateHabit";
+import type { Habit, HabitSummary } from "@shared/index";
+import type { CreateHabitFormValues } from "@/types/forms";
 import { apiRequest, errorMessage } from "@api/client";
 
-interface DayInfo {
-  dayTitle: string;
-  date: Date;
-  completed: boolean;
-  _id: string;
-}
-
-export interface Step {
-  _id: string;
-  title: string;
-  completed: boolean;
-}
-
-export interface habitForDate {
-  _id: string;
-  title: string;
-  description?: string;
-  category?: string;
-  steps?: Step[];
-  startDate: string;
-  type: string;
-  color: string;
-  icon: string;
-  currentStreak: number;
-  isCompleted: boolean;
-  duration: number;
-  completedCount: number;
-  dayInfo: DayInfo;
-}
-
 export interface IHabitSlice {
+  /** Every habit, as `GET /habits` returns them. */
   habits: Habit[];
-  habitsForDate: habitForDate[];
+  /** Habits active on the selected day, narrowed to that day's entry. */
+  habitsForDate: HabitSummary[];
+  /** In flight for a list fetch. */
   loading: boolean;
+  /**
+   * Which kind of creation is running, if any. One flag for both buttons used
+   * to disable and re-label the wrong one.
+   */
+  creating: "manual" | "ai" | null;
   error: string | null;
 }
 
@@ -44,29 +22,29 @@ const initialState: IHabitSlice = {
   habits: [],
   habitsForDate: [],
   loading: false,
+  creating: null,
   error: null,
 };
 
 /** The form's shape, translated into what the API expects. */
-const toHabitBody = (habitData: IHabit, allowAutoDuration = false) => ({
-  title: habitData.habitName.trim(),
-  startDate: habitData.startDate
-    ? new Date(habitData.startDate).toISOString()
+const toHabitBody = (values: CreateHabitFormValues, allowAutoDuration = false) => ({
+  title: values.habitName.trim(),
+  startDate: values.startDate
+    ? new Date(values.startDate).toISOString()
     : new Date().toISOString(),
-  duration:
-    allowAutoDuration && !habitData.duration ? null : Number(habitData.duration),
-  type: habitData.habitType,
-  color: habitData.color,
-  icon: habitData.emoji,
+  duration: allowAutoDuration && !values.duration ? null : Number(values.duration),
+  type: values.habitType,
+  color: values.color,
+  icon: values.emoji,
 });
 
 export const createHabit = createAsyncThunk(
   "habit/createHabit",
-  async (habitData: IHabit, { rejectWithValue }) => {
+  async (values: CreateHabitFormValues, { rejectWithValue }) => {
     try {
       return await apiRequest<{ habit: Habit }>("/habits/", {
         method: "POST",
-        body: toHabitBody(habitData),
+        body: toHabitBody(values),
       });
     } catch (error) {
       return rejectWithValue(errorMessage(error));
@@ -76,11 +54,11 @@ export const createHabit = createAsyncThunk(
 
 export const createAIHabit = createAsyncThunk(
   "habit/createAIHabit",
-  async (habitData: IHabit, { rejectWithValue }) => {
+  async (values: CreateHabitFormValues, { rejectWithValue }) => {
     try {
       return await apiRequest<{ habit: Habit }>("/habits/ai", {
         method: "POST",
-        body: toHabitBody(habitData, true),
+        body: toHabitBody(values, true),
       });
     } catch (error) {
       return rejectWithValue(errorMessage(error));
@@ -93,7 +71,7 @@ export const getHabitsForDate = createAsyncThunk(
   async (date: string, { rejectWithValue }) => {
     try {
       const day = new Date(date).toISOString().split("T")[0];
-      return await apiRequest<{ date: string; habits: habitForDate[] }>(
+      return await apiRequest<{ date: string; habits: HabitSummary[] }>(
         `/habits/daily?date=${day}`,
       );
     } catch (error) {
@@ -173,29 +151,29 @@ const habitSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(createHabit.pending, (state) => {
-        state.loading = true;
+        state.creating = "manual";
         state.error = null;
       })
       .addCase(createHabit.fulfilled, (state, action) => {
-        state.loading = false;
+        state.creating = null;
         state.habits.push(action.payload.habit);
       })
       .addCase(createHabit.rejected, (state, action) => {
-        state.loading = false;
+        state.creating = null;
         state.error = action.payload as string;
       });
 
     builder
       .addCase(createAIHabit.pending, (state) => {
-        state.loading = true;
+        state.creating = "ai";
         state.error = null;
       })
       .addCase(createAIHabit.fulfilled, (state, action) => {
-        state.loading = false;
+        state.creating = null;
         state.habits.push(action.payload.habit);
       })
       .addCase(createAIHabit.rejected, (state, action) => {
-        state.loading = false;
+        state.creating = null;
         state.error = action.payload as string;
       });
 
@@ -233,11 +211,9 @@ const habitSlice = createSlice({
       if (habit) {
         const wasCompleted = habit.dayInfo.completed;
         habit.dayInfo.completed = completed;
-        if (updatedHabit) {
-          habit.currentStreak = updatedHabit.currentStreak;
-          habit.isCompleted = updatedHabit.isCompleted;
-        }
-        // Update completedCount locally based on the change
+        habit.currentStreak = updatedHabit.currentStreak;
+        habit.isCompleted = updatedHabit.isCompleted;
+        // Adjusted locally rather than refetched, since the change is known.
         if (completed && !wasCompleted) habit.completedCount += 1;
         if (!completed && wasCompleted) habit.completedCount = Math.max(0, habit.completedCount - 1);
       }
@@ -278,7 +254,6 @@ const habitSlice = createSlice({
       })
       .addCase(deleteHabit.fulfilled, (state, action) => {
         state.loading = false;
-        // Remove from habits and habitsForDate
         state.habits = state.habits.filter((h) => h._id !== action.payload);
         state.habitsForDate = state.habitsForDate.filter((h) => h._id !== action.payload);
       })

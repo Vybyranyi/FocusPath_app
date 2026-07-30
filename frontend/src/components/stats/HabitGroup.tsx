@@ -1,8 +1,8 @@
 import HabitRow from "./HabitRow";
-import type { FullHabit } from "./FullHabit";
+import type { Habit } from "@shared/index";
 
 interface HabitGroupProps {
-  habits: FullHabit[];
+  habits: Habit[];
   type: "build" | "quit";
 }
 

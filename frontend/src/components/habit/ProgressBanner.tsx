@@ -1,13 +1,12 @@
 import CircleLoader from "@components/habit/CircleLoader";
 import { Emoji } from "react-apple-emojis";
 import { useAppSelector } from "@store/hooks";
+import { selectDailyProgress } from "@store/selectors";
 
 export default function ProgressBanner() {
-  const { habitsForDate } = useAppSelector(s => s.habit);
-
-  const total     = habitsForDate.length;
-  const completed = habitsForDate.filter(h => h.dayInfo.completed).length;
-  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+  // Subscribes to the derived figures rather than the whole habit slice, so a
+  // change to loading or error no longer re-renders this banner.
+  const { total, completed, percentage } = useAppSelector(selectDailyProgress);
 
   if (total === 0) return null;
 

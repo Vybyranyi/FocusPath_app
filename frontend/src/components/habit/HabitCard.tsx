@@ -3,14 +3,14 @@ import tick_success from '@assets/images/icons/tick_success.svg';
 import cross_red    from '@assets/images/icons/cross_red.svg';
 import { useSwipeable } from 'react-swipeable';
 import { useState, useRef, useEffect } from 'react';
-import type { habitForDate } from '@store/habitSlice';
+import type { HabitSummary } from '@shared/index';
 import { markHabitCompletion } from '@store/habitSlice';
 import { useAppDispatch } from '@store/hooks';
 import { motion, AnimatePresence } from 'framer-motion';
 import HabitDetailPopup from '@components/habit/HabitDetailPopup';
 
 interface IHabitCardProps {
-  habit: habitForDate;
+  habit: HabitSummary;
 }
 
 type Status = 'idle' | 'done' | 'failed';

@@ -3,7 +3,7 @@ import { render, type RenderOptions } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router";
 import { makeStore, type RootState } from "@store/store";
-import type { habitForDate } from "@store/habitSlice";
+import type { HabitSummary } from "@shared/index";
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, "wrapper"> {
   /** Slice state to start from. Anything omitted falls back to the slice's own initial state. */
@@ -44,9 +44,9 @@ export function renderWithProviders(
  * override only the fields a test actually reasons about, so the intent of each
  * case stays visible.
  */
-export const makeHabitForDate = (
-  overrides: Partial<habitForDate> = {},
-): habitForDate => ({
+export const makeHabitSummary = (
+  overrides: Partial<HabitSummary> = {},
+): HabitSummary => ({
   _id: "habit-1",
   title: "Read",
   startDate: "2025-01-06T00:00:00.000Z",
@@ -60,8 +60,24 @@ export const makeHabitForDate = (
   dayInfo: {
     _id: "day-1",
     dayTitle: "Read 10 pages",
-    date: new Date("2025-01-06T00:00:00.000Z"),
+    // A string, as it arrives over JSON — the old fixture used a Date, which
+    // no response has ever actually contained.
+    date: "2025-01-06T00:00:00.000Z",
     completed: false,
   },
   ...overrides,
+});
+
+/** Preloaded habit-slice state, so a test only spells out what it cares about. */
+export const habitState = (
+  overrides: Partial<RootState["habit"]> = {},
+): Pick<RootState, "habit"> => ({
+  habit: {
+    habits: [],
+    habitsForDate: [],
+    loading: false,
+    creating: null,
+    error: null,
+    ...overrides,
+  },
 });

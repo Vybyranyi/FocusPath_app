@@ -6,11 +6,11 @@ import cross_red from '@assets/images/icons/cross_red.svg';
 import tick_success from '@assets/images/icons/tick_success.svg';
 import { useAppDispatch } from '@store/hooks';
 import { toggleHabitStep, deleteHabit } from '@store/habitSlice';
-import type { habitForDate } from '@store/habitSlice';
+import type { HabitSummary } from '@shared/index';
 import { format, addDays } from 'date-fns';
 
 interface IHabitDetailPopupProps {
-  habit: habitForDate;
+  habit: HabitSummary;
   onClose: () => void;
 }
 
