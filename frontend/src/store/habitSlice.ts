@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { Habit } from "@shared/index";
 import type { IHabit } from "@pages/CreateHabit";
-import type { RootState } from "@store/store";
 import { apiRequest, errorMessage } from "@api/client";
 
 interface DayInfo {
@@ -48,8 +47,6 @@ const initialState: IHabitSlice = {
   error: null,
 };
 
-const tokenOf = (getState: () => unknown) => (getState() as RootState).auth.token;
-
 /** The form's shape, translated into what the API expects. */
 const toHabitBody = (habitData: IHabit, allowAutoDuration = false) => ({
   title: habitData.habitName.trim(),
@@ -65,12 +62,11 @@ const toHabitBody = (habitData: IHabit, allowAutoDuration = false) => ({
 
 export const createHabit = createAsyncThunk(
   "habit/createHabit",
-  async (habitData: IHabit, { getState, rejectWithValue }) => {
+  async (habitData: IHabit, { rejectWithValue }) => {
     try {
       return await apiRequest<{ habit: Habit }>("/habits/", {
         method: "POST",
         body: toHabitBody(habitData),
-        token: tokenOf(getState),
       });
     } catch (error) {
       return rejectWithValue(errorMessage(error));
@@ -80,12 +76,11 @@ export const createHabit = createAsyncThunk(
 
 export const createAIHabit = createAsyncThunk(
   "habit/createAIHabit",
-  async (habitData: IHabit, { getState, rejectWithValue }) => {
+  async (habitData: IHabit, { rejectWithValue }) => {
     try {
       return await apiRequest<{ habit: Habit }>("/habits/ai", {
         method: "POST",
         body: toHabitBody(habitData, true),
-        token: tokenOf(getState),
       });
     } catch (error) {
       return rejectWithValue(errorMessage(error));
@@ -95,12 +90,11 @@ export const createAIHabit = createAsyncThunk(
 
 export const getHabitsForDate = createAsyncThunk(
   "habit/getHabitsForDate",
-  async (date: string, { getState, rejectWithValue }) => {
+  async (date: string, { rejectWithValue }) => {
     try {
       const day = new Date(date).toISOString().split("T")[0];
       return await apiRequest<{ date: string; habits: habitForDate[] }>(
         `/habits/daily?date=${day}`,
-        { token: tokenOf(getState) },
       );
     } catch (error) {
       return rejectWithValue(errorMessage(error));
@@ -110,11 +104,9 @@ export const getHabitsForDate = createAsyncThunk(
 
 export const getAllHabits = createAsyncThunk(
   "habit/getAllHabits",
-  async (_, { getState, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      return await apiRequest<{ habits: Habit[] }>("/habits/", {
-        token: tokenOf(getState),
-      });
+      return await apiRequest<{ habits: Habit[] }>("/habits/");
     } catch (error) {
       return rejectWithValue(errorMessage(error));
     }
@@ -125,7 +117,7 @@ export const markHabitCompletion = createAsyncThunk(
   "habit/markHabitCompletion",
   async (
     { habitId, date, completed }: { habitId: string; date: Date | string; completed: boolean },
-    { getState, rejectWithValue },
+    { rejectWithValue },
   ) => {
     try {
       const { habit } = await apiRequest<{ habit: Habit }>(
@@ -133,7 +125,6 @@ export const markHabitCompletion = createAsyncThunk(
         {
           method: "PATCH",
           body: { date: new Date(date).toISOString(), completed },
-          token: tokenOf(getState),
         },
       );
       return { habitId, completed, updatedHabit: habit };
@@ -147,12 +138,12 @@ export const toggleHabitStep = createAsyncThunk(
   "habit/toggleHabitStep",
   async (
     { habitId, stepId }: { habitId: string; stepId: string },
-    { getState, rejectWithValue },
+    { rejectWithValue },
   ) => {
     try {
       const { completed } = await apiRequest<{ stepId: string; completed: boolean }>(
         `/habits/${habitId}/steps/${stepId}`,
-        { method: "PATCH", token: tokenOf(getState) },
+        { method: "PATCH" },
       );
       return { habitId, stepId, completed };
     } catch (error) {
@@ -163,11 +154,10 @@ export const toggleHabitStep = createAsyncThunk(
 
 export const deleteHabit = createAsyncThunk(
   "habit/deleteHabit",
-  async (habitId: string, { getState, rejectWithValue }) => {
+  async (habitId: string, { rejectWithValue }) => {
     try {
       await apiRequest<{ habitId: string }>(`/habits/${habitId}`, {
         method: "DELETE",
-        token: tokenOf(getState),
       });
       return habitId;
     } catch (error) {

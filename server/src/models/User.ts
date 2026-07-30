@@ -11,6 +11,19 @@ export interface IUser
     Omit<User, '_id' | 'birthday' | 'createdAt' | 'updatedAt'> {
     birthday: Date;
     password: string;
+    /**
+     * Bumped to invalidate every refresh token issued so far. Changing a
+     * password raises it, which ends other sessions instead of leaving them
+     * live for the rest of the token's lifetime.
+     */
+    tokenVersion: number;
+    /**
+     * Ids of the refresh tokens currently accepted, one per signed-in device.
+     * Rotation replaces an entry; logout removes one; changing a password
+     * empties the list. Without this, "rotation" would only mean issuing a new
+     * token while the old one stayed just as valid.
+     */
+    refreshSessions: string[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -25,6 +38,8 @@ const UserSchema: Schema = new Schema({
     // it — signing in and changing a password — ask for it with .select('+password').
     password: { type: String, required: true, minlength: 8, select: false },
     avatar: { type: String, required: false },
+    tokenVersion: { type: Number, default: 0 },
+    refreshSessions: { type: [String], default: [], select: false },
 }, { timestamps: true });
 
 // Strips the hash on the way out so no controller has to remember to, and drops
@@ -32,6 +47,8 @@ const UserSchema: Schema = new Schema({
 UserSchema.set('toJSON', {
     transform: (_doc, ret: Record<string, unknown>) => {
         delete ret.password;
+        delete ret.tokenVersion;
+        delete ret.refreshSessions;
         delete ret.__v;
         return ret;
     },

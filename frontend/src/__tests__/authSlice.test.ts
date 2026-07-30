@@ -1,10 +1,15 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import reducer, { logout, registerUser, loginUser, verifyToken } from '../store/authSlice';
-import type { IAuthSlice } from '../store/authSlice';
+import { describe, it, expect } from "vitest";
+import reducer, {
+  deleteAccount,
+  fetchCurrentUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+} from "../store/authSlice";
+import type { IAuthSlice } from "../store/authSlice";
 
 const initialState: IAuthSlice = {
   user: null,
-  token: null,
   loading: false,
   error: null,
 };
@@ -20,127 +25,129 @@ const mockUser = {
   updatedAt: "2020",
 };
 
-describe("authSlice", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
+const signedIn: IAuthSlice = { user: mockUser, loading: false, error: null };
 
-  it("should return initial state", () => {
+describe("authSlice", () => {
+  it("starts with nobody signed in", () => {
     expect(reducer(undefined, { type: "" })).toEqual(initialState);
   });
 
-  it("should handle logout", () => {
-    const prevState: IAuthSlice = {
-      user: mockUser,
-      token: "123",
-      loading: false,
-      error: null,
-    };
-
-    const state = reducer(prevState, logout());
-
-    expect(state.user).toBeNull();
-    expect(state.token).toBeNull();
-    expect(localStorage.getItem("token")).toBeNull();
-  });
-
-  // --- REGISTER ---
-  it("should handle registerUser.pending", () => {
-    const state = reducer(initialState, { type: registerUser.pending.type });
-    expect(state.loading).toBe(true);
-    expect(state.error).toBeNull();
-  });
-
-  it("should handle registerUser.fulfilled", () => {
-    const payload = { user: mockUser, token: "jwt_token" };
-
-    const state = reducer(initialState, {
-      type: registerUser.fulfilled.type,
-      payload,
-    });
-
-    expect(state.loading).toBe(false);
-    expect(state.user).toEqual(mockUser);
-    expect(state.token).toBe("jwt_token");
-    expect(localStorage.getItem("token")).toBe("jwt_token");
-  });
-
-  it("should handle registerUser.rejected", () => {
-    const state = reducer(initialState, {
-      type: registerUser.rejected.type,
-      payload: "Registration failed",
-    });
-
-    expect(state.loading).toBe(false);
-    expect(state.error).toBe("Registration failed");
-  });
-
-  // --- LOGIN ---
-  it("should handle loginUser.pending", () => {
-    const state = reducer(initialState, { type: loginUser.pending.type });
-    expect(state.loading).toBe(true);
-    expect(state.error).toBeNull();
-  });
-
-  it("should handle loginUser.fulfilled", () => {
-    const payload = { user: mockUser, token: "jwt_token" };
-
+  it("never stores a token, since the session is a cookie the page cannot read", () => {
     const state = reducer(initialState, {
       type: loginUser.fulfilled.type,
-      payload,
+      payload: { user: mockUser },
     });
 
-    expect(state.loading).toBe(false);
-    expect(state.user).toEqual(mockUser);
-    expect(state.token).toBe("jwt_token");
-    expect(localStorage.getItem("token")).toBe("jwt_token");
-  });
-
-  it("should handle loginUser.rejected", () => {
-    const state = reducer(initialState, {
-      type: loginUser.rejected.type,
-      payload: "Login failed",
-    });
-
-    expect(state.loading).toBe(false);
-    expect(state.error).toBe("Login failed");
-  });
-
-  // --- VERIFY TOKEN ---
-  it("should handle verifyToken.pending", () => {
-    const state = reducer(initialState, { type: verifyToken.pending.type });
-    expect(state.loading).toBe(true);
-    expect(state.error).toBeNull();
-  });
-
-  it("should handle verifyToken.fulfilled", () => {
-    const payload = { user: mockUser };
-
-    const state = reducer(initialState, {
-      type: verifyToken.fulfilled.type,
-      payload,
-    });
-
-    expect(state.loading).toBe(false);
-    expect(state.user).toEqual(mockUser);
-  });
-
-  it("should handle verifyToken.rejected", () => {
-    localStorage.setItem("token", "old_token");
-
-    const state = reducer(
-      { ...initialState, token: "old_token", user: mockUser },
-      {
-        type: verifyToken.rejected.type,
-        payload: "Token verification failed",
-      }
-    );
-
-    expect(state.loading).toBe(false);
-    expect(state.token).toBeNull();
-    expect(state.user).toBeNull();
-    expect(state.error).toBe("Token verification failed");
+    expect(state).not.toHaveProperty("token");
     expect(localStorage.getItem("token")).toBeNull();
   });
 
+  describe("registerUser", () => {
+    it("marks the request in flight and clears the last error", () => {
+      const state = reducer(
+        { ...initialState, error: "previous" },
+        { type: registerUser.pending.type },
+      );
+
+      expect(state.loading).toBe(true);
+      expect(state.error).toBeNull();
+    });
+
+    it("signs the new account in", () => {
+      const state = reducer(initialState, {
+        type: registerUser.fulfilled.type,
+        payload: { user: mockUser },
+      });
+
+      expect(state.loading).toBe(false);
+      expect(state.user).toEqual(mockUser);
+    });
+
+    it("surfaces the reason it failed", () => {
+      const state = reducer(initialState, {
+        type: registerUser.rejected.type,
+        payload: "User already exists",
+      });
+
+      expect(state.loading).toBe(false);
+      expect(state.error).toBe("User already exists");
+    });
+  });
+
+  describe("loginUser", () => {
+    it("signs the account in", () => {
+      const state = reducer(initialState, {
+        type: loginUser.fulfilled.type,
+        payload: { user: mockUser },
+      });
+
+      expect(state.user).toEqual(mockUser);
+    });
+
+    it("surfaces the reason it failed", () => {
+      const state = reducer(initialState, {
+        type: loginUser.rejected.type,
+        payload: "Invalid credentials",
+      });
+
+      expect(state.error).toBe("Invalid credentials");
+    });
+  });
+
+  describe("fetchCurrentUser", () => {
+    it("restores the session the cookies belong to", () => {
+      const state = reducer(initialState, {
+        type: fetchCurrentUser.fulfilled.type,
+        payload: { user: mockUser },
+      });
+
+      expect(state.user).toEqual(mockUser);
+    });
+
+    it("treats no session as ordinary rather than as an error to show", () => {
+      // Every visitor who has not signed in takes this path on first load;
+      // surfacing it would put a red message on the login screen for everyone.
+      const state = reducer(signedIn, {
+        type: fetchCurrentUser.rejected.type,
+        payload: "Not authenticated",
+      });
+
+      expect(state.user).toBeNull();
+      expect(state.error).toBeNull();
+    });
+  });
+
+  describe("logoutUser", () => {
+    it("signs out once the server confirms", () => {
+      const state = reducer(signedIn, { type: logoutUser.fulfilled.type });
+
+      expect(state.user).toBeNull();
+    });
+
+    it("signs out locally even if the request failed", () => {
+      // The cookies may survive, but keeping someone in the app after they
+      // asked to leave is the worse of the two outcomes.
+      const state = reducer(signedIn, { type: logoutUser.rejected.type });
+
+      expect(state.user).toBeNull();
+    });
+  });
+
+  describe("deleteAccount", () => {
+    it("clears the user once the account is gone", () => {
+      const state = reducer(signedIn, { type: deleteAccount.fulfilled.type });
+
+      expect(state.user).toBeNull();
+    });
+
+    it("keeps the user signed in when the password was wrong", () => {
+      const state = reducer(signedIn, {
+        type: deleteAccount.rejected.type,
+        payload: "Password is incorrect",
+      });
+
+      expect(state.user).toEqual(mockUser);
+      expect(state.error).toBe("Password is incorrect");
+    });
+  });
 });

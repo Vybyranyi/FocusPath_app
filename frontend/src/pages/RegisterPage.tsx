@@ -46,12 +46,12 @@ const initialValues: IinitialValues = {
 export default function RegisterPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { user, token, error, loading } = useAppSelector((state) => state.auth);
+  const { user, error, loading } = useAppSelector((state) => state.auth);
   const [step, setStep] = useState(1);
 
   useEffect(() => {
-    if (user && token) navigate("/main");
-  }, [user, token, navigate]);
+    if (user) navigate("/main");
+  }, [user, navigate]);
 
   const handleSubmit = async (values: IinitialValues) => {
     if (step === 1) {

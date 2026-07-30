@@ -15,11 +15,11 @@ const validationSchema = Yup.object({
 export default function LoginPage() {
   const navigate  = useNavigate();
   const dispatch  = useAppDispatch();
-  const { user, token, error, loading } = useAppSelector(state => state.auth);
+  const { user, error, loading } = useAppSelector(state => state.auth);
 
   useEffect(() => {
-    if (user && token) navigate('/main');
-  }, [user, token, navigate]);
+    if (user) navigate('/main');
+  }, [user, navigate]);
 
   return (
     /* Mobile: flex-col full height with fixed bottom button

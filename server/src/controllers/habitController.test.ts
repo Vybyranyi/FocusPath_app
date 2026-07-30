@@ -1,5 +1,4 @@
-import request from 'supertest';
-import app from '@app';
+import { signUp, type Client } from '../testUtils';
 
 /** Today at midnight UTC — the earliest start date a new habit is allowed. */
 const todayUtc = () => {
@@ -23,26 +22,12 @@ const validHabit = () => ({
     icon: 'books',
 });
 
-const registerUser = async (email: string): Promise<string> => {
-    const response = await request(app)
-        .post('/auth/')
-        .send({
-            name: 'Test',
-            surname: 'User',
-            birthday: '1990-01-01T00:00:00.000Z',
-            gender: 'male',
-            email,
-            password: 'password123',
-        })
-        .expect(201);
+/** A write as the real client makes it: session cookies plus the echoed CSRF value. */
+const write = (client: Client, method: 'post' | 'put' | 'patch' | 'delete', path: string) =>
+    client.agent[method](path).set('X-CSRF-Token', client.csrf);
 
-    return response.body.data.token;
-};
-
-const createHabit = async (token: string, overrides: Record<string, unknown> = {}) => {
-    const response = await request(app)
-        .post('/habits/')
-        .set('Authorization', `Bearer ${token}`)
+const createHabit = async (client: Client, overrides: Record<string, unknown> = {}) => {
+    const response = await write(client, 'post', '/habits/')
         .send({ ...validHabit(), ...overrides })
         .expect(201);
 
@@ -50,32 +35,32 @@ const createHabit = async (token: string, overrides: Record<string, unknown> = {
 };
 
 describe('Habit Controller', () => {
-    let token: string;
+    let client: Client;
 
     beforeEach(async () => {
-        token = await registerUser('owner@example.com');
+        client = await signUp();
     });
 
     describe('POST /habits/', () => {
         it('generates one scheduled day per day of the duration', async () => {
-            const habit = await createHabit(token, { duration: 7 });
+            const habit = await createHabit(client, { duration: 7 });
 
             expect(habit.dailyCompletions).toHaveLength(7);
-            expect(habit.dailyCompletions.every((day: { completed: boolean }) => !day.completed)).toBe(true);
+            expect(
+                habit.dailyCompletions.every((day: { completed: boolean }) => !day.completed),
+            ).toBe(true);
             expect(habit.currentStreak).toBe(0);
         });
 
         it('never exposes the owner link', async () => {
-            const habit = await createHabit(token);
+            const habit = await createHabit(client);
 
             expect(habit).not.toHaveProperty('userId');
             expect(habit).not.toHaveProperty('__v');
         });
 
         it('refuses a start date in the past', async () => {
-            const response = await request(app)
-                .post('/habits/')
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'post', '/habits/')
                 .send({ ...validHabit(), startDate: daysFromToday(-1) })
                 .expect(400);
 
@@ -85,9 +70,7 @@ describe('Habit Controller', () => {
         });
 
         it.each([0, 366, 1.5])('refuses a duration of %s', async duration => {
-            const response = await request(app)
-                .post('/habits/')
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'post', '/habits/')
                 .send({ ...validHabit(), duration })
                 .expect(400);
 
@@ -95,9 +78,7 @@ describe('Habit Controller', () => {
         });
 
         it('refuses a type outside the allowed set', async () => {
-            const response = await request(app)
-                .post('/habits/')
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'post', '/habits/')
                 .send({ ...validHabit(), type: 'sideways' })
                 .expect(400);
 
@@ -107,9 +88,7 @@ describe('Habit Controller', () => {
         });
 
         it('reports a failure inside a step at its own path', async () => {
-            const response = await request(app)
-                .post('/habits/')
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'post', '/habits/')
                 .send({ ...validHabit(), steps: [{ title: 'ok' }, { title: '' }] })
                 .expect(400);
 
@@ -118,45 +97,35 @@ describe('Habit Controller', () => {
             expect(response.body.error.details).toHaveProperty(['steps.1.title']);
         });
 
-        it('requires authentication', async () => {
-            await request(app).post('/habits/').send(validHabit()).expect(401);
+        it('requires a session', async () => {
+            const stranger = await signUp({ email: 'stranger@example.com' });
+            await write(stranger, 'post', '/auth/logout').expect(200);
+
+            await stranger.agent.post('/habits/').send(validHabit()).expect(401);
         });
     });
 
     describe('ownership', () => {
-        it('does not let one user read another user\'s habit', async () => {
-            const habit = await createHabit(token);
-            const otherToken = await registerUser('stranger@example.com');
+        it("does not let one user read another user's habit", async () => {
+            const habit = await createHabit(client);
+            const stranger = await signUp({ email: 'stranger@example.com' });
 
-            await request(app)
-                .get(`/habits/${habit._id}`)
-                .set('Authorization', `Bearer ${otherToken}`)
-                .expect(404);
+            await stranger.agent.get(`/habits/${habit._id}`).expect(404);
         });
 
-        it('does not let one user delete another user\'s habit', async () => {
-            const habit = await createHabit(token);
-            const otherToken = await registerUser('stranger@example.com');
+        it("does not let one user delete another user's habit", async () => {
+            const habit = await createHabit(client);
+            const stranger = await signUp({ email: 'stranger@example.com' });
 
-            await request(app)
-                .delete(`/habits/${habit._id}`)
-                .set('Authorization', `Bearer ${otherToken}`)
-                .expect(404);
-
-            await request(app)
-                .get(`/habits/${habit._id}`)
-                .set('Authorization', `Bearer ${token}`)
-                .expect(200);
+            await write(stranger, 'delete', `/habits/${habit._id}`).expect(404);
+            await client.agent.get(`/habits/${habit._id}`).expect(200);
         });
 
-        it('lists only the requesting user\'s habits', async () => {
-            await createHabit(token);
-            const otherToken = await registerUser('stranger@example.com');
+        it("lists only the requesting user's habits", async () => {
+            await createHabit(client);
+            const stranger = await signUp({ email: 'stranger@example.com' });
 
-            const response = await request(app)
-                .get('/habits/')
-                .set('Authorization', `Bearer ${otherToken}`)
-                .expect(200);
+            const response = await stranger.agent.get('/habits/').expect(200);
 
             expect(response.body.data.habits).toEqual([]);
         });
@@ -164,29 +133,22 @@ describe('Habit Controller', () => {
 
     describe('GET /habits/:id', () => {
         it('refuses an id that is not an ObjectId', async () => {
-            const response = await request(app)
-                .get('/habits/not-an-id')
-                .set('Authorization', `Bearer ${token}`)
-                .expect(400);
+            const response = await client.agent.get('/habits/not-an-id').expect(400);
 
             expect(response.body.error.details.id).toEqual(['Invalid habit ID']);
         });
 
         it('reports a well-formed id that matches nothing as not found', async () => {
-            await request(app)
-                .get('/habits/507f1f77bcf86cd799439011')
-                .set('Authorization', `Bearer ${token}`)
-                .expect(404);
+            await client.agent.get('/habits/507f1f77bcf86cd799439011').expect(404);
         });
     });
 
     describe('GET /habits/daily', () => {
         it('returns the entry for the requested day', async () => {
-            await createHabit(token, { duration: 3 });
+            await createHabit(client, { duration: 3 });
 
-            const response = await request(app)
+            const response = await client.agent
                 .get(`/habits/daily?date=${daysFromToday(0).slice(0, 10)}`)
-                .set('Authorization', `Bearer ${token}`)
                 .expect(200);
 
             expect(response.body.data.habits).toHaveLength(1);
@@ -195,20 +157,18 @@ describe('Habit Controller', () => {
         });
 
         it('omits habits whose schedule has not started', async () => {
-            await createHabit(token, { startDate: daysFromToday(5) });
+            await createHabit(client, { startDate: daysFromToday(5) });
 
-            const response = await request(app)
+            const response = await client.agent
                 .get(`/habits/daily?date=${daysFromToday(0).slice(0, 10)}`)
-                .set('Authorization', `Bearer ${token}`)
                 .expect(200);
 
             expect(response.body.data.habits).toEqual([]);
         });
 
         it('refuses a date it cannot parse', async () => {
-            const response = await request(app)
+            const response = await client.agent
                 .get('/habits/daily?date=not-a-date')
-                .set('Authorization', `Bearer ${token}`)
                 .expect(400);
 
             expect(response.body.error.details).toHaveProperty('date');
@@ -217,11 +177,9 @@ describe('Habit Controller', () => {
 
     describe('PATCH /habits/:id/complete', () => {
         it('marks a scheduled day and counts it', async () => {
-            const habit = await createHabit(token, { duration: 3 });
+            const habit = await createHabit(client, { duration: 3 });
 
-            const response = await request(app)
-                .patch(`/habits/${habit._id}/complete`)
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'patch', `/habits/${habit._id}/complete`)
                 .send({ date: daysFromToday(0), completed: true })
                 .expect(200);
 
@@ -232,11 +190,9 @@ describe('Habit Controller', () => {
         });
 
         it('refuses a day outside the schedule', async () => {
-            const habit = await createHabit(token, { duration: 3 });
+            const habit = await createHabit(client, { duration: 3 });
 
-            const response = await request(app)
-                .patch(`/habits/${habit._id}/complete`)
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'patch', `/habits/${habit._id}/complete`)
                 .send({ date: daysFromToday(30), completed: true })
                 .expect(400);
 
@@ -244,11 +200,9 @@ describe('Habit Controller', () => {
         });
 
         it('requires the completed flag', async () => {
-            const habit = await createHabit(token);
+            const habit = await createHabit(client);
 
-            const response = await request(app)
-                .patch(`/habits/${habit._id}/complete`)
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'patch', `/habits/${habit._id}/complete`)
                 .send({ date: daysFromToday(0) })
                 .expect(400);
 
@@ -256,20 +210,15 @@ describe('Habit Controller', () => {
         });
 
         it('marks the habit complete once every day is done', async () => {
-            const habit = await createHabit(token, { duration: 2 });
+            const habit = await createHabit(client, { duration: 2 });
 
             for (const offset of [0, 1]) {
-                await request(app)
-                    .patch(`/habits/${habit._id}/complete`)
-                    .set('Authorization', `Bearer ${token}`)
+                await write(client, 'patch', `/habits/${habit._id}/complete`)
                     .send({ date: daysFromToday(offset), completed: true })
                     .expect(200);
             }
 
-            const response = await request(app)
-                .get(`/habits/${habit._id}`)
-                .set('Authorization', `Bearer ${token}`)
-                .expect(200);
+            const response = await client.agent.get(`/habits/${habit._id}`).expect(200);
 
             expect(response.body.data.habit.isCompleted).toBe(true);
         });
@@ -279,23 +228,17 @@ describe('Habit Controller', () => {
         /** Marks the first `count` days of the plan as done. */
         const completeFirstDays = async (habitId: string, count: number) => {
             for (let offset = 0; offset < count; offset++) {
-                await request(app)
-                    .patch(`/habits/${habitId}/complete`)
-                    .set('Authorization', `Bearer ${token}`)
+                await write(client, 'patch', `/habits/${habitId}/complete`)
                     .send({ date: daysFromToday(offset), completed: true })
                     .expect(200);
             }
         };
 
         const update = (habitId: string, changes: Record<string, unknown>) =>
-            request(app)
-                .put(`/habits/${habitId}`)
-                .set('Authorization', `Bearer ${token}`)
-                .send(changes)
-                .expect(200);
+            write(client, 'put', `/habits/${habitId}`).send(changes).expect(200);
 
         it('rebuilds the plan when the duration is shortened', async () => {
-            const habit = await createHabit(token, { duration: 5 });
+            const habit = await createHabit(client, { duration: 5 });
             await completeFirstDays(habit._id, 2);
 
             const response = await update(habit._id, { duration: 3 });
@@ -311,7 +254,7 @@ describe('Habit Controller', () => {
         });
 
         it('rebuilds the plan when the duration is extended', async () => {
-            const habit = await createHabit(token, { duration: 3 });
+            const habit = await createHabit(client, { duration: 3 });
             await completeFirstDays(habit._id, 1);
 
             const response = await update(habit._id, { duration: 6 });
@@ -322,7 +265,7 @@ describe('Habit Controller', () => {
         });
 
         it('shifts every scheduled date when the start moves, keeping progress', async () => {
-            const habit = await createHabit(token, { duration: 3 });
+            const habit = await createHabit(client, { duration: 3 });
             await completeFirstDays(habit._id, 1);
 
             const response = await update(habit._id, { startDate: daysFromToday(10) });
@@ -337,7 +280,7 @@ describe('Habit Controller', () => {
         });
 
         it('leaves the plan alone when neither the start nor the length changes', async () => {
-            const habit = await createHabit(token, { duration: 4 });
+            const habit = await createHabit(client, { duration: 4 });
             await completeFirstDays(habit._id, 2);
 
             const response = await update(habit._id, { title: 'Renamed' });
@@ -348,11 +291,9 @@ describe('Habit Controller', () => {
         });
 
         it('refuses an update that changes nothing', async () => {
-            const habit = await createHabit(token);
+            const habit = await createHabit(client);
 
-            const response = await request(app)
-                .put(`/habits/${habit._id}`)
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'put', `/habits/${habit._id}`)
                 .send({})
                 .expect(400);
 
@@ -362,11 +303,9 @@ describe('Habit Controller', () => {
 
     describe('streak', () => {
         it('counts a day completed today', async () => {
-            const habit = await createHabit(token, { duration: 3 });
+            const habit = await createHabit(client, { duration: 3 });
 
-            const response = await request(app)
-                .patch(`/habits/${habit._id}/complete`)
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'patch', `/habits/${habit._id}/complete`)
                 .send({ date: daysFromToday(0), completed: true })
                 .expect(200);
 
@@ -374,11 +313,9 @@ describe('Habit Controller', () => {
         });
 
         it('does not count a day of the plan that today has not reached', async () => {
-            const habit = await createHabit(token, { duration: 5 });
+            const habit = await createHabit(client, { duration: 5 });
 
-            const response = await request(app)
-                .patch(`/habits/${habit._id}/complete`)
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'patch', `/habits/${habit._id}/complete`)
                 .send({ date: daysFromToday(3), completed: true })
                 .expect(200);
 
@@ -386,17 +323,13 @@ describe('Habit Controller', () => {
         });
 
         it('drops back when a completion is undone', async () => {
-            const habit = await createHabit(token, { duration: 3 });
+            const habit = await createHabit(client, { duration: 3 });
 
-            await request(app)
-                .patch(`/habits/${habit._id}/complete`)
-                .set('Authorization', `Bearer ${token}`)
+            await write(client, 'patch', `/habits/${habit._id}/complete`)
                 .send({ date: daysFromToday(0), completed: true })
                 .expect(200);
 
-            const response = await request(app)
-                .patch(`/habits/${habit._id}/complete`)
-                .set('Authorization', `Bearer ${token}`)
+            const response = await write(client, 'patch', `/habits/${habit._id}/complete`)
                 .send({ date: daysFromToday(0), completed: false })
                 .expect(200);
 
@@ -406,49 +339,44 @@ describe('Habit Controller', () => {
 
     describe('PATCH /habits/:id/steps/:stepId', () => {
         it('flips a step and reports its new state', async () => {
-            const habit = await createHabit(token, {
-                steps: [{ title: 'Open the book' }],
-            });
+            const habit = await createHabit(client, { steps: [{ title: 'Open the book' }] });
             const stepId = habit.steps[0]._id;
 
-            const first = await request(app)
-                .patch(`/habits/${habit._id}/steps/${stepId}`)
-                .set('Authorization', `Bearer ${token}`)
-                .expect(200);
+            const first = await write(
+                client,
+                'patch',
+                `/habits/${habit._id}/steps/${stepId}`,
+            ).expect(200);
             expect(first.body.data.completed).toBe(true);
 
-            const second = await request(app)
-                .patch(`/habits/${habit._id}/steps/${stepId}`)
-                .set('Authorization', `Bearer ${token}`)
-                .expect(200);
+            const second = await write(
+                client,
+                'patch',
+                `/habits/${habit._id}/steps/${stepId}`,
+            ).expect(200);
             expect(second.body.data.completed).toBe(false);
         });
 
         it('reports a step that does not belong to the habit as not found', async () => {
-            const habit = await createHabit(token);
+            const habit = await createHabit(client);
 
-            await request(app)
-                .patch(`/habits/${habit._id}/steps/507f1f77bcf86cd799439011`)
-                .set('Authorization', `Bearer ${token}`)
-                .expect(404);
+            await write(
+                client,
+                'patch',
+                `/habits/${habit._id}/steps/507f1f77bcf86cd799439011`,
+            ).expect(404);
         });
     });
 
     describe('DELETE /habits/:id', () => {
         it('removes the habit and returns its id', async () => {
-            const habit = await createHabit(token);
+            const habit = await createHabit(client);
 
-            const response = await request(app)
-                .delete(`/habits/${habit._id}`)
-                .set('Authorization', `Bearer ${token}`)
-                .expect(200);
+            const response = await write(client, 'delete', `/habits/${habit._id}`).expect(200);
 
             expect(response.body.data.habitId).toBe(habit._id);
 
-            await request(app)
-                .get(`/habits/${habit._id}`)
-                .set('Authorization', `Bearer ${token}`)
-                .expect(404);
+            await client.agent.get(`/habits/${habit._id}`).expect(404);
         });
     });
 });

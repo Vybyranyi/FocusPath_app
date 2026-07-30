@@ -1,21 +1,13 @@
 import request from 'supertest';
 import app from '@app';
 import User from '@models/User';
-
-const validUser = {
-    name: 'Test',
-    surname: 'User',
-    birthday: '1990-01-01T00:00:00.000Z',
-    gender: 'male',
-    email: 'testuser@example.com',
-    password: 'password123',
-};
+import { signUp, validUser } from './testUtils';
 
 describe('Application hardening', () => {
 
     describe('security headers', () => {
         it('sets helmet defaults on responses', async () => {
-            const response = await request(app).get('/auth/token');
+            const response = await request(app).get('/auth/me');
 
             expect(response.headers['x-content-type-options']).toBe('nosniff');
             expect(response.headers['x-frame-options']).toBe('SAMEORIGIN');
@@ -24,7 +16,7 @@ describe('Application hardening', () => {
         });
 
         it('allows the API to be read cross-origin', async () => {
-            const response = await request(app).get('/auth/token');
+            const response = await request(app).get('/auth/me');
 
             expect(response.headers['cross-origin-resource-policy']).toBe('cross-origin');
         });
@@ -33,7 +25,7 @@ describe('Application hardening', () => {
     describe('CORS', () => {
         it('accepts an origin on the allowlist', async () => {
             const response = await request(app)
-                .get('/auth/token')
+                .get('/auth/me')
                 .set('Origin', 'http://localhost:5173');
 
             expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5173');
@@ -42,7 +34,7 @@ describe('Application hardening', () => {
 
         it('withholds CORS headers from an origin that is not allowed', async () => {
             const response = await request(app)
-                .get('/auth/token')
+                .get('/auth/me')
                 .set('Origin', 'https://evil.example.com');
 
             expect(response.headers).not.toHaveProperty('access-control-allow-origin');
@@ -51,7 +43,7 @@ describe('Application hardening', () => {
         it('does not gate callers that send no Origin at all', async () => {
             // curl, health checks and server-to-server calls are not browser
             // cross-origin requests and have no Origin to check.
-            const response = await request(app).get('/auth/token');
+            const response = await request(app).get('/auth/me');
 
             expect(response.status).toBe(401);
         });
@@ -72,7 +64,7 @@ describe('Application hardening', () => {
     describe('request body limits', () => {
         it('rejects a body beyond the configured limit', async () => {
             const response = await request(app)
-                .post('/auth/')
+                .post('/auth/register')
                 .set('Content-Type', 'application/json')
                 .send(JSON.stringify({ ...validUser, note: 'x'.repeat(3 * 1024 * 1024) }))
                 .expect(413);
@@ -82,7 +74,7 @@ describe('Application hardening', () => {
 
         it('reports malformed JSON as a bad request rather than a crash', async () => {
             const response = await request(app)
-                .post('/auth/')
+                .post('/auth/register')
                 .set('Content-Type', 'application/json')
                 .send('{"email": ')
                 .expect(400);
@@ -93,12 +85,12 @@ describe('Application hardening', () => {
 
     describe('NoSQL injection', () => {
         beforeEach(async () => {
-            await request(app).post('/auth/').send(validUser).expect(201);
+            await request(app).post('/auth/register').send(validUser).expect(201);
         });
 
         it('does not let an operator object stand in for an email at login', async () => {
             const response = await request(app)
-                .post('/auth/token')
+                .post('/auth/login')
                 .send({ email: { $ne: null }, password: 'password123' })
                 .expect(400);
 
@@ -109,7 +101,7 @@ describe('Application hardening', () => {
 
         it('does not let an operator object bypass the duplicate-email check', async () => {
             const response = await request(app)
-                .post('/auth/')
+                .post('/auth/register')
                 .send({ ...validUser, email: { $ne: null } })
                 .expect(400);
 
@@ -120,7 +112,7 @@ describe('Application hardening', () => {
 
     describe('password storage', () => {
         it('leaves the hash out of ordinary queries', async () => {
-            await request(app).post('/auth/').send(validUser).expect(201);
+            await request(app).post('/auth/register').send(validUser).expect(201);
 
             const user = await User.findOne({ email: validUser.email });
 
@@ -129,7 +121,7 @@ describe('Application hardening', () => {
         });
 
         it('still returns the hash when a caller explicitly asks for it', async () => {
-            await request(app).post('/auth/').send(validUser).expect(201);
+            await request(app).post('/auth/register').send(validUser).expect(201);
 
             const user = await User.findOne({ email: validUser.email }).select('+password');
 
@@ -139,7 +131,7 @@ describe('Application hardening', () => {
 
         it('rejects a password longer than bcrypt can hash', async () => {
             const response = await request(app)
-                .post('/auth/')
+                .post('/auth/register')
                 .send({ ...validUser, password: 'a'.repeat(73) })
                 .expect(400);
 
@@ -152,7 +144,7 @@ describe('Application hardening', () => {
     describe('mass assignment', () => {
         it('ignores schema fields the caller was not invited to set', async () => {
             const response = await request(app)
-                .post('/auth/')
+                .post('/auth/register')
                 .send({ ...validUser, avatar: 'data:image/png;base64,AAAA' })
                 .expect(201);
 
@@ -164,17 +156,16 @@ describe('Application hardening', () => {
     });
 
     describe('avatar uploads', () => {
-        let token: string;
+        let client: Awaited<ReturnType<typeof signUp>>;
 
         beforeEach(async () => {
-            const res = await request(app).post('/auth/').send(validUser).expect(201);
-            token = res.body.data.token;
+            client = await signUp();
         });
 
         it('accepts a png data URI', async () => {
-            const response = await request(app)
+            const response = await client.agent
                 .patch('/auth/profile')
-                .set('Authorization', `Bearer ${token}`)
+                .set('X-CSRF-Token', client.csrf)
                 .send({ avatar: 'data:image/png;base64,iVBORw0KGgo=' })
                 .expect(200);
 
@@ -182,9 +173,9 @@ describe('Application hardening', () => {
         });
 
         it('rejects a payload that is not an image data URI', async () => {
-            const response = await request(app)
+            const response = await client.agent
                 .patch('/auth/profile')
-                .set('Authorization', `Bearer ${token}`)
+                .set('X-CSRF-Token', client.csrf)
                 .send({ avatar: 'https://example.com/avatar.png' })
                 .expect(400);
 
@@ -194,9 +185,9 @@ describe('Application hardening', () => {
         });
 
         it('rejects an svg data URI, which can carry script', async () => {
-            const response = await request(app)
+            const response = await client.agent
                 .patch('/auth/profile')
-                .set('Authorization', `Bearer ${token}`)
+                .set('X-CSRF-Token', client.csrf)
                 .send({ avatar: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' })
                 .expect(400);
 

@@ -1,29 +1,25 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { User } from "@shared/index";
 import { apiRequest, errorMessage } from "@api/client";
-import type { RootState } from "@store/store";
 
 export interface IAuthSlice {
     user: User | null;
-    token: string | null;
     loading: boolean,
     error: string | null,
 }
 
+// No token anywhere in this slice. The session lives in httpOnly cookies the
+// browser attaches on its own, which is what keeps it out of reach of any
+// script — including one injected into this page.
 const initialState: IAuthSlice = {
     user: null,
-    token: localStorage.getItem("token") || null,
     loading: false,
     error: null,
 }
 
-/** What the credential endpoints hand back. */
-interface Session {
-    token: string;
+interface UserResponse {
     user: User;
 }
-
-const tokenOf = (getState: () => unknown) => (getState() as RootState).auth.token;
 
 export const registerUser = createAsyncThunk(
     "auth/registerUser",
@@ -39,7 +35,10 @@ export const registerUser = createAsyncThunk(
         { rejectWithValue },
     ) => {
         try {
-            return await apiRequest<Session>("/auth/", { method: "POST", body: userData });
+            return await apiRequest<UserResponse>("/auth/register", {
+                method: "POST",
+                body: userData,
+            });
         } catch (error) {
             return rejectWithValue(errorMessage(error));
         }
@@ -50,7 +49,26 @@ export const loginUser = createAsyncThunk(
     "auth/loginUser",
     async (userData: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            return await apiRequest<Session>("/auth/token", { method: "POST", body: userData });
+            return await apiRequest<UserResponse>("/auth/login", {
+                method: "POST",
+                body: userData,
+            });
+        } catch (error) {
+            return rejectWithValue(errorMessage(error));
+        }
+    },
+);
+
+/**
+ * Restores the session on load. The cookies are already in the browser, so this
+ * only asks who they belong to; the client renews an expired access cookie on
+ * its own before this ever sees a 401.
+ */
+export const fetchCurrentUser = createAsyncThunk(
+    "auth/fetchCurrentUser",
+    async (_, { rejectWithValue }) => {
+        try {
+            return await apiRequest<UserResponse>("/auth/me");
         } catch (error) {
             return rejectWithValue(errorMessage(error));
         }
@@ -68,13 +86,12 @@ export const updateProfile = createAsyncThunk(
             email: string;
             avatar?: string;
         },
-        { getState, rejectWithValue },
+        { rejectWithValue },
     ) => {
         try {
-            return await apiRequest<{ user: User }>("/auth/profile", {
+            return await apiRequest<UserResponse>("/auth/profile", {
                 method: "PATCH",
                 body: data,
-                token: tokenOf(getState),
             });
         } catch (error) {
             return rejectWithValue(errorMessage(error));
@@ -84,15 +101,11 @@ export const updateProfile = createAsyncThunk(
 
 export const changePassword = createAsyncThunk(
     "auth/changePassword",
-    async (
-        data: { currentPassword: string; newPassword: string },
-        { getState, rejectWithValue },
-    ) => {
+    async (data: { currentPassword: string; newPassword: string }, { rejectWithValue }) => {
         try {
             return await apiRequest<null>("/auth/password", {
                 method: "PATCH",
                 body: data,
-                token: tokenOf(getState),
             });
         } catch (error) {
             return rejectWithValue(errorMessage(error));
@@ -102,11 +115,11 @@ export const changePassword = createAsyncThunk(
 
 export const deleteAccount = createAsyncThunk(
     "auth/deleteAccount",
-    async (_, { getState, rejectWithValue }) => {
+    async (data: { password: string }, { rejectWithValue }) => {
         try {
-            return await apiRequest<null>("/auth/", {
+            return await apiRequest<null>("/auth/account", {
                 method: "DELETE",
-                token: tokenOf(getState),
+                body: data,
             });
         } catch (error) {
             return rejectWithValue(errorMessage(error));
@@ -114,15 +127,12 @@ export const deleteAccount = createAsyncThunk(
     },
 );
 
-export const verifyToken = createAsyncThunk(
-    "auth/verifyToken",
+/** Signing out has to reach the server: only it can clear an httpOnly cookie. */
+export const logoutUser = createAsyncThunk(
+    "auth/logoutUser",
     async (_, { rejectWithValue }) => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            return rejectWithValue("No token found");
-        }
         try {
-            return await apiRequest<{ user: User }>("/auth/token", { token });
+            return await apiRequest<null>("/auth/logout", { method: "POST" });
         } catch (error) {
             return rejectWithValue(errorMessage(error));
         }
@@ -132,13 +142,7 @@ export const verifyToken = createAsyncThunk(
 const authSlice = createSlice({
     name: "auth",
     initialState,
-    reducers: {
-        logout: (state) => {
-            state.user = null;
-            state.token = null;
-            localStorage.removeItem("token");
-        },
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder
             .addCase(registerUser.pending, (state) => {
@@ -148,8 +152,6 @@ const authSlice = createSlice({
             .addCase(registerUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token;
-                localStorage.setItem("token", action.payload.token);
             })
             .addCase(registerUser.rejected, (state, action) => {
                 state.loading = false;
@@ -164,12 +166,27 @@ const authSlice = createSlice({
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.user;
-                state.token = action.payload.token;
-                localStorage.setItem("token", action.payload.token);
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+            });
+
+        builder
+            .addCase(fetchCurrentUser.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+            })
+            .addCase(fetchCurrentUser.rejected, (state) => {
+                state.loading = false;
+                state.user = null;
+                // Not an error worth showing: arriving without a session is the
+                // normal state of a visitor who has not signed in.
+                state.error = null;
             });
 
         builder
@@ -207,8 +224,6 @@ const authSlice = createSlice({
             .addCase(deleteAccount.fulfilled, (state) => {
                 state.loading = false;
                 state.user = null;
-                state.token = null;
-                localStorage.removeItem("token");
             })
             .addCase(deleteAccount.rejected, (state, action) => {
                 state.loading = false;
@@ -216,23 +231,21 @@ const authSlice = createSlice({
             });
 
         builder
-            .addCase(verifyToken.pending, (state) => {
+            .addCase(logoutUser.pending, (state) => {
                 state.loading = true;
+            })
+            // Signed out locally either way: if the call failed, the cookies may
+            // still be there, but keeping the user in the app would be worse.
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.loading = false;
+                state.user = null;
                 state.error = null;
             })
-            .addCase(verifyToken.fulfilled, (state, action) => {
+            .addCase(logoutUser.rejected, (state) => {
                 state.loading = false;
-                state.user = action.payload.user;
-            })
-            .addCase(verifyToken.rejected, (state, action) => {
-                state.loading = false;
-                state.token = null;
                 state.user = null;
-                state.error = action.payload as string;
-                localStorage.removeItem("token");
             });
     },
 });
 
-export const { logout } = authSlice.actions;
 export default authSlice.reducer;

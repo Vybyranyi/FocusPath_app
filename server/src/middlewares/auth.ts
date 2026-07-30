@@ -1,37 +1,23 @@
-import { Request, Response, NextFunction } from "express";
-import jwt, { type JwtPayload } from "jsonwebtoken";
+import type { NextFunction, Request, Response } from "express";
+import { ACCESS_COOKIE } from "@config/auth";
 import { UnauthorizedError } from "@errors/AppError";
-
-const jwtSecret = process.env.JWT_SECRET as string;
-
-const BEARER_PREFIX = "Bearer ";
-
-interface AccessTokenPayload extends JwtPayload {
-    id: string;
-}
+import { verifyAccessToken } from "@utils/tokens";
 
 /**
- * Verifies synchronously and lets the throw travel: Express routes it to the
- * error handler, which turns a bad signature into a 401 and an expired token
- * into its own code so the client knows to refresh rather than to sign in again.
+ * Reads the session from the httpOnly access cookie.
+ *
+ * Verification is synchronous and the throw is left to travel: Express routes
+ * it to the error handler, which turns a bad signature into a 401 and an
+ * expired token into its own code, so the client knows to refresh rather than
+ * to send the user back to the sign-in screen.
  */
 export const verifyTokenMiddleware = (req: Request, _res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
+    const token = req.cookies?.[ACCESS_COOKIE];
 
-    if (!authHeader?.startsWith(BEARER_PREFIX)) {
-        throw new UnauthorizedError("No token provided");
-    }
-
-    const token = authHeader.slice(BEARER_PREFIX.length).trim();
     if (!token) {
-        throw new UnauthorizedError("No token provided");
+        throw new UnauthorizedError("Not authenticated");
     }
 
-    const decoded = jwt.verify(token, jwtSecret) as AccessTokenPayload;
-    if (!decoded.id) {
-        throw new UnauthorizedError("Invalid token");
-    }
-
-    req.userId = decoded.id;
+    req.userId = verifyAccessToken(token).userId;
     next();
 };

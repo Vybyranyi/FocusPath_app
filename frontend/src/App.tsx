@@ -1,5 +1,5 @@
 // Global styles are in src/index.css
-import { verifyToken } from "@store/authSlice";
+import { fetchCurrentUser } from "@store/authSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useEffect, useState, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router";
@@ -15,27 +15,14 @@ import ProtectedRoute from "@components/layout/ProtectedRoute";
 
 function App() {
   const dispatch = useAppDispatch();
-  const { user, token, loading } = useAppSelector((state) => state.auth);
+  const { user, loading } = useAppSelector((state) => state.auth);
   const [isAppReady, setIsAppReady] = useState(false);
 
   useEffect(() => {
-    const initializeApp = async () => {
-      const storedToken = localStorage.getItem("token");
-
-      if (storedToken) {
-        try {
-          await dispatch(verifyToken()).unwrap();
-        } catch (error) {
-          console.log("Token verification failed:", error);
-        }
-      }
-
-      setTimeout(() => {
-        setIsAppReady(true);
-      }, 100);
-    };
-
-    initializeApp();
+    // The session lives in cookies the browser sends on its own, so there is
+    // nothing to read locally — just ask who they belong to. A visitor with no
+    // session gets a rejection, which is the normal path, not a failure.
+    dispatch(fetchCurrentUser()).finally(() => setIsAppReady(true));
   }, [dispatch]);
 
   if (!isAppReady || (loading && !user)) {
@@ -83,7 +70,7 @@ function App() {
           <Route
             path="*"
             element={
-              user && token ? (
+              user ? (
                 <Navigate to="/main" replace />
               ) : (
                 <Navigate to="/login" replace />

@@ -65,6 +65,11 @@ export const updateProfileSchema = z
     );
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
 
+export const deleteAccountSchema = z.object({
+    password: z.string('Password is required').min(1, 'Password is required'),
+});
+export type DeleteAccountDto = z.infer<typeof deleteAccountSchema>;
+
 export const changePasswordSchema = z.object({
     currentPassword: z.string('Current password is required').min(1, 'Current password is required'),
     newPassword: password,

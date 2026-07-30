@@ -2,6 +2,12 @@ import type { ApiResponse } from "@shared/index";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+/** Readable on purpose so it can be echoed back in a header the server checks. */
+const CSRF_COOKIE = "csrf_token";
+const CSRF_HEADER = "X-CSRF-Token";
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
 /**
  * A failure the server described, or one this client could not get past.
  *
@@ -32,35 +38,67 @@ export class ApiError extends Error {
 export interface RequestOptions {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
-  token?: string | null;
   signal?: AbortSignal;
 }
+
+const readCookie = (name: string): string | null => {
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
 
 const isEnvelope = <T>(value: unknown): value is ApiResponse<T> =>
   typeof value === "object" && value !== null && "success" in value;
 
-/**
- * The single path to the API.
- *
- * Unwraps the success envelope so callers receive the payload itself, and
- * funnels every way a request can fail — transport, unreadable body, or a
- * failure the server described — into one ApiError.
- */
-export async function apiRequest<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<T> {
-  const { method = "GET", body, token, signal } = options;
+let refreshInFlight: Promise<void> | null = null;
 
-  const headers: Record<string, string> = {};
+/**
+ * Trades the refresh cookie for a new session.
+ *
+ * Shared between callers on purpose: the server rotates the refresh token on
+ * every use, so two refreshes racing would leave the loser holding a token that
+ * has already been spent. Everyone waits on the same attempt instead.
+ */
+const refreshSession = (): Promise<void> => {
+  refreshInFlight ??= fetch(`${API_URL}/auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+    headers: csrfHeaders("POST"),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new ApiError("UNAUTHORIZED", "Session expired", response.status);
+      }
+    })
+    .finally(() => {
+      refreshInFlight = null;
+    });
+
+  return refreshInFlight;
+};
+
+const csrfHeaders = (method: string): Record<string, string> => {
+  if (SAFE_METHODS.has(method)) return {};
+  const token = readCookie(CSRF_COOKIE);
+  return token ? { [CSRF_HEADER]: token } : {};
+};
+
+async function send<T>(
+  path: string,
+  options: RequestOptions,
+  mayRetry: boolean,
+): Promise<T> {
+  const { method = "GET", body, signal } = options;
+
+  const headers: Record<string, string> = { ...csrfHeaders(method) };
   if (body !== undefined) headers["Content-Type"] = "application/json";
-  if (token) headers.Authorization = `Bearer ${token}`;
 
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
       method,
       headers,
+      // The session lives in httpOnly cookies, so every call has to carry them.
+      credentials: "include",
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
     });
@@ -92,16 +130,37 @@ export async function apiRequest<T>(
   }
 
   if (!payload.success) {
-    throw new ApiError(
+    const failure = new ApiError(
       payload.error.code,
       payload.error.message,
       response.status,
       payload.error.details,
     );
+
+    // A 401 usually means the short-lived access cookie aged out while the
+    // refresh cookie is still good. Renew once and replay, so the user never
+    // sees a session that quietly expired underneath them.
+    if (response.status === 401 && mayRetry && !path.startsWith("/auth/refresh")) {
+      try {
+        await refreshSession();
+      } catch {
+        throw failure;
+      }
+      return send<T>(path, options, false);
+    }
+
+    throw failure;
   }
 
   return payload.data;
 }
+
+/**
+ * The single path to the API. Unwraps the success envelope so callers receive
+ * the payload itself, and funnels every way a request can fail into one ApiError.
+ */
+export const apiRequest = <T>(path: string, options: RequestOptions = {}): Promise<T> =>
+  send<T>(path, options, true);
 
 /** A message worth showing a user, whatever actually went wrong. */
 export const errorMessage = (error: unknown): string =>
