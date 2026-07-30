@@ -21,6 +21,7 @@
       "@routes/*": ["routes/*"],
       "@utils/*": ["utils/*"],
       "@services/*": ["services/*"],
+      "@errors/*": ["errors/*"],
       "@shared/*": ["../../shared/src/*"]
     }
   },

@@ -1,10 +1,13 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import pinoHttp from "pino-http";
 import authRoutes from "@routes/authRoutes";
 import habitRoutes from "@routes/habitRouter";
 import { corsOptions } from "@config/cors";
+import { logger } from "@config/logger";
 import { apiLimiter } from "@middlewares/rateLimit";
+import { errorHandler, notFoundHandler } from "@middlewares/errorHandler";
 // Imported for its side effect: applies mongoose-wide query hardening.
 import "@config/mongoose";
 
@@ -14,6 +17,7 @@ const app = express();
 // to the rate limiters as the proxy's address and be throttled as one visitor.
 app.set("trust proxy", 1);
 
+app.use(pinoHttp({ logger }));
 app.use(
     helmet({
         // A cross-origin JSON API by design — the browser app is served from a
@@ -31,8 +35,9 @@ app.use(apiLimiter);
 app.use("/auth", authRoutes);
 app.use("/habits", habitRoutes);
 
-app.use((_req, res) => {
-    res.status(404).json({ message: "Not found" });
-});
+// Both must stay last, and in this order: unmatched requests become a
+// NotFoundError, which the error handler then renders like any other failure.
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

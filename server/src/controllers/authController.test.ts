@@ -5,7 +5,8 @@ import mongoose from 'mongoose';
 
 // Route paths follow authRoutes.ts: registration is POST /auth/, and the token
 // is treated as a resource — POST /auth/token to mint one, GET /auth/token to
-// validate it.
+// validate it. Every response travels in the {success, data} / {success, error}
+// envelope, so assertions read through one of those two branches.
 
 const validUser = {
     name: 'Test',
@@ -25,9 +26,9 @@ describe('Auth Controller', () => {
                 .send(validUser)
                 .expect(201);
 
-            expect(response.body.message).toBe('User registered successfully');
-            expect(response.body).toHaveProperty('token');
-            expect(response.body.user.email).toBe(validUser.email);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data).toHaveProperty('token');
+            expect(response.body.data.user.email).toBe(validUser.email);
 
             const user = await User.findOne({ email: validUser.email });
             expect(user).not.toBeNull();
@@ -40,7 +41,7 @@ describe('Auth Controller', () => {
                 .send(validUser)
                 .expect(201);
 
-            expect(response.body.user).not.toHaveProperty('password');
+            expect(response.body.data.user).not.toHaveProperty('password');
         });
 
         it('should return 400 if required fields are missing', async () => {
@@ -51,18 +52,21 @@ describe('Auth Controller', () => {
                 .send(incompleteData)
                 .expect(400);
 
-            expect(response.body.message).toBe('All fields are required');
+            expect(response.body.success).toBe(false);
+            expect(response.body.error.code).toBe('BAD_REQUEST');
+            expect(response.body.error.message).toBe('All fields are required');
         });
 
-        it('should return 400 if user with email already exists', async () => {
+        it('should return 409 if user with email already exists', async () => {
             await request(app).post('/auth/').send(validUser).expect(201);
 
             const response = await request(app)
                 .post('/auth/')
                 .send(validUser)
-                .expect(400);
+                .expect(409);
 
-            expect(response.body.message).toBe('User already exists');
+            expect(response.body.error.code).toBe('CONFLICT');
+            expect(response.body.error.message).toBe('User already exists');
         });
 
         it('should return 400 if password is less than 8 characters', async () => {
@@ -71,10 +75,10 @@ describe('Auth Controller', () => {
                 .send({ ...validUser, password: 'pass' })
                 .expect(400);
 
-            expect(response.body.message).toBe('Password must be at least 8 characters long');
+            expect(response.body.error.message).toBe('Password must be at least 8 characters long');
         });
 
-        it('should return 400 for a Mongoose validation error', async () => {
+        it('should report a Mongoose validation error field by field', async () => {
             const mockValidationError = new mongoose.Error.ValidationError();
             mockValidationError.errors = {
                 gender: new mongoose.Error.ValidatorError({
@@ -93,13 +97,14 @@ describe('Auth Controller', () => {
                 .send({ ...validUser, gender: 'invalid' })
                 .expect(400);
 
-            expect(response.body.message).toBe('Validation error');
-            expect(response.body).toHaveProperty('errors');
+            expect(response.body.error.code).toBe('VALIDATION_ERROR');
+            // Only the messages travel — not Mongoose's internal validator state.
+            expect(response.body.error.details).toEqual({ gender: ['Gender is not valid'] });
 
             jest.restoreAllMocks();
         });
 
-        it('should return 500 for a general server error', async () => {
+        it('should keep the detail of an unexpected failure out of the response', async () => {
             jest.spyOn(User, 'findOne').mockImplementationOnce(() => {
                 throw new Error('Simulated database connection error');
             });
@@ -109,7 +114,9 @@ describe('Auth Controller', () => {
                 .send(validUser)
                 .expect(500);
 
-            expect(response.body.message).toBe('Server error during registration');
+            expect(response.body.error.code).toBe('INTERNAL_ERROR');
+            expect(response.body.error.message).toBe('Something went wrong on our side');
+            expect(JSON.stringify(response.body)).not.toContain('Simulated database');
 
             jest.restoreAllMocks();
         });
@@ -124,10 +131,10 @@ describe('Auth Controller', () => {
                 .send({ email: validUser.email, password: validUser.password })
                 .expect(200);
 
-            expect(response.body.message).toBe('Login successful');
-            expect(response.body).toHaveProperty('token');
-            expect(response.body.user.email).toBe(validUser.email);
-            expect(response.body.user).not.toHaveProperty('password');
+            expect(response.body.success).toBe(true);
+            expect(response.body.data).toHaveProperty('token');
+            expect(response.body.data.user.email).toBe(validUser.email);
+            expect(response.body.data.user).not.toHaveProperty('password');
         });
 
         it('should return 400 if email or password is missing', async () => {
@@ -136,7 +143,7 @@ describe('Auth Controller', () => {
                 .send({ email: validUser.email })
                 .expect(400);
 
-            expect(response.body.message).toBe('Email and password are required');
+            expect(response.body.error.message).toBe('Email and password are required');
         });
 
         it('should return 404 if user not found', async () => {
@@ -145,7 +152,8 @@ describe('Auth Controller', () => {
                 .send({ email: 'nonexistent@example.com', password: 'password123' })
                 .expect(404);
 
-            expect(response.body.message).toBe('User not found');
+            expect(response.body.error.code).toBe('NOT_FOUND');
+            expect(response.body.error.message).toBe('User not found');
         });
 
         it('should return 400 if password is invalid', async () => {
@@ -156,10 +164,10 @@ describe('Auth Controller', () => {
                 .send({ email: validUser.email, password: 'wrongpassword' })
                 .expect(400);
 
-            expect(response.body.message).toBe('Invalid credentials');
+            expect(response.body.error.message).toBe('Invalid credentials');
         });
 
-        it('should return 500 for a server error', async () => {
+        it('should keep the detail of an unexpected failure out of the response', async () => {
             jest.spyOn(User, 'findOne').mockImplementationOnce(() => {
                 throw new Error('Simulated database find error');
             });
@@ -169,7 +177,7 @@ describe('Auth Controller', () => {
                 .send({ email: 'anyuser@example.com', password: 'anypassword' })
                 .expect(500);
 
-            expect(response.body.message).toBe('Server error during login');
+            expect(response.body.error.message).toBe('Something went wrong on our side');
 
             jest.restoreAllMocks();
         });
@@ -184,7 +192,7 @@ describe('Auth Controller', () => {
                 .send(validUser)
                 .expect(201);
 
-            token = res.body.token;
+            token = res.body.data.token;
         });
 
         it('should return 200 if token is valid', async () => {
@@ -193,8 +201,8 @@ describe('Auth Controller', () => {
                 .set('Authorization', `Bearer ${token}`)
                 .expect(200);
 
-            expect(response.body.message).toBe('Token is valid');
-            expect(response.body.user.email).toBe(validUser.email);
+            expect(response.body.success).toBe(true);
+            expect(response.body.data.user.email).toBe(validUser.email);
         });
 
         it('should return 401 if no token provided', async () => {
@@ -202,7 +210,17 @@ describe('Auth Controller', () => {
                 .get('/auth/token')
                 .expect(401);
 
-            expect(response.body.message).toBe('No token provided');
+            expect(response.body.error.code).toBe('UNAUTHORIZED');
+            expect(response.body.error.message).toBe('No token provided');
+        });
+
+        it('should return 401 if the Authorization header is not a bearer token', async () => {
+            const response = await request(app)
+                .get('/auth/token')
+                .set('Authorization', token)
+                .expect(401);
+
+            expect(response.body.error.message).toBe('No token provided');
         });
 
         it('should return 401 if token is invalid', async () => {
@@ -211,7 +229,7 @@ describe('Auth Controller', () => {
                 .set('Authorization', 'Bearer invalidtoken123')
                 .expect(401);
 
-            expect(response.body.message).toBe('Invalid token');
+            expect(response.body.error.message).toBe('Invalid token');
         });
 
         it('should return 404 if the user behind a valid token is gone', async () => {
@@ -222,10 +240,10 @@ describe('Auth Controller', () => {
                 .set('Authorization', `Bearer ${token}`)
                 .expect(404);
 
-            expect(response.body.message).toBe('User not found');
+            expect(response.body.error.message).toBe('User not found');
         });
 
-        it('should return 500 if database throws error', async () => {
+        it('should keep the detail of an unexpected failure out of the response', async () => {
             jest.spyOn(User, 'findById').mockImplementationOnce(() => {
                 throw new Error('Simulated DB error');
             });
@@ -235,7 +253,7 @@ describe('Auth Controller', () => {
                 .set('Authorization', `Bearer ${token}`)
                 .expect(500);
 
-            expect(response.body.message).toBe('Server error during token verification');
+            expect(response.body.error.message).toBe('Something went wrong on our side');
 
             jest.restoreAllMocks();
         });

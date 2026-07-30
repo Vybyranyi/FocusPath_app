@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { User } from "@shared/index";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiRequest, errorMessage } from "@api/client";
+import type { RootState } from "@store/store";
 
 export interface IAuthSlice {
     user: User | null;
@@ -17,129 +17,116 @@ const initialState: IAuthSlice = {
     error: null,
 }
 
+/** What the credential endpoints hand back. */
+interface Session {
+    token: string;
+    user: User;
+}
+
+const tokenOf = (getState: () => unknown) => (getState() as RootState).auth.token;
+
 export const registerUser = createAsyncThunk(
     "auth/registerUser",
-    async (userData: { name: string; surname: string; birthday: Date; gender: "male" | "female"; email: string; password: string }, { rejectWithValue }) => {
+    async (
+        userData: {
+            name: string;
+            surname: string;
+            birthday: Date;
+            gender: "male" | "female";
+            email: string;
+            password: string;
+        },
+        { rejectWithValue },
+    ) => {
         try {
-            const res = await fetch(`${API_URL}/auth/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', },
-                body: JSON.stringify(userData),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                return rejectWithValue(data.message || "Registration failed");
-            };
-            return data;
+            return await apiRequest<Session>("/auth/", { method: "POST", body: userData });
         } catch (error) {
-            return rejectWithValue("Network error during registration");
-        };
-    }
+            return rejectWithValue(errorMessage(error));
+        }
+    },
 );
 
 export const loginUser = createAsyncThunk(
     "auth/loginUser",
     async (userData: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            const res = await fetch(`${API_URL}/auth/token`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', },
-                body: JSON.stringify(userData),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                return rejectWithValue(data.message || "Login failed");
-            };
-            return data;
+            return await apiRequest<Session>("/auth/token", { method: "POST", body: userData });
         } catch (error) {
-            return rejectWithValue("Network error during login");
-        };
-    }
+            return rejectWithValue(errorMessage(error));
+        }
+    },
 );
 
 export const updateProfile = createAsyncThunk(
     "auth/updateProfile",
-    async (data: { name: string; surname: string; birthday: string; gender: "male" | "female"; email: string; avatar?: string }, { getState, rejectWithValue }) => {
+    async (
+        data: {
+            name: string;
+            surname: string;
+            birthday: string;
+            gender: "male" | "female";
+            email: string;
+            avatar?: string;
+        },
+        { getState, rejectWithValue },
+    ) => {
         try {
-            const state = getState() as { auth: IAuthSlice };
-            const res = await fetch(`${API_URL}/auth/profile`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${state.auth.token}`,
-                },
-                body: JSON.stringify(data),
+            return await apiRequest<{ user: User }>("/auth/profile", {
+                method: "PATCH",
+                body: data,
+                token: tokenOf(getState),
             });
-            const json = await res.json();
-            if (!res.ok) return rejectWithValue(json.message || "Update failed");
-            return json;
-        } catch {
-            return rejectWithValue("Network error during profile update");
+        } catch (error) {
+            return rejectWithValue(errorMessage(error));
         }
-    }
+    },
 );
 
 export const changePassword = createAsyncThunk(
     "auth/changePassword",
-    async (data: { currentPassword: string; newPassword: string }, { getState, rejectWithValue }) => {
+    async (
+        data: { currentPassword: string; newPassword: string },
+        { getState, rejectWithValue },
+    ) => {
         try {
-            const state = getState() as { auth: IAuthSlice };
-            const res = await fetch(`${API_URL}/auth/password`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${state.auth.token}`,
-                },
-                body: JSON.stringify(data),
+            return await apiRequest<null>("/auth/password", {
+                method: "PATCH",
+                body: data,
+                token: tokenOf(getState),
             });
-            const json = await res.json();
-            if (!res.ok) return rejectWithValue(json.message || "Password change failed");
-            return json;
-        } catch {
-            return rejectWithValue("Network error during password change");
+        } catch (error) {
+            return rejectWithValue(errorMessage(error));
         }
-    }
+    },
 );
 
 export const deleteAccount = createAsyncThunk(
     "auth/deleteAccount",
     async (_, { getState, rejectWithValue }) => {
         try {
-            const state = getState() as { auth: IAuthSlice };
-            const res = await fetch(`${API_URL}/auth/`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${state.auth.token}` },
+            return await apiRequest<null>("/auth/", {
+                method: "DELETE",
+                token: tokenOf(getState),
             });
-            const json = await res.json();
-            if (!res.ok) return rejectWithValue(json.message || "Delete failed");
-            return json;
-        } catch {
-            return rejectWithValue("Network error during account deletion");
+        } catch (error) {
+            return rejectWithValue(errorMessage(error));
         }
-    }
+    },
 );
 
 export const verifyToken = createAsyncThunk(
     "auth/verifyToken",
     async (_, { rejectWithValue }) => {
-        try {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                return rejectWithValue("No token found");
-            }
-            const res = await fetch(`${API_URL}/auth/token`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                return rejectWithValue(data.message || "Token verification failed");
-            }
-            return data;
-        } catch (error) {
-            return rejectWithValue("Network error during token verification");
+        const token = localStorage.getItem("token");
+        if (!token) {
+            return rejectWithValue("No token found");
         }
-    }
+        try {
+            return await apiRequest<{ user: User }>("/auth/token", { token });
+        } catch (error) {
+            return rejectWithValue(errorMessage(error));
+        }
+    },
 );
 
 const authSlice = createSlice({

@@ -6,13 +6,14 @@ import mongoose from 'mongoose';
 import { connectDB } from '@config/db';
 import User from '@models/User';
 import { hashPassword } from '@utils/password';
+import { logger } from '@config/logger';
 
 const run = async () => {
     const email = process.env.ADMIN_EMAIL;
     const password = process.env.ADMIN_PASSWORD;
 
     if (!email || !password) {
-        console.error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env');
+        logger.error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env');
         process.exit(1);
     }
 
@@ -20,7 +21,7 @@ const run = async () => {
 
     const existing = await User.findOne({ email });
     if (existing) {
-        console.log(`Admin user already exists: ${email}`);
+        logger.info(`Admin user already exists: ${email}`);
         await mongoose.disconnect();
         return;
     }
@@ -36,11 +37,11 @@ const run = async () => {
         password: hashedPassword,
     });
 
-    console.log(`Admin user created: ${email}`);
+    logger.info(`Admin user created: ${email}`);
     await mongoose.disconnect();
 };
 
 run().catch((error) => {
-    console.error('Failed to seed admin user:', error);
+    logger.fatal({ err: error }, 'Failed to seed admin user');
     process.exit(1);
 });

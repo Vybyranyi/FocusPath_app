@@ -58,12 +58,14 @@ describe('Application hardening', () => {
     });
 
     describe('unknown routes', () => {
-        it('answers with JSON rather than an HTML error page', async () => {
+        it('answers with the error envelope rather than an HTML error page', async () => {
             const response = await request(app)
                 .get('/does-not-exist')
                 .expect(404);
 
-            expect(response.body).toEqual({ message: 'Not found' });
+            expect(response.body.success).toBe(false);
+            expect(response.body.error.code).toBe('NOT_FOUND');
+            expect(response.body.error.message).toBe('Cannot GET /does-not-exist');
         });
     });
 
@@ -72,9 +74,20 @@ describe('Application hardening', () => {
             const response = await request(app)
                 .post('/auth/')
                 .set('Content-Type', 'application/json')
-                .send(JSON.stringify({ ...validUser, note: 'x'.repeat(3 * 1024 * 1024) }));
+                .send(JSON.stringify({ ...validUser, note: 'x'.repeat(3 * 1024 * 1024) }))
+                .expect(413);
 
-            expect(response.status).toBe(413);
+            expect(response.body.error.code).toBe('PAYLOAD_TOO_LARGE');
+        });
+
+        it('reports malformed JSON as a bad request rather than a crash', async () => {
+            const response = await request(app)
+                .post('/auth/')
+                .set('Content-Type', 'application/json')
+                .send('{"email": ')
+                .expect(400);
+
+            expect(response.body.error.message).toBe('Request body is not valid JSON');
         });
     });
 
@@ -91,7 +104,7 @@ describe('Application hardening', () => {
 
             // Unguarded, this matches whichever user comes first and turns login
             // into a guess-any-password attack.
-            expect(response.body).not.toHaveProperty('token');
+            expect(response.body).not.toHaveProperty('data');
         });
 
         it('does not let an operator object bypass the duplicate-email check', async () => {
@@ -100,7 +113,7 @@ describe('Application hardening', () => {
                 .send({ ...validUser, email: { $ne: null } })
                 .expect(400);
 
-            expect(response.body).not.toHaveProperty('token');
+            expect(response.body).not.toHaveProperty('data');
             expect(await User.countDocuments()).toBe(1);
         });
     });
@@ -130,7 +143,7 @@ describe('Application hardening', () => {
                 .send({ ...validUser, password: 'a'.repeat(73) })
                 .expect(400);
 
-            expect(response.body.message).toBe('Password must not exceed 72 bytes');
+            expect(response.body.error.message).toBe('Password must not exceed 72 bytes');
         });
     });
 
@@ -143,7 +156,7 @@ describe('Application hardening', () => {
 
             // avatar is a real schema path, so a spread of req.body would have
             // written it. Registration accepts a fixed set of fields instead.
-            expect(response.body.user.avatar).toBeUndefined();
+            expect(response.body.data.user.avatar).toBeUndefined();
         });
     });
 
@@ -152,7 +165,7 @@ describe('Application hardening', () => {
 
         beforeEach(async () => {
             const res = await request(app).post('/auth/').send(validUser).expect(201);
-            token = res.body.token;
+            token = res.body.data.token;
         });
 
         it('accepts a png data URI', async () => {
@@ -162,7 +175,7 @@ describe('Application hardening', () => {
                 .send({ avatar: 'data:image/png;base64,iVBORw0KGgo=' })
                 .expect(200);
 
-            expect(response.body.user.avatar).toBe('data:image/png;base64,iVBORw0KGgo=');
+            expect(response.body.data.user.avatar).toBe('data:image/png;base64,iVBORw0KGgo=');
         });
 
         it('rejects a payload that is not an image data URI', async () => {
@@ -172,7 +185,7 @@ describe('Application hardening', () => {
                 .send({ avatar: 'https://example.com/avatar.png' })
                 .expect(400);
 
-            expect(response.body.message).toBe(
+            expect(response.body.error.message).toBe(
                 'Avatar must be a base64 data URI of type png, jpeg or webp',
             );
         });
@@ -184,7 +197,7 @@ describe('Application hardening', () => {
                 .send({ avatar: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' })
                 .expect(400);
 
-            expect(response.body.message).toContain('png, jpeg or webp');
+            expect(response.body.error.message).toContain('png, jpeg or webp');
         });
     });
 });

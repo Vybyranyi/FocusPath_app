@@ -13,6 +13,7 @@ const config: Config.InitialOptions = {
     "^@routes/(.*)$": "<rootDir>/src/routes/$1",
     "^@utils/(.*)$": "<rootDir>/src/utils/$1",
     "^@services/(.*)$": "<rootDir>/src/services/$1",
+    "^@errors/(.*)$": "<rootDir>/src/errors/$1",
     "^@shared/(.*)$": "<rootDir>/../shared/src/$1",
     "^@app$": "<rootDir>/src/app.ts",
     "^@/(.*)$": "<rootDir>/src/$1"

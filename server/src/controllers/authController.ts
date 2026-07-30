@@ -2,218 +2,159 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '@models/User';
 import Habit from '@models/Habit';
-import mongoose from 'mongoose';
 import { hashPassword, validatePassword, verifyPassword } from '@utils/password';
 import { validateAvatar } from '@utils/avatar';
+import { created, ok } from '@utils/apiResponse';
+import { BadRequestError, ConflictError, NotFoundError } from '@errors/AppError';
 
 const jwtSecret = process.env.JWT_SECRET as string;
 
+// No try/catch anywhere below: Express 5 forwards a rejected promise to the
+// error handler, which is the only place that turns a failure into a response.
+
 export const register = async (req: Request, res: Response) => {
-    try {
-        const { name, surname, birthday, gender, email, password } = req.body;
+    const { name, surname, birthday, gender, email, password } = req.body;
 
-        if (!name || !surname || !birthday || !gender || !email || !password) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        // Rejects operator objects such as {"$ne": null} before they reach a
-        // query. sanitizeFilter would neutralise them anyway, but only by
-        // failing the cast — which surfaces as a 500 rather than a clear refusal.
-        if (typeof email !== 'string' || typeof password !== 'string') {
-            return res.status(400).json({ message: 'Email and password must be strings' });
-        }
-
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        const passwordProblem = validatePassword(password);
-        if (passwordProblem) {
-            return res.status(400).json({ message: passwordProblem });
-        }
-
-        // Fields are listed rather than spread from the body: spreading let a
-        // caller set any schema path it liked, which becomes privilege
-        // escalation the moment a role or flag is added to the model.
-        const newUser = new User({
-            name,
-            surname,
-            birthday,
-            gender,
-            email,
-            password: await hashPassword(password),
-        });
-
-        await newUser.save();
-
-        const token = jwt.sign({ id: newUser._id }, jwtSecret, { expiresIn: '7d' });
-
-        res.status(201).json({
-            message: 'User registered successfully',
-            token,
-            user: newUser,
-        });
-    } catch (error) {
-        console.error('Registration error:', error);
-        if (error instanceof mongoose.Error.ValidationError) {
-            return res.status(400).json({ message: 'Validation error', errors: error.errors });
-        }
-        res.status(500).json({ message: 'Server error during registration' });
+    if (!name || !surname || !birthday || !gender || !email || !password) {
+        throw new BadRequestError('All fields are required');
     }
+
+    // Rejects operator objects such as {"$ne": null} before they reach a query.
+    // sanitizeFilter would neutralise them anyway, but only by failing the cast.
+    if (typeof email !== 'string' || typeof password !== 'string') {
+        throw new BadRequestError('Email and password must be strings');
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw new ConflictError('User already exists');
+    }
+
+    const passwordProblem = validatePassword(password);
+    if (passwordProblem) {
+        throw new BadRequestError(passwordProblem);
+    }
+
+    // Fields are listed rather than spread from the body: spreading let a caller
+    // set any schema path it liked, which becomes privilege escalation the
+    // moment a role or flag is added to the model.
+    const newUser = new User({
+        name,
+        surname,
+        birthday,
+        gender,
+        email,
+        password: await hashPassword(password),
+    });
+
+    await newUser.save();
+
+    const token = jwt.sign({ id: newUser._id }, jwtSecret, { expiresIn: '7d' });
+
+    return created(res, { token, user: newUser });
 };
 
 export const login = async (req: Request, res: Response) => {
-    try {
-        const { email, password } = req.body;
+    const { email, password } = req.body;
 
-        // Checked before the lookup rather than after, so a malformed request
-        // never reaches the database.
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
-        }
-
-        // Rejects operator objects such as {"$ne": null} before they reach a
-        // query. sanitizeFilter would neutralise them anyway, but only by
-        // failing the cast — which surfaces as a 500 rather than a clear refusal.
-        if (typeof email !== 'string' || typeof password !== 'string') {
-            return res.status(400).json({ message: 'Email and password must be strings' });
-        }
-
-        // The hash is select:false on the schema, so it has to be asked for.
-        const user = await User.findOne({ email }).select('+password');
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const isValidPassword = await verifyPassword(password, user.password);
-        if (!isValidPassword) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign({ id: user._id }, jwtSecret, { expiresIn: '7d' });
-
-        res.status(200).json({
-            message: 'Login successful',
-            token,
-            user,
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error during login' });
+    // Checked before the lookup, so a malformed request never reaches the database.
+    if (!email || !password) {
+        throw new BadRequestError('Email and password are required');
     }
+
+    if (typeof email !== 'string' || typeof password !== 'string') {
+        throw new BadRequestError('Email and password must be strings');
+    }
+
+    // The hash is select:false on the schema, so it has to be asked for.
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+        throw new NotFoundError('User not found');
+    }
+
+    const isValidPassword = await verifyPassword(password, user.password);
+    if (!isValidPassword) {
+        throw new BadRequestError('Invalid credentials');
+    }
+
+    const token = jwt.sign({ id: user._id }, jwtSecret, { expiresIn: '7d' });
+
+    return ok(res, { token, user });
 };
 
-interface AuthRequest extends Request {
-    userId?: string;
-}
-
-export const verifyToken = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req;
-
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.status(200).json({
-            message: 'Token is valid',
-            user,
-        });
-    } catch (error) {
-        console.error('Error verifying token:', error);
-        res.status(500).json({ message: 'Server error during token verification' });
+export const verifyToken = async (req: Request, res: Response) => {
+    const user = await User.findById(req.userId);
+    if (!user) {
+        throw new NotFoundError('User not found');
     }
+
+    return ok(res, { user });
 };
 
-export const updateProfile = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req;
-        const { name, surname, birthday, gender, email, avatar } = req.body;
+export const updateProfile = async (req: Request, res: Response) => {
+    const { userId } = req;
+    const { name, surname, birthday, gender, email, avatar } = req.body;
 
-        if (avatar !== undefined) {
-            const avatarProblem = validateAvatar(avatar);
-            if (avatarProblem) {
-                return res.status(400).json({ message: avatarProblem });
-            }
+    if (avatar !== undefined) {
+        const avatarProblem = validateAvatar(avatar);
+        if (avatarProblem) {
+            throw new BadRequestError(avatarProblem);
         }
-
-        if (email) {
-            const existing = await User.findOne({ email, _id: { $ne: userId } });
-            if (existing) {
-                return res.status(400).json({ message: 'Email already in use' });
-            }
-        }
-
-        const updated = await User.findByIdAndUpdate(
-            userId,
-            { name, surname, birthday, gender, email, avatar },
-            { new: true, runValidators: true }
-        );
-
-        if (!updated) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.status(200).json({
-            message: 'Profile updated successfully',
-            user: updated,
-        });
-    } catch (error) {
-        console.error('Update profile error:', error);
-        if (error instanceof mongoose.Error.ValidationError) {
-            return res.status(400).json({ message: 'Validation error', errors: error.errors });
-        }
-        res.status(500).json({ message: 'Server error during profile update' });
     }
+
+    if (email) {
+        const existing = await User.findOne({ email, _id: { $ne: userId } });
+        if (existing) {
+            throw new ConflictError('Email already in use');
+        }
+    }
+
+    const updated = await User.findByIdAndUpdate(
+        userId,
+        { name, surname, birthday, gender, email, avatar },
+        { new: true, runValidators: true },
+    );
+
+    if (!updated) {
+        throw new NotFoundError('User not found');
+    }
+
+    return ok(res, { user: updated });
 };
 
-export const changePassword = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req;
-        const { currentPassword, newPassword } = req.body;
+export const changePassword = async (req: Request, res: Response) => {
+    const { userId } = req;
+    const { currentPassword, newPassword } = req.body;
 
-        if (!currentPassword || !newPassword) {
-            return res.status(400).json({ message: 'Current and new password are required' });
-        }
-
-        const passwordProblem = validatePassword(newPassword);
-        if (passwordProblem) {
-            return res.status(400).json({ message: passwordProblem });
-        }
-
-        const user = await User.findById(userId).select('+password');
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const isValid = await verifyPassword(currentPassword, user.password);
-        if (!isValid) {
-            return res.status(400).json({ message: 'Current password is incorrect' });
-        }
-
-        await User.findByIdAndUpdate(userId, { password: await hashPassword(newPassword) });
-
-        res.status(200).json({ message: 'Password changed successfully' });
-    } catch (error) {
-        console.error('Change password error:', error);
-        res.status(500).json({ message: 'Server error during password change' });
+    if (!currentPassword || !newPassword) {
+        throw new BadRequestError('Current and new password are required');
     }
+
+    const passwordProblem = validatePassword(newPassword);
+    if (passwordProblem) {
+        throw new BadRequestError(passwordProblem);
+    }
+
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+        throw new NotFoundError('User not found');
+    }
+
+    const isValid = await verifyPassword(currentPassword, user.password);
+    if (!isValid) {
+        throw new BadRequestError('Current password is incorrect');
+    }
+
+    await User.findByIdAndUpdate(userId, { password: await hashPassword(newPassword) });
+
+    return ok(res, null);
 };
 
-export const deleteAccount = async (req: AuthRequest, res: Response) => {
-    try {
-        const { userId } = req;
+export const deleteAccount = async (req: Request, res: Response) => {
+    const { userId } = req;
 
-        await Habit.deleteMany({ userId });
-        await User.findByIdAndDelete(userId);
+    await Habit.deleteMany({ userId });
+    await User.findByIdAndDelete(userId);
 
-        res.status(200).json({ message: 'Account deleted successfully' });
-    } catch (error) {
-        console.error('Delete account error:', error);
-        res.status(500).json({ message: 'Server error during account deletion' });
-    }
+    return ok(res, null);
 };

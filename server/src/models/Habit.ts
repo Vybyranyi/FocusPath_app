@@ -75,6 +75,16 @@ HabitSchema.methods.getExpectedEndDate = function() {
     return endDate;
 };
 
+// The owner link and version key are storage details. Stripping them here means
+// no handler has to remember to, and none can forget.
+HabitSchema.set('toJSON', {
+    transform: (_doc, ret: Record<string, unknown>) => {
+        delete ret.userId;
+        delete ret.__v;
+        return ret;
+    },
+});
+
 const Habit = mongoose.model<IHabit>('Habit', HabitSchema);
 
 export default Habit;

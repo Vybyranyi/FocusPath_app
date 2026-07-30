@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { logger } from '@config/logger';
 
 let client: OpenAI | null = null;
 
@@ -110,8 +111,6 @@ Double-check your response before returning it.`
             throw new Error('No response from OpenAI');
         }
 
-        console.log('OpenAI raw response:', content);
-
         // Parse and validate response
         const response = JSON.parse(content) as AIHabitResponse;
 
@@ -130,11 +129,10 @@ Double-check your response before returning it.`
 
         // CRITICAL: Check if lengths match
         if (response.dailyTasks.length !== response.duration) {
-            console.error('Duration mismatch:', {
-                expected: response.duration,
-                received: response.dailyTasks.length,
-                tasks: response.dailyTasks
-            });
+            logger.warn(
+                { expected: response.duration, received: response.dailyTasks.length },
+                'AI returned a task count that does not match the duration',
+            );
 
             // Try to fix the mismatch
             if (response.dailyTasks.length < response.duration) {
@@ -154,12 +152,12 @@ Double-check your response before returning it.`
 
         return response;
     } catch (error) {
-        console.error('OpenAI API error:', error);
+        logger.error({ err: error }, 'OpenAI request failed');
 
         // Retry logic if duration mismatch occurred
         if (retryCount < MAX_RETRIES && error instanceof Error) {
             if (error.message.includes('Duration') || error.message.includes('parse')) {
-                console.log(`Retrying AI request (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+                logger.info(`Retrying AI request (attempt ${retryCount + 1}/${MAX_RETRIES})`);
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
                 return generateHabitPlan(title, type, duration, retryCount + 1);
             }

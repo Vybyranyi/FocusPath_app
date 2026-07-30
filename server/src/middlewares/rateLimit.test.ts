@@ -53,7 +53,7 @@ describe('rate limiting', () => {
                 .set('x-test-user', 'user-a')
                 .expect(429);
 
-            expect(response.body.message).toBe(
+            expect(response.body.error.message).toBe(
                 'AI habit generation is limited to 5 requests per hour',
             );
         });
@@ -89,7 +89,7 @@ describe('rate limiting', () => {
 
             const response = await request(app).post('/fail').expect(429);
 
-            expect(response.body.message).toBe(
+            expect(response.body.error.message).toBe(
                 'Too many authentication attempts, please try again later',
             );
         });

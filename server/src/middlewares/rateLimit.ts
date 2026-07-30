@@ -9,13 +9,19 @@ const skip = () => process.env.NODE_ENV === 'test';
 
 const headers = { standardHeaders: true, legacyHeaders: false } as const;
 
+/** Refusals travel in the same envelope as every other response. */
+const refusal = (message: string) => ({
+    success: false as const,
+    error: { code: 'RATE_LIMITED', message },
+});
+
 /** Blanket ceiling, so no single client can flood the API. */
 export const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 300,
     ...headers,
     skip,
-    message: { message: 'Too many requests, please try again later' },
+    message: refusal('Too many requests, please try again later'),
 });
 
 /**
@@ -28,7 +34,7 @@ export const authLimiter = rateLimit({
     skipSuccessfulRequests: true,
     ...headers,
     skip,
-    message: { message: 'Too many authentication attempts, please try again later' },
+    message: refusal('Too many authentication attempts, please try again later'),
 });
 
 /**
@@ -42,5 +48,5 @@ export const aiLimiter = rateLimit({
     keyGenerator: req => req.userId ?? ipKeyGenerator(req.ip ?? ''),
     ...headers,
     skip,
-    message: { message: 'AI habit generation is limited to 5 requests per hour' },
+    message: refusal('AI habit generation is limited to 5 requests per hour'),
 });

@@ -1,19 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import type { Habit } from "@shared/index";
 import type { IHabit } from "@pages/CreateHabit";
 import type { RootState } from "@store/store";
-
-const API_URL = import.meta.env.VITE_API_URL;
-
-// export interface IHabit {
-//     color: string;
-//     emoji: string;
-//     habitName: string;
-//     habitDescription: string;
-//     startDate: Date | undefined;
-//     aiEnabled: boolean;
-//     duration: string;
-//     habitType: 'build' | 'quit';
-// }
+import { apiRequest, errorMessage } from "@api/client";
 
 interface DayInfo {
   dayTitle: string;
@@ -46,7 +35,7 @@ export interface habitForDate {
 }
 
 export interface IHabitSlice {
-  habits: IHabit[];
+  habits: Habit[];
   habitsForDate: habitForDate[];
   loading: boolean;
   error: string | null;
@@ -59,47 +48,32 @@ const initialState: IHabitSlice = {
   error: null,
 };
 
+const tokenOf = (getState: () => unknown) => (getState() as RootState).auth.token;
+
+/** The form's shape, translated into what the API expects. */
+const toHabitBody = (habitData: IHabit, allowAutoDuration = false) => ({
+  title: habitData.habitName.trim(),
+  startDate: habitData.startDate
+    ? new Date(habitData.startDate).toISOString()
+    : new Date().toISOString(),
+  duration:
+    allowAutoDuration && !habitData.duration ? null : Number(habitData.duration),
+  type: habitData.habitType,
+  color: habitData.color,
+  icon: habitData.emoji,
+});
+
 export const createHabit = createAsyncThunk(
   "habit/createHabit",
   async (habitData: IHabit, { getState, rejectWithValue }) => {
     try {
-      const state = getState() as RootState;
-      const user = state.auth.user;
-
-      if (!user) {
-        return rejectWithValue("User not authenticated");
-      }
-
-      const body = {
-        title: habitData.habitName.trim(),
-        startDate: habitData.startDate
-          ? new Date(habitData.startDate).toISOString()
-          : new Date().toISOString(),
-        duration: Number(habitData.duration),
-        type: habitData.habitType,
-        color: habitData.color,
-        icon: habitData.emoji,
-      };
-
-      const res = await fetch(`${API_URL}/habits/`, {
+      return await apiRequest<{ habit: Habit }>("/habits/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${state.auth.token}`,
-        },
-        body: JSON.stringify(body),
+        body: toHabitBody(habitData),
+        token: tokenOf(getState),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        return rejectWithValue(data.message || "Habit creation failed");
-      }
-
-      return data;
     } catch (error) {
-      console.error("Habit creation error:", error);
-      return rejectWithValue("Network error during habit creation");
+      return rejectWithValue(errorMessage(error));
     }
   },
 );
@@ -108,43 +82,13 @@ export const createAIHabit = createAsyncThunk(
   "habit/createAIHabit",
   async (habitData: IHabit, { getState, rejectWithValue }) => {
     try {
-      const state = getState() as RootState;
-      const user = state.auth.user;
-
-      if (!user) {
-        return rejectWithValue("User not authenticated");
-      }
-
-      const body = {
-        title: habitData.habitName.trim(),
-        startDate: habitData.startDate
-          ? new Date(habitData.startDate).toISOString()
-          : new Date().toISOString(),
-        duration: habitData.duration ? Number(habitData.duration) : null,
-        type: habitData.habitType,
-        color: habitData.color,
-        icon: habitData.emoji,
-      };
-
-      const res = await fetch(`${API_URL}/habits/ai`, {
+      return await apiRequest<{ habit: Habit }>("/habits/ai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${state.auth.token}`,
-        },
-        body: JSON.stringify(body),
+        body: toHabitBody(habitData, true),
+        token: tokenOf(getState),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        return rejectWithValue(data.message || "AI habit creation failed");
-      }
-
-      return data;
     } catch (error) {
-      console.error("AI Habit creation error:", error);
-      return rejectWithValue("Network error during AI habit creation");
+      return rejectWithValue(errorMessage(error));
     }
   },
 );
@@ -153,30 +97,13 @@ export const getHabitsForDate = createAsyncThunk(
   "habit/getHabitsForDate",
   async (date: string, { getState, rejectWithValue }) => {
     try {
-      const state = getState() as RootState;
-
-      const formattedDate = new Date(date).toISOString().split("T")[0];
-      const url = `${API_URL}/habits/daily?date=${formattedDate}`;
-
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${state.auth.token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        return rejectWithValue(
-          data.message || "Failed to fetch habits for the date",
-        );
-      }
-      return data;
+      const day = new Date(date).toISOString().split("T")[0];
+      return await apiRequest<{ date: string; habits: habitForDate[] }>(
+        `/habits/daily?date=${day}`,
+        { token: tokenOf(getState) },
+      );
     } catch (error) {
-      console.error("Error fetching habits for date:", error);
-      return rejectWithValue("Network error during fetching habits for date");
+      return rejectWithValue(errorMessage(error));
     }
   },
 );
@@ -185,26 +112,11 @@ export const getAllHabits = createAsyncThunk(
   "habit/getAllHabits",
   async (_, { getState, rejectWithValue }) => {
     try {
-      const state = getState() as RootState;
-
-      const res = await fetch(`${API_URL}/habits/`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${state.auth.token}`,
-        },
+      return await apiRequest<{ habits: Habit[] }>("/habits/", {
+        token: tokenOf(getState),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        return rejectWithValue(data.message || "Failed to fetch habits");
-      }
-
-      return data;
     } catch (error) {
-      console.error("Error fetching habits:", error);
-      return rejectWithValue("Network error during habit fetching");
+      return rejectWithValue(errorMessage(error));
     }
   },
 );
@@ -216,25 +128,17 @@ export const markHabitCompletion = createAsyncThunk(
     { getState, rejectWithValue },
   ) => {
     try {
-      const state = getState() as RootState;
-      const res = await fetch(`${API_URL}/habits/${habitId}/complete`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${state.auth.token}`,
+      const { habit } = await apiRequest<{ habit: Habit }>(
+        `/habits/${habitId}/complete`,
+        {
+          method: "PATCH",
+          body: { date: new Date(date).toISOString(), completed },
+          token: tokenOf(getState),
         },
-        body: JSON.stringify({
-          date: new Date(date).toISOString(),
-          completed,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return rejectWithValue(data.message || "Failed to update habit completion");
-      }
-      return { habitId, completed, updatedHabit: data.habit || data };
+      );
+      return { habitId, completed, updatedHabit: habit };
     } catch (error) {
-      return rejectWithValue("Network error during habit completion update");
+      return rejectWithValue(errorMessage(error));
     }
   },
 );
@@ -246,21 +150,13 @@ export const toggleHabitStep = createAsyncThunk(
     { getState, rejectWithValue },
   ) => {
     try {
-      const state = getState() as RootState;
-      const res = await fetch(`${API_URL}/habits/${habitId}/steps/${stepId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${state.auth.token}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return rejectWithValue(data.message || "Failed to toggle step");
-      }
-      return { habitId, stepId, completed: data.completed };
+      const { completed } = await apiRequest<{ stepId: string; completed: boolean }>(
+        `/habits/${habitId}/steps/${stepId}`,
+        { method: "PATCH", token: tokenOf(getState) },
+      );
+      return { habitId, stepId, completed };
     } catch (error) {
-      return rejectWithValue("Network error during toggling step");
+      return rejectWithValue(errorMessage(error));
     }
   },
 );
@@ -269,20 +165,13 @@ export const deleteHabit = createAsyncThunk(
   "habit/deleteHabit",
   async (habitId: string, { getState, rejectWithValue }) => {
     try {
-      const state = getState() as RootState;
-      const res = await fetch(`${API_URL}/habits/${habitId}`, {
+      await apiRequest<{ habitId: string }>(`/habits/${habitId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${state.auth.token}`,
-        },
+        token: tokenOf(getState),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return rejectWithValue(data.message || "Failed to delete habit");
-      }
       return habitId;
     } catch (error) {
-      return rejectWithValue("Network error during habit deletion");
+      return rejectWithValue(errorMessage(error));
     }
   },
 );
@@ -299,7 +188,7 @@ const habitSlice = createSlice({
       })
       .addCase(createHabit.fulfilled, (state, action) => {
         state.loading = false;
-        state.habits.push(action.payload);
+        state.habits.push(action.payload.habit);
       })
       .addCase(createHabit.rejected, (state, action) => {
         state.loading = false;
@@ -313,7 +202,7 @@ const habitSlice = createSlice({
       })
       .addCase(createAIHabit.fulfilled, (state, action) => {
         state.loading = false;
-        state.habits.push(action.payload);
+        state.habits.push(action.payload.habit);
       })
       .addCase(createAIHabit.rejected, (state, action) => {
         state.loading = false;
@@ -355,12 +244,12 @@ const habitSlice = createSlice({
         const wasCompleted = habit.dayInfo.completed;
         habit.dayInfo.completed = completed;
         if (updatedHabit) {
-          habit.currentStreak  = updatedHabit.currentStreak;
-          habit.isCompleted    = updatedHabit.isCompleted;
+          habit.currentStreak = updatedHabit.currentStreak;
+          habit.isCompleted = updatedHabit.isCompleted;
         }
         // Update completedCount locally based on the change
         if (completed && !wasCompleted) habit.completedCount += 1;
-        if (!completed && wasCompleted) habit.completedCount  = Math.max(0, habit.completedCount - 1);
+        if (!completed && wasCompleted) habit.completedCount = Math.max(0, habit.completedCount - 1);
       }
     });
 
@@ -369,34 +258,27 @@ const habitSlice = createSlice({
         // Optimistic update
         const { habitId, stepId } = action.meta.arg;
         const habit = state.habitsForDate.find((h) => h._id === habitId);
-        if (habit && habit.steps) {
-          const step = habit.steps.find((s) => s._id === stepId);
-          if (step) {
-            step.completed = !step.completed;
-          }
+        const step = habit?.steps?.find((s) => s._id === stepId);
+        if (step) {
+          step.completed = !step.completed;
         }
       })
       .addCase(toggleHabitStep.fulfilled, (state, action) => {
-        // Confirmation from server (we already optimistically updated, if anything mismatch we can correct here)
+        // Confirmation from the server; corrects the guess above if it differed.
         const { habitId, stepId, completed } = action.payload;
         const habit = state.habitsForDate.find((h) => h._id === habitId);
-        if (habit && habit.steps) {
-          const step = habit.steps.find((s) => s._id === stepId);
-          if (step) {
-            step.completed = completed;
-          }
+        const step = habit?.steps?.find((s) => s._id === stepId);
+        if (step) {
+          step.completed = completed;
         }
       })
       .addCase(toggleHabitStep.rejected, (state, action) => {
         // Rollback on failure
         const { habitId, stepId } = action.meta.arg;
         const habit = state.habitsForDate.find((h) => h._id === habitId);
-        if (habit && habit.steps) {
-          const step = habit.steps.find((s) => s._id === stepId);
-          if (step) {
-            // Revert back
-            step.completed = !step.completed;
-          }
+        const step = habit?.steps?.find((s) => s._id === stepId);
+        if (step) {
+          step.completed = !step.completed;
         }
       });
 

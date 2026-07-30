@@ -39,6 +39,7 @@ export default defineConfig({
       '@store':     path.resolve(__dirname, './src/store'),
       '@hooks':     path.resolve(__dirname, './src/hooks'),
       '@animation': path.resolve(__dirname, './src/animation'),
+      '@api':       path.resolve(__dirname, './src/api'),
       '@shared':    path.resolve(__dirname, '../shared/src'),
     },
   },
