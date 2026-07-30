@@ -10,7 +10,9 @@ export interface Segment {
 export interface ISegmentControl {
   segments: Segment[];
   defaultSelectedId: string;
-  onSelect: (selectedId: string) => void;
+  /** Optional: the control already tracks its own selection, so a caller that
+   * only needs the visual state can leave this out. */
+  onSelect?: (selectedId: string) => void;
 }
 
 export default function SegmentControl({
@@ -22,7 +24,7 @@ export default function SegmentControl({
 
   const handleClick = (id: string) => {
     setSelectedId(id);
-    onSelect(id);
+    onSelect?.(id);
   };
 
   return (

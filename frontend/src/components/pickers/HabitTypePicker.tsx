@@ -1,3 +1,4 @@
+import FieldError from "@components/ui/FieldError";
 import SegmentControl from '@components/ui/SegmentControl';
 
 export interface IHabitTypePickerProps {
@@ -20,7 +21,7 @@ export default function HabitTypePicker({ value, onSelect, error }: IHabitTypePi
         defaultSelectedId={value ?? 'build'}
         onSelect={id => onSelect(id as 'build' | 'quit')}
       />
-      {error && <p className="alternative text-error">{error}</p>}
+      <FieldError message={error} className="mt-0" />
     </div>
   );
 }

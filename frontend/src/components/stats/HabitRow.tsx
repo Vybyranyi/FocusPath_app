@@ -1,4 +1,6 @@
+import { memo } from "react";
 import CircleLoader from "@components/habit/CircleLoader";
+import { getHabitProgress } from "@/lib/habitProgress";
 import { Emoji } from "react-apple-emojis";
 import type { Habit } from "@shared/index";
 
@@ -6,10 +8,9 @@ interface HabitRowProps {
   habit: Habit;
 }
 
-export default function HabitRow({ habit }: HabitRowProps) {
+function HabitRow({ habit }: HabitRowProps) {
   const completed = habit.dailyCompletions.filter((d) => d.completed).length;
-  const total = habit.dailyCompletions.length || 1;
-  const pct = Math.round((completed / total) * 100);
+  const pct = getHabitProgress(completed, habit.dailyCompletions.length);
 
   return (
     <div
@@ -73,3 +74,6 @@ export default function HabitRow({ habit }: HabitRowProps) {
     </div>
   );
 }
+
+/** Memoised: rendered once per habit in a list the stats page rebuilds wholesale. */
+export default memo(HabitRow);

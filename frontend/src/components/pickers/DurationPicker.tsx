@@ -1,3 +1,4 @@
+import FieldError from "@components/ui/FieldError";
 import Switch from "@components/ui/Switch";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +60,7 @@ export default function DurationPicker({
         )}
       </div>
 
-      {error && <p className="alternative text-error">{error}</p>}
+      <FieldError message={error} className="mt-0" />
     </div>
   );
 }

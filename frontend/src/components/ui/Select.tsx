@@ -1,4 +1,5 @@
 import React from "react";
+import FieldError from "@components/ui/FieldError";
 import { cn } from "@/lib/utils";
 
 export interface ISelectOption {
@@ -68,7 +69,7 @@ export default function Select({
         </span>
       </div>
 
-      {error && <p className="alternative text-error mt-1">{error}</p>}
+      <FieldError message={error} />
     </div>
   );
 }

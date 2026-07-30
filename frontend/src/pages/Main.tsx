@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import {
   motion,
   AnimatePresence,
@@ -64,10 +64,13 @@ export default function Main() {
     trackMouse: true,
   });
 
-  const handleDateClick = (date: Date) => {
-    setDirection(date > selectedDate ? 1 : -1);
-    setSelectedDate(date);
-  };
+  const handleDateClick = useCallback((date: Date) => {
+    setDirection((current) => current);
+    setSelectedDate((previous) => {
+      setDirection(date > previous ? 1 : -1);
+      return date;
+    });
+  }, []);
 
   useEffect(() => {
     dispatch(getHabitsForDate(selectedDate.toISOString()));
@@ -140,9 +143,9 @@ export default function Main() {
               transition={springTransition}
               className="flex gap-2 w-full *:flex-1 *:min-w-0"
             >
-              {dates.map((date, i) => (
+              {dates.map((date) => (
                 <DatePicker
-                  key={i}
+                  key={date.toISOString()}
                   date={date}
                   active={isSameDay(date, selectedDate)}
                   onClick={() => handleDateClick(date)}

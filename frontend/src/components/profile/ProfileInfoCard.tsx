@@ -137,6 +137,7 @@ export default function ProfileInfoCard() {
                 type="text"
                 value={values.name}
                 onChange={handleChange("name")}
+                onClear={() => handleChange("name")("")}
                 onBlur={handleBlur("name")}
                 error={touched.name ? errors.name : ""}
               />
@@ -146,6 +147,7 @@ export default function ProfileInfoCard() {
                 type="text"
                 value={values.surname}
                 onChange={handleChange("surname")}
+                onClear={() => handleChange("surname")("")}
                 onBlur={handleBlur("surname")}
                 error={touched.surname ? errors.surname : ""}
               />
@@ -155,6 +157,7 @@ export default function ProfileInfoCard() {
                 type="email"
                 value={values.email}
                 onChange={handleChange("email")}
+                onClear={() => handleChange("email")("")}
                 onBlur={handleBlur("email")}
                 error={touched.email ? errors.email : ""}
               />
@@ -164,6 +167,7 @@ export default function ProfileInfoCard() {
                 type="date"
                 value={values.birthdate}
                 onChange={handleChange("birthdate")}
+                onClear={() => handleChange("birthdate")("")}
                 onBlur={handleBlur("birthdate")}
                 error={touched.birthdate ? errors.birthdate : ""}
               />

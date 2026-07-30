@@ -42,6 +42,7 @@ export default function LoginPage() {
                   type="email"
                   value={values.email}
                   onChange={handleChange('email')}
+                  onClear={() => handleChange('email')("")}
                   onBlur={handleBlur('email')}
                   error={touched.email ? errors.email : ''}
                 />
@@ -51,6 +52,7 @@ export default function LoginPage() {
                   type="password"
                   value={values.password}
                   onChange={handleChange('password')}
+                  onClear={() => handleChange('password')("")}
                   onBlur={handleBlur('password')}
                   error={touched.password ? errors.password : ''}
                 />

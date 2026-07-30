@@ -6,6 +6,7 @@ import cross_red from '@assets/images/icons/cross_red.svg';
 import tick_success from '@assets/images/icons/tick_success.svg';
 import { useAppDispatch } from '@store/hooks';
 import { toggleHabitStep, deleteHabit } from '@store/habitSlice';
+import { getHabitProgress } from '@/lib/habitProgress';
 import type { HabitSummary } from '@shared/index';
 import { format, addDays } from 'date-fns';
 
@@ -37,12 +38,11 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
 
-  const hasSteps = habit.steps && habit.steps.length > 0;
-  const progress = hasSteps
-    ? Math.floor((habit.steps!.filter(s => s.completed).length / habit.steps!.length) * 100)
-    : habit.duration > 0
-      ? Math.min(100, Math.floor((habit.completedCount / habit.duration) * 100))
-      : 0;
+  // Steps, when a habit has them, are a finer measure of the same thing.
+  const steps = habit.steps ?? [];
+  const progress = steps.length > 0
+    ? getHabitProgress(steps.filter(step => step.completed).length, steps.length)
+    : getHabitProgress(habit.completedCount, habit.duration);
 
   const handleToggleStep = (stepId: string) => {
     dispatch(toggleHabitStep({ habitId: habit._id, stepId }));
@@ -128,15 +128,6 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
                      transition={{ duration: 0.15 }}
                      className="absolute right-0 top-full mt-2 w-48 bg-base-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-primary-black-10 overflow-hidden z-10"
                    >
-                     <button onClick={() => { alert("Edit functionality coming soon!"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-base-bg transition-colors flex items-center gap-2 text-primary-black">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        Edit Goal
-                     </button>
-                     <button onClick={() => { alert("Add Step functionality coming soon!"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-base-bg transition-colors flex items-center gap-2 text-primary-black">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Add Step
-                     </button>
-                     <div className="h-px bg-primary-black-10 w-full" />
                      <button onClick={handleDelete} className="w-full text-left px-4 py-3 text-sm font-medium text-error hover:bg-error-10 transition-colors flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                         Delete Goal
@@ -182,7 +173,7 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
         )}
 
         {/* Steps List */}
-        {hasSteps ? (
+        {steps.length > 0 ? (
             <div className="flex flex-col gap-3">
                <p className="text-sm font-semibold tracking-wide text-primary-black-60 uppercase mb-1">Steps to Complete</p>
                <div className="flex flex-col gap-2">

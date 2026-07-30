@@ -2,6 +2,7 @@ import eye_show from "@assets/images/icons/eye_show.svg";
 import eye_hide from "@assets/images/icons/eye_hide.svg";
 import remove_cross from "@assets/images/icons/remove_cross.svg";
 import React, { useState } from "react";
+import FieldError from "@components/ui/FieldError";
 import { cn } from "@/lib/utils";
 
 export interface IInputProps {
@@ -13,6 +14,8 @@ export interface IInputProps {
   value?: string;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
+  /** Called by the clear button. Without it the button is not rendered. */
+  onClear?: () => void;
 }
 
 export default function Input({
@@ -24,6 +27,7 @@ export default function Input({
   value,
   onChange,
   onBlur,
+  onClear,
 }: IInputProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [inputType, setInputType] = useState<IInputProps["type"]>(
@@ -37,12 +41,6 @@ export default function Input({
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     if (type === "date" && !value) setInputType("text");
     onBlur?.(e);
-  };
-
-  const handleClear = () => {
-    onChange?.({
-      target: { value: "" },
-    } as React.ChangeEvent<HTMLInputElement>);
   };
 
   const currentType =
@@ -85,8 +83,8 @@ export default function Input({
               />
             </button>
           )}
-          {value && (
-            <button type="button" onClick={handleClear}>
+          {value && onClear && (
+            <button type="button" onClick={onClear}>
               <img
                 src={remove_cross}
                 className="w-6 h-6 cursor-pointer"
@@ -97,7 +95,7 @@ export default function Input({
         </div>
       </div>
 
-      {error && <p className="alternative text-error mt-1">{error}</p>}
+      <FieldError message={error} />
     </div>
   );
 }

@@ -59,6 +59,7 @@ export default function PasswordCard() {
               type="password"
               value={values.currentPassword}
               onChange={handleChange("currentPassword")}
+              onClear={() => handleChange("currentPassword")("")}
               onBlur={handleBlur("currentPassword")}
               error={touched.currentPassword ? errors.currentPassword : ""}
             />
@@ -68,6 +69,7 @@ export default function PasswordCard() {
               type="password"
               value={values.newPassword}
               onChange={handleChange("newPassword")}
+              onClear={() => handleChange("newPassword")("")}
               onBlur={handleBlur("newPassword")}
               error={touched.newPassword ? errors.newPassword : ""}
             />
@@ -77,6 +79,7 @@ export default function PasswordCard() {
               type="password"
               value={values.confirmPassword}
               onChange={handleChange("confirmPassword")}
+              onClear={() => handleChange("confirmPassword")("")}
               onBlur={handleBlur("confirmPassword")}
               error={touched.confirmPassword ? errors.confirmPassword : ""}
             />

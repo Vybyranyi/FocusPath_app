@@ -2,11 +2,13 @@ import CircleLoader from '@components/habit/CircleLoader';
 import tick_success from '@assets/images/icons/tick_success.svg';
 import cross_red    from '@assets/images/icons/cross_red.svg';
 import { useSwipeable } from 'react-swipeable';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import type { HabitSummary } from '@shared/index';
 import { markHabitCompletion } from '@store/habitSlice';
 import { useAppDispatch } from '@store/hooks';
 import { motion, AnimatePresence } from 'framer-motion';
+import { startOfDay } from 'date-fns';
+import { getHabitProgress } from '@/lib/habitProgress';
 import HabitDetailPopup from '@components/habit/HabitDetailPopup';
 
 interface IHabitCardProps {
@@ -15,20 +17,14 @@ interface IHabitCardProps {
 
 type Status = 'idle' | 'done' | 'failed';
 
-function getDateOnly(d: Date | string) {
-  const date = new Date(d);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-export default function HabitCard({ habit }: IHabitCardProps) {
+function HabitCard({ habit }: IHabitCardProps) {
   const dispatch   = useAppDispatch();
   const [showDetail, setShowDetail] = useState(false);
   const [swipeDelta, setSwipeDelta] = useState(0);
   const wasSwipedRef = useRef(false);
 
-  const today     = getDateOnly(new Date());
-  const habitDate = getDateOnly(habit.dayInfo.date);
+  const today     = startOfDay(new Date());
+  const habitDate = startOfDay(new Date(habit.dayInfo.date));
   const isFuture  = habitDate > today;
   const isPast    = habitDate < today;
 
@@ -50,19 +46,16 @@ export default function HabitCard({ habit }: IHabitCardProps) {
     // For today + completed=false: preserve local 'failed' state set by user
   }, [habit.dayInfo.completed, habit.dayInfo.date, isPast]);
 
-  // Circle: completed tasks out of total duration
-  const progress = habit.duration > 0
-    ? Math.min(100, Math.floor((habit.completedCount / habit.duration) * 100))
-    : 0;
+  const progress = getHabitProgress(habit.completedCount, habit.duration);
 
-  const handleComplete = (completed: boolean) => {
+  const handleComplete = useCallback((completed: boolean) => {
     dispatch(markHabitCompletion({
       habitId: habit._id,
       date: habit.dayInfo.date,
       completed,
     }));
     setStatus(completed ? 'done' : 'failed');
-  };
+  }, [dispatch, habit._id, habit.dayInfo.date]);
 
   const handlers = useSwipeable({
     onSwiping: e => {
@@ -145,3 +138,6 @@ export default function HabitCard({ habit }: IHabitCardProps) {
     </>
   );
 }
+
+/** Memoised: the day view renders one per habit and re-renders on every store change. */
+export default memo(HabitCard);

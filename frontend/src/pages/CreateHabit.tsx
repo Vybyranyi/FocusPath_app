@@ -113,13 +113,11 @@ export default function CreateHabit() {
                     value={values.color}
                     error={touched.color ? errors.color : ""}
                     onChange={(v) => handleChange("color")(v)}
-                    onBlur={() => handleBlur("color")}
                   />
                   <EmojiPicker
                     value={values.emoji}
                     error={touched.emoji ? errors.emoji : ""}
                     onChange={(v) => handleChange("emoji")(v)}
-                    onBlur={() => handleBlur("emoji")}
                   />
                   <Input
                     label="Habit Name"
@@ -127,6 +125,7 @@ export default function CreateHabit() {
                     type="text"
                     value={values.habitName}
                     onChange={handleChange("habitName")}
+                    onClear={() => handleChange("habitName")("")}
                     onBlur={handleBlur("habitName")}
                     error={touched.habitName ? errors.habitName : ""}
                   />
@@ -136,6 +135,7 @@ export default function CreateHabit() {
                     type="text"
                     value={values.habitDescription}
                     onChange={handleChange("habitDescription")}
+                    onClear={() => handleChange("habitDescription")("")}
                     onBlur={handleBlur("habitDescription")}
                     error={
                       touched.habitDescription ? errors.habitDescription : ""

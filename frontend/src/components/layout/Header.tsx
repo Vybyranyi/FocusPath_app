@@ -29,7 +29,8 @@ export default function Header({
   segmentControl,
   showWeekController,
 }: IHeaderProps) {
-  const { user } = useAppSelector((state) => state.auth);
+  // Narrowed to the user: this header does not care about loading or errors.
+  const user = useAppSelector((state) => state.auth.user);
 
   return (
     <header className="bg-base-white shadow-[inset_0_-1px_0_#EAECF0] pb-4 mb-3 md:mb-6">
@@ -74,9 +75,9 @@ export default function Header({
         {profile && (
           <div className="flex gap-2 md:col-start-2 md:flex-row-reverse">
             <img
-              src={default_user}
+              src={user?.avatar || default_user}
               alt="User profile"
-              className="w-14 h-14 rounded-full md:w-12 md:h-12"
+              className="w-14 h-14 rounded-full object-cover md:w-12 md:h-12"
             />
             <div className="flex items-center">
               <p className="title">{`${user?.name} ${user?.surname}`}</p>
@@ -99,7 +100,6 @@ export default function Header({
             <SegmentControl
               segments={segments}
               defaultSelectedId="1"
-              onSelect={(id) => console.log(id)}
             />
           </div>
         )}

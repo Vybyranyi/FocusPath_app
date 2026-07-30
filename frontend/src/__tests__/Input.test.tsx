@@ -42,22 +42,38 @@ describe("Input component", () => {
         );
     });
 
-    it("shows clear icon and clears input on click", () => {
-        const handleChange = vi.fn();
+    it("calls onClear when the clear button is pressed", () => {
+        const handleClear = vi.fn();
         render(
             <Input
                 label="Name"
                 placeholder="Enter name"
                 type="text"
                 value="Test"
-                onChange={handleChange}
+                onChange={vi.fn()}
+                onClear={handleClear}
             />
         );
-        const clearIcon = screen.getByRole("img", { name: "Clear input" });
-        fireEvent.click(clearIcon);
-        expect(handleChange).toHaveBeenCalledWith(
-            expect.objectContaining({ target: expect.objectContaining({ value: "" }) })
+
+        fireEvent.click(screen.getByRole("img", { name: "Clear input" }));
+
+        expect(handleClear).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides the clear button when no handler was given", () => {
+        // It used to fabricate a change event with only a target.value on it —
+        // an object nothing else about a real event was true of.
+        render(
+            <Input
+                label="Name"
+                placeholder="Enter name"
+                type="text"
+                value="Test"
+                onChange={vi.fn()}
+            />
         );
+
+        expect(screen.queryByRole("img", { name: "Clear input" })).not.toBeInTheDocument();
     });
 
     it("password toggle", () => {

@@ -63,7 +63,7 @@ const AILoadingAnimation = () => {
           height: '100%',
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(56, 67, 255, 0.3) 0%, transparent 70%)',
-          animation: 'pulse 2s ease-in-out infinite'
+          animation: 'ai-pulse 2s ease-in-out infinite'
         }} />
         
         {/* Rotating Ring */}
@@ -74,7 +74,7 @@ const AILoadingAnimation = () => {
             left: 0,
             width: '100%',
             height: '100%',
-            animation: 'rotate 3s linear infinite'
+            animation: 'ai-rotate 3s linear infinite'
           }}
           viewBox="0 0 120 120"
         >
@@ -104,7 +104,7 @@ const AILoadingAnimation = () => {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           fontSize: '48px',
-          animation: 'float 3s ease-in-out infinite'
+          animation: 'ai-float 3s ease-in-out infinite'
         }}>
           🤖
         </div>
@@ -119,7 +119,7 @@ const AILoadingAnimation = () => {
         minHeight: '60px',
         display: 'flex',
         alignItems: 'center',
-        animation: 'fadeInOut 2.5s ease-in-out infinite'
+        animation: 'ai-fadeInOut 2.5s ease-in-out infinite'
       }}>
         {phrases[currentPhrase]}
       </div>
@@ -152,12 +152,12 @@ const AILoadingAnimation = () => {
       </div>
 
       <style>{`
-        @keyframes rotate {
+        @keyframes ai-rotate {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
 
-        @keyframes pulse {
+        @keyframes ai-pulse {
           0%, 100% { 
             transform: scale(1);
             opacity: 0.5;
@@ -168,7 +168,7 @@ const AILoadingAnimation = () => {
           }
         }
 
-        @keyframes float {
+        @keyframes ai-float {
           0%, 100% { 
             transform: translate(-50%, -50%) translateY(0px);
           }
@@ -177,7 +177,7 @@ const AILoadingAnimation = () => {
           }
         }
 
-        @keyframes fadeInOut {
+        @keyframes ai-fadeInOut {
           0%, 100% { opacity: 0; transform: translateY(10px); }
           20%, 80% { opacity: 1; transform: translateY(0); }
         }

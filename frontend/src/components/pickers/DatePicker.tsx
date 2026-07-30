@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 
 export interface IDatePicker {
@@ -10,7 +11,7 @@ export interface IDatePicker {
 
 const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-export default function DatePicker({
+function DatePicker({
   date,
   active,
   error,
@@ -45,3 +46,9 @@ export default function DatePicker({
     </div>
   );
 }
+
+/**
+ * Memoised: the month grid renders up to 42 of these, and the parent re-renders
+ * on every navigation of the week strip above it.
+ */
+export default memo(DatePicker);

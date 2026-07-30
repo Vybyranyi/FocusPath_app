@@ -1,8 +1,17 @@
+import FieldError from "@components/ui/FieldError";
+import {
+  addDays,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
 import arrow_right from "@assets/images/icons/arrow-right.svg";
 import DatePicker from "@components/pickers/DatePicker";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export interface IWeekDatePickerProps {
   label: string;
@@ -12,43 +21,22 @@ export interface IWeekDatePickerProps {
   error?: string;
 }
 
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  // Monday as first day
-  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+// date-fns is already a dependency and WeekSelector was already using it for
+// exactly this. The hand-rolled versions carried their own Sunday special case
+// and their own month-boundary loop, both of which are easy to get subtly wrong.
+const WEEK_STARTS_MONDAY = { weekStartsOn: 1 } as const;
 
-function getWeekDates(start: Date): Date[] {
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    return d;
+const getWeekStart = (date: Date): Date => startOfWeek(date, WEEK_STARTS_MONDAY);
+
+const getWeekDates = (start: Date): Date[] =>
+  eachDayOfInterval({ start, end: addDays(start, 6) });
+
+/** Whole weeks covering the month, so the grid always has complete rows. */
+const getMonthDates = (base: Date): Date[] =>
+  eachDayOfInterval({
+    start: startOfWeek(startOfMonth(base), WEEK_STARTS_MONDAY),
+    end: endOfWeek(endOfMonth(base), WEEK_STARTS_MONDAY),
   });
-}
-
-function getMonthDates(base: Date): Date[] {
-  const year = base.getFullYear();
-  const month = base.getMonth();
-  const first = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
-
-  const startOfCal = getWeekStart(first);
-  const endOfCal = new Date(last);
-  if (endOfCal.getDay() !== 0) {
-    endOfCal.setDate(endOfCal.getDate() + (7 - endOfCal.getDay()));
-  }
-
-  const dates: Date[] = [];
-  const cur = new Date(startOfCal);
-  while (cur <= endOfCal) {
-    dates.push(new Date(cur));
-    cur.setDate(cur.getDate() + 1);
-  }
-  return dates;
-}
 
 export default function WeekDatePicker({
   label,
@@ -75,10 +63,15 @@ export default function WeekDatePicker({
     ? new Date(selectedDate).toDateString()
     : null;
 
-  const monthWeeks: Date[][] = [];
-  for (let i = 0; i < monthDates.length; i += 7) {
-    monthWeeks.push(monthDates.slice(i, i + 7));
-  }
+  // Memoised alongside monthDates: rebuilding this on every render handed all
+  // forty-two children new props and undid the memo above it.
+  const monthWeeks = useMemo(() => {
+    const weeks: Date[][] = [];
+    for (let i = 0; i < monthDates.length; i += 7) {
+      weeks.push(monthDates.slice(i, i + 7));
+    }
+    return weeks;
+  }, [monthDates]);
 
   const currentMonth = viewDate.toLocaleString("en-US", {
     month: "long",
@@ -97,24 +90,15 @@ export default function WeekDatePicker({
     setViewDate(d);
   };
 
-  const handlePrevWeek = () => {
-    const d = new Date(currentWeekStart);
-    d.setDate(d.getDate() - 7);
-    setCurrentWeekStart(d);
-  };
+  const handlePrevWeek = () => setCurrentWeekStart((week) => addDays(week, -7));
+  const handleNextWeek = () => setCurrentWeekStart((week) => addDays(week, 7));
 
-  const handleNextWeek = () => {
-    const d = new Date(currentWeekStart);
-    d.setDate(d.getDate() + 7);
-    setCurrentWeekStart(d);
-  };
-
-  const handleDateSelectInternal = (date: Date) => {
+  const handleDateSelectInternal = useCallback((date: Date) => {
     onDateSelect(date);
     // When a date is selected, make sure both views follow it
     setCurrentWeekStart(getWeekStart(date));
     setViewDate(new Date(date));
-  };
+  }, [onDateSelect]);
 
   const datesRowClass = cn(
     "flex gap-2 w-full items-center",
@@ -133,9 +117,9 @@ export default function WeekDatePicker({
             <img src={arrow_left} alt="Previous week" className="w-5 h-5" />
           </button>
           <div className={datesRowClass}>
-            {weekDates.map((date, i) => (
+            {weekDates.map((date) => (
               <DatePicker
-                key={i}
+                key={date.toISOString()}
                 date={date}
                 active={selectedStr === date.toDateString()}
                 error={!!error}
@@ -163,11 +147,11 @@ export default function WeekDatePicker({
             </button>
           </div>
 
-          {monthWeeks.map((week, wi) => (
-            <div key={wi} className={datesRowClass}>
-              {week.map((date, di) => (
+          {monthWeeks.map((week) => (
+            <div key={week[0].toISOString()} className={datesRowClass}>
+              {week.map((date) => (
                 <DatePicker
-                  key={di}
+                  key={date.toISOString()}
                   date={date}
                   active={selectedStr === date.toDateString()}
                   error={!!error}
@@ -194,7 +178,7 @@ export default function WeekDatePicker({
         {isExpanded ? "Show less" : "Show more"}
       </button>
 
-      {error && <p className="alternative text-error mt-1">{error}</p>}
+      <FieldError message={error} />
     </div>
   );
 }

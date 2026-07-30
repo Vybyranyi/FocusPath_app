@@ -1,11 +1,13 @@
+import { memo } from "react";
 import StatCard from "./StatCard";
+import { getHabitProgress } from "@/lib/habitProgress";
 import type { Habit } from "@shared/index";
 
 interface StatsSummaryProps {
   habits: Habit[];
 }
 
-export default function StatsSummary({ habits }: StatsSummaryProps) {
+function StatsSummary({ habits }: StatsSummaryProps) {
   const activeCount = habits.filter((h) => !h.isCompleted).length;
   const completedCount = habits.filter((h) => h.isCompleted).length;
   const bestStreak = habits.reduce((max, h) => Math.max(max, h.currentStreak), 0);
@@ -15,7 +17,7 @@ export default function StatsSummary({ habits }: StatsSummaryProps) {
     (sum, h) => sum + h.dailyCompletions.filter((d) => d.completed).length,
     0,
   );
-  const overallRate = totalDays > 0 ? Math.round((doneDays / totalDays) * 100) : 0;
+  const overallRate = getHabitProgress(doneDays, totalDays);
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -26,3 +28,6 @@ export default function StatsSummary({ habits }: StatsSummaryProps) {
     </div>
   );
 }
+
+/** Memoised: its props are a memoised selector's output, so it settles quickly. */
+export default memo(StatsSummary);
