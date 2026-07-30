@@ -1,26 +1,23 @@
-import { Response, Request } from 'express';
+import { Request, Response } from 'express';
 import Habit from '@models/Habit';
 import mongoose from 'mongoose';
 import { created, ok } from '@utils/apiResponse';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '@errors/AppError';
+import type { TypedRequest } from '@middlewares/validate';
+import type {
+    CreateHabitDto,
+    HabitParams,
+    MarkCompletionDto,
+    StepParams,
+    UpdateDayTitleDto,
+    UpdateHabitDto,
+} from '@validation/habitSchemas';
 
-// No try/catch anywhere below: Express 5 forwards a rejected promise to the
-// error handler, which is the only place that turns a failure into a response.
-
-interface HabitBody {
-    title?: string;
-    description?: string;
-    category?: string;
-    steps?: Array<{ title: string; completed?: boolean }>;
-    startDate?: string;
-    duration?: number | null;
-    type?: 'build' | 'quit';
-    color?: string;
-    icon?: string;
-    completed?: boolean;
-    date?: string;
-    dayTitle?: string;
-}
+// Shape, ranges and id formats are enforced by the schemas on the routes.
+// What remains here is the part a schema cannot know: whether the habit exists,
+// whether it belongs to this user, and whether a date falls inside its schedule.
+//
+// No try/catch — Express 5 forwards a rejected promise to the error handler.
 
 /** Every handler here runs behind verifyTokenMiddleware, so this should always hold. */
 const requireUserId = (req: Request): string => {
@@ -30,19 +27,9 @@ const requireUserId = (req: Request): string => {
     return req.userId;
 };
 
-const requireObjectId = (value: string, label = 'habit ID'): string => {
-    if (!mongoose.Types.ObjectId.isValid(value)) {
-        throw new BadRequestError(`Invalid ${label}`);
-    }
-    return value;
-};
-
-/** Midnight UTC of the given day, rejecting anything that is not a real date. */
-const startOfUtcDay = (value: string | Date, label = 'date'): Date => {
+/** Midnight UTC of the given day, matching how the schedule is generated. */
+const startOfUtcDay = (value: string | Date): Date => {
     const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-        throw new BadRequestError(`Invalid ${label} format`);
-    }
     parsed.setUTCHours(0, 0, 0, 0);
     return parsed;
 };
@@ -54,53 +41,47 @@ const endOfSchedule = (startDate: Date, duration: number): Date => {
     return end;
 };
 
-const findCompletionIndex = (
-    completions: Array<{ date: Date }>,
-    target: Date,
-): number =>
-    completions.findIndex(completion => {
-        const day = new Date(completion.date);
-        day.setUTCHours(0, 0, 0, 0);
-        return day.getTime() === target.getTime();
+/** The scheduled entry for a day, or a refusal naming why there is none. */
+const requireScheduledDay = (
+    habit: { startDate: Date; duration: number; dailyCompletions: Array<{ date: Date }> },
+    day: Date,
+): number => {
+    const start = startOfUtcDay(habit.startDate);
+
+    if (day < start || day > endOfSchedule(start, habit.duration)) {
+        throw new BadRequestError('Date is outside habit duration');
+    }
+
+    const index = habit.dailyCompletions.findIndex(completion => {
+        const scheduled = new Date(completion.date);
+        scheduled.setUTCHours(0, 0, 0, 0);
+        return scheduled.getTime() === day.getTime();
     });
 
-export const createHabit = async (req: Request, res: Response) => {
+    if (index === -1) {
+        throw new BadRequestError('Date not found in habit schedule');
+    }
+
+    return index;
+};
+
+export const createHabit = async (req: TypedRequest<CreateHabitDto>, res: Response) => {
     const userId = requireUserId(req);
-    const {
-        title, description, category, steps, startDate, duration, type, color, icon,
-    } = req.body as HabitBody;
+    const { title, description, category, steps, startDate, duration, type, color, icon } = req.body;
 
-    if (!title || !startDate || !duration || !type || !color || !icon) {
-        throw new BadRequestError('All fields are required');
-    }
-
-    if (!['build', 'quit'].includes(type)) {
-        throw new BadRequestError('Type must be either "build" or "quit"');
-    }
-
-    if (duration < 1 || duration > 365) {
-        throw new BadRequestError('Duration must be between 1 and 365 days');
-    }
-
-    const parsedStartDate = startOfUtcDay(startDate, 'start date');
-
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    if (parsedStartDate.getTime() < today.getTime()) {
-        throw new BadRequestError('Start date cannot be in the past');
-    }
+    const parsedStartDate = startOfUtcDay(startDate);
 
     const dailyCompletions = Array.from({ length: duration }, (_unused, dayOffset) => {
         const completionDate = new Date(parsedStartDate);
         completionDate.setUTCDate(completionDate.getUTCDate() + dayOffset);
-        return { dayTitle: title.trim(), date: completionDate, completed: false };
+        return { dayTitle: title, date: completionDate, completed: false };
     });
 
     const newHabit = new Habit({
-        title: title.trim(),
-        description: description?.trim() || '',
-        category: category?.trim() || '',
-        steps: steps || [],
+        title,
+        description: description ?? '',
+        category: category ?? '',
+        steps: steps ?? [],
         startDate: parsedStartDate,
         duration,
         type,
@@ -119,11 +100,11 @@ export const createHabit = async (req: Request, res: Response) => {
 
 export const getHabitsForDate = async (req: Request, res: Response) => {
     const userId = requireUserId(req);
-    const { date } = req.query;
 
-    const targetDate = startOfUtcDay(
-        typeof date === 'string' && date ? date : new Date(),
-    );
+    // Read from req.query rather than a validated copy: Express 5 silently
+    // discards an assignment to it, so the schema checks and the handler parses.
+    const { date } = req.query;
+    const targetDate = startOfUtcDay(typeof date === 'string' && date ? date : new Date());
 
     const endDate = new Date(targetDate);
     endDate.setUTCHours(23, 59, 59, 999);
@@ -198,11 +179,13 @@ export const getAllHabits = async (req: Request, res: Response) => {
     return ok(res, { habits });
 };
 
-export const getHabitById = async (req: Request, res: Response) => {
+export const getHabitById = async (
+    req: TypedRequest<unknown, HabitParams>,
+    res: Response,
+) => {
     const userId = requireUserId(req);
-    const id = requireObjectId(req.params.id);
 
-    const habit = await Habit.findOne({ _id: id, userId }).select('-userId');
+    const habit = await Habit.findOne({ _id: req.params.id, userId }).select('-userId');
     if (!habit) {
         throw new NotFoundError('Habit not found');
     }
@@ -210,35 +193,24 @@ export const getHabitById = async (req: Request, res: Response) => {
     return ok(res, { habit });
 };
 
-export const updateHabit = async (req: Request, res: Response) => {
+export const updateHabit = async (
+    req: TypedRequest<UpdateHabitDto, HabitParams>,
+    res: Response,
+) => {
     const userId = requireUserId(req);
-    const id = requireObjectId(req.params.id);
-    const {
-        title, description, category, steps, startDate, duration, type, color, icon,
-    } = req.body as HabitBody;
+    const { title, description, category, steps, startDate, duration, type, color, icon } = req.body;
 
-    const habit = await Habit.findOne({ _id: id, userId });
+    const habit = await Habit.findOne({ _id: req.params.id, userId });
     if (!habit) {
         throw new NotFoundError('Habit not found');
     }
 
-    if (type && !['build', 'quit'].includes(type)) {
-        throw new BadRequestError('Type must be either "build" or "quit"');
-    }
-
-    if (duration != null && (duration < 1 || duration > 365)) {
-        throw new BadRequestError('Duration must be between 1 and 365 days');
-    }
-
-    if (startDate) {
-        habit.startDate = startOfUtcDay(startDate, 'start date');
-    }
-
-    if (title) habit.title = title.trim();
-    if (description !== undefined) habit.description = description.trim();
-    if (category !== undefined) habit.category = category.trim();
-    if (steps) habit.steps = steps.map(step => ({ ...step, completed: step.completed ?? false }));
-    if (duration != null) habit.duration = duration;
+    if (startDate) habit.startDate = startOfUtcDay(startDate);
+    if (title) habit.title = title;
+    if (description !== undefined) habit.description = description;
+    if (category !== undefined) habit.category = category;
+    if (steps) habit.steps = steps;
+    if (duration !== undefined) habit.duration = duration;
     if (type) habit.type = type;
     if (color) habit.color = color;
     if (icon) habit.icon = icon;
@@ -246,12 +218,15 @@ export const updateHabit = async (req: Request, res: Response) => {
 
     await habit.save();
 
-    return ok(res, { habit: habit });
+    return ok(res, { habit });
 };
 
-export const deleteHabit = async (req: Request, res: Response) => {
+export const deleteHabit = async (
+    req: TypedRequest<unknown, HabitParams>,
+    res: Response,
+) => {
     const userId = requireUserId(req);
-    const id = requireObjectId(req.params.id);
+    const { id } = req.params;
 
     const habit = await Habit.findOneAndDelete({ _id: id, userId });
     if (!habit) {
@@ -261,65 +236,40 @@ export const deleteHabit = async (req: Request, res: Response) => {
     return ok(res, { habitId: id });
 };
 
-export const updateDayTitle = async (req: Request, res: Response) => {
+export const updateDayTitle = async (
+    req: TypedRequest<UpdateDayTitleDto, HabitParams>,
+    res: Response,
+) => {
     const userId = requireUserId(req);
-    const id = requireObjectId(req.params.id);
-    const { date, dayTitle } = req.body as HabitBody;
+    const { date, dayTitle } = req.body;
 
-    if (!date || !dayTitle) {
-        throw new BadRequestError('Date and dayTitle are required');
-    }
-
-    const habit = await Habit.findOne({ _id: id, userId });
+    const habit = await Habit.findOne({ _id: req.params.id, userId });
     if (!habit) {
         throw new NotFoundError('Habit not found');
     }
 
-    const targetDate = startOfUtcDay(date);
-    const startDate = startOfUtcDay(habit.startDate);
+    const index = requireScheduledDay(habit, startOfUtcDay(date));
 
-    if (targetDate < startDate || targetDate > endOfSchedule(startDate, habit.duration)) {
-        throw new BadRequestError('Date is outside habit duration');
-    }
-
-    const index = findCompletionIndex(habit.dailyCompletions, targetDate);
-    if (index === -1) {
-        throw new BadRequestError('Date not found in habit schedule');
-    }
-
-    habit.dailyCompletions[index].dayTitle = dayTitle.trim();
+    habit.dailyCompletions[index].dayTitle = dayTitle;
     habit.updatedAt = new Date();
     await habit.save();
 
-    return ok(res, { habit: habit });
+    return ok(res, { habit });
 };
 
-export const markHabitCompletion = async (req: Request, res: Response) => {
+export const markHabitCompletion = async (
+    req: TypedRequest<MarkCompletionDto, HabitParams>,
+    res: Response,
+) => {
     const userId = requireUserId(req);
-    const id = requireObjectId(req.params.id);
-    const { date, completed } = req.body as HabitBody;
+    const { date, completed } = req.body;
 
-    if (completed === undefined) {
-        throw new BadRequestError('Completed status is required');
-    }
-
-    const habit = await Habit.findOne({ _id: id, userId });
+    const habit = await Habit.findOne({ _id: req.params.id, userId });
     if (!habit) {
         throw new NotFoundError('Habit not found');
     }
 
-    const completionDate = startOfUtcDay(date ?? new Date());
-    const startDate = startOfUtcDay(habit.startDate);
-
-    if (completionDate < startDate || completionDate > endOfSchedule(startDate, habit.duration)) {
-        throw new BadRequestError('Date is outside habit duration');
-    }
-
-    const index = findCompletionIndex(habit.dailyCompletions, completionDate);
-    if (index === -1) {
-        throw new BadRequestError('Date not found in habit schedule');
-    }
-
+    const index = requireScheduledDay(habit, startOfUtcDay(date ?? new Date()));
     habit.dailyCompletions[index].completed = completed;
 
     // Оновлення поточної серії
@@ -354,13 +304,15 @@ export const markHabitCompletion = async (req: Request, res: Response) => {
     habit.updatedAt = new Date();
     await habit.save();
 
-    return ok(res, { habit: habit });
+    return ok(res, { habit });
 };
 
-export const toggleStep = async (req: Request, res: Response) => {
+export const toggleStep = async (
+    req: TypedRequest<unknown, StepParams>,
+    res: Response,
+) => {
     const userId = requireUserId(req);
-    const id = requireObjectId(req.params.id);
-    const stepId = requireObjectId(req.params.stepId, 'step ID');
+    const { id, stepId } = req.params;
 
     const habit = await Habit.findOne({ _id: id, userId });
     if (!habit) {
@@ -376,9 +328,5 @@ export const toggleStep = async (req: Request, res: Response) => {
     habit.updatedAt = new Date();
     await habit.save();
 
-    return ok(res, {
-        stepId,
-        completed: step.completed,
-        habit: habit,
-    });
+    return ok(res, { stepId, completed: step.completed, habit });
 };

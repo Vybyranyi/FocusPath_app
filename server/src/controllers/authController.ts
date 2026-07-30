@@ -2,42 +2,36 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '@models/User';
 import Habit from '@models/Habit';
-import { hashPassword, validatePassword, verifyPassword } from '@utils/password';
-import { validateAvatar } from '@utils/avatar';
+import { hashPassword, verifyPassword } from '@utils/password';
 import { created, ok } from '@utils/apiResponse';
 import { BadRequestError, ConflictError, NotFoundError } from '@errors/AppError';
+import type { TypedRequest } from '@middlewares/validate';
+import type {
+    ChangePasswordDto,
+    LoginDto,
+    RegisterDto,
+    UpdateProfileDto,
+} from '@validation/authSchemas';
 
 const jwtSecret = process.env.JWT_SECRET as string;
 
-// No try/catch anywhere below: Express 5 forwards a rejected promise to the
-// error handler, which is the only place that turns a failure into a response.
+// Shape, types and field limits are enforced by the schemas on the routes, so
+// nothing below re-checks them. What remains here is the part a schema cannot
+// know: whether the address is taken, whether the password matches.
+//
+// No try/catch either — Express 5 forwards a rejected promise to the error
+// handler, which is the only place that turns a failure into a response.
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: TypedRequest<RegisterDto>, res: Response) => {
     const { name, surname, birthday, gender, email, password } = req.body;
-
-    if (!name || !surname || !birthday || !gender || !email || !password) {
-        throw new BadRequestError('All fields are required');
-    }
-
-    // Rejects operator objects such as {"$ne": null} before they reach a query.
-    // sanitizeFilter would neutralise them anyway, but only by failing the cast.
-    if (typeof email !== 'string' || typeof password !== 'string') {
-        throw new BadRequestError('Email and password must be strings');
-    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
         throw new ConflictError('User already exists');
     }
 
-    const passwordProblem = validatePassword(password);
-    if (passwordProblem) {
-        throw new BadRequestError(passwordProblem);
-    }
-
-    // Fields are listed rather than spread from the body: spreading let a caller
-    // set any schema path it liked, which becomes privilege escalation the
-    // moment a role or flag is added to the model.
+    // The schema strips unknown keys, so the body cannot carry a field the
+    // caller was never offered — no spread, and nothing to escalate through.
     const newUser = new User({
         name,
         surname,
@@ -54,17 +48,8 @@ export const register = async (req: Request, res: Response) => {
     return created(res, { token, user: newUser });
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: TypedRequest<LoginDto>, res: Response) => {
     const { email, password } = req.body;
-
-    // Checked before the lookup, so a malformed request never reaches the database.
-    if (!email || !password) {
-        throw new BadRequestError('Email and password are required');
-    }
-
-    if (typeof email !== 'string' || typeof password !== 'string') {
-        throw new BadRequestError('Email and password must be strings');
-    }
 
     // The hash is select:false on the schema, so it has to be asked for.
     const user = await User.findOne({ email }).select('+password');
@@ -91,16 +76,9 @@ export const verifyToken = async (req: Request, res: Response) => {
     return ok(res, { user });
 };
 
-export const updateProfile = async (req: Request, res: Response) => {
+export const updateProfile = async (req: TypedRequest<UpdateProfileDto>, res: Response) => {
     const { userId } = req;
-    const { name, surname, birthday, gender, email, avatar } = req.body;
-
-    if (avatar !== undefined) {
-        const avatarProblem = validateAvatar(avatar);
-        if (avatarProblem) {
-            throw new BadRequestError(avatarProblem);
-        }
-    }
+    const { email } = req.body;
 
     if (email) {
         const existing = await User.findOne({ email, _id: { $ne: userId } });
@@ -109,11 +87,12 @@ export const updateProfile = async (req: Request, res: Response) => {
         }
     }
 
-    const updated = await User.findByIdAndUpdate(
-        userId,
-        { name, surname, birthday, gender, email, avatar },
-        { new: true, runValidators: true },
-    );
+    // Safe to hand the body over whole: the schema allows only these six fields
+    // and has already dropped anything else.
+    const updated = await User.findByIdAndUpdate(userId, req.body, {
+        new: true,
+        runValidators: true,
+    });
 
     if (!updated) {
         throw new NotFoundError('User not found');
@@ -122,18 +101,9 @@ export const updateProfile = async (req: Request, res: Response) => {
     return ok(res, { user: updated });
 };
 
-export const changePassword = async (req: Request, res: Response) => {
+export const changePassword = async (req: TypedRequest<ChangePasswordDto>, res: Response) => {
     const { userId } = req;
     const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-        throw new BadRequestError('Current and new password are required');
-    }
-
-    const passwordProblem = validatePassword(newPassword);
-    if (passwordProblem) {
-        throw new BadRequestError(passwordProblem);
-    }
 
     const user = await User.findById(userId).select('+password');
     if (!user) {

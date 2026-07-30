@@ -14,6 +14,7 @@ const config: Config.InitialOptions = {
     "^@utils/(.*)$": "<rootDir>/src/utils/$1",
     "^@services/(.*)$": "<rootDir>/src/services/$1",
     "^@errors/(.*)$": "<rootDir>/src/errors/$1",
+    "^@validation/(.*)$": "<rootDir>/src/validation/$1",
     "^@shared/(.*)$": "<rootDir>/../shared/src/$1",
     "^@app$": "<rootDir>/src/app.ts",
     "^@/(.*)$": "<rootDir>/src/$1"

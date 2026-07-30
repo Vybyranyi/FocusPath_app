@@ -22,6 +22,7 @@
       "@utils/*": ["utils/*"],
       "@services/*": ["services/*"],
       "@errors/*": ["errors/*"],
+      "@validation/*": ["validation/*"],
       "@shared/*": ["../../shared/src/*"]
     }
   },

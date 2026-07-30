@@ -143,7 +143,9 @@ describe('Application hardening', () => {
                 .send({ ...validUser, password: 'a'.repeat(73) })
                 .expect(400);
 
-            expect(response.body.error.message).toBe('Password must not exceed 72 bytes');
+            expect(response.body.error.details.password).toEqual([
+                'Password must not exceed 72 bytes',
+            ]);
         });
     });
 
@@ -154,8 +156,9 @@ describe('Application hardening', () => {
                 .send({ ...validUser, avatar: 'data:image/png;base64,AAAA' })
                 .expect(201);
 
-            // avatar is a real schema path, so a spread of req.body would have
-            // written it. Registration accepts a fixed set of fields instead.
+            // avatar is a real model path, so a spread of req.body would have
+            // written it. The request schema does not list it, so it is stripped
+            // before any handler sees the body.
             expect(response.body.data.user.avatar).toBeUndefined();
         });
     });
@@ -185,9 +188,9 @@ describe('Application hardening', () => {
                 .send({ avatar: 'https://example.com/avatar.png' })
                 .expect(400);
 
-            expect(response.body.error.message).toBe(
+            expect(response.body.error.details.avatar).toEqual([
                 'Avatar must be a base64 data URI of type png, jpeg or webp',
-            );
+            ]);
         });
 
         it('rejects an svg data URI, which can carry script', async () => {
@@ -197,7 +200,7 @@ describe('Application hardening', () => {
                 .send({ avatar: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' })
                 .expect(400);
 
-            expect(response.body.error.message).toContain('png, jpeg or webp');
+            expect(response.body.error.details.avatar[0]).toContain('png, jpeg or webp');
         });
     });
 });

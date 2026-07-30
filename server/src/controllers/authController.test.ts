@@ -44,7 +44,7 @@ describe('Auth Controller', () => {
             expect(response.body.data.user).not.toHaveProperty('password');
         });
 
-        it('should return 400 if required fields are missing', async () => {
+        it('should name every missing field at once rather than the first', async () => {
             const { surname, gender, ...incompleteData } = validUser;
 
             const response = await request(app)
@@ -53,8 +53,38 @@ describe('Auth Controller', () => {
                 .expect(400);
 
             expect(response.body.success).toBe(false);
-            expect(response.body.error.code).toBe('BAD_REQUEST');
-            expect(response.body.error.message).toBe('All fields are required');
+            expect(response.body.error.code).toBe('VALIDATION_ERROR');
+            expect(Object.keys(response.body.error.details).sort()).toEqual(['gender', 'surname']);
+        });
+
+        it('should accept an address that arrived with surrounding whitespace', async () => {
+            const response = await request(app)
+                .post('/auth/')
+                .send({ ...validUser, email: `  ${validUser.email}  ` })
+                .expect(201);
+
+            expect(response.body.data.user.email).toBe(validUser.email);
+        });
+
+        it('should reject an email that is not an address', async () => {
+            const response = await request(app)
+                .post('/auth/')
+                .send({ ...validUser, email: 'not-an-email' })
+                .expect(400);
+
+            expect(response.body.error.details.email).toEqual(['Must be a valid email address']);
+        });
+
+        it('should drop fields the caller was never offered', async () => {
+            const response = await request(app)
+                .post('/auth/')
+                .send({ ...validUser, avatar: 'data:image/png;base64,AAAA', role: 'admin' })
+                .expect(201);
+
+            // The schema strips unknown keys, so neither reaches the model —
+            // there is no body left to escalate through.
+            expect(response.body.data.user.avatar).toBeUndefined();
+            expect(response.body.data.user.role).toBeUndefined();
         });
 
         it('should return 409 if user with email already exists', async () => {
@@ -75,16 +105,30 @@ describe('Auth Controller', () => {
                 .send({ ...validUser, password: 'pass' })
                 .expect(400);
 
-            expect(response.body.error.message).toBe('Password must be at least 8 characters long');
+            expect(response.body.error.details.password).toEqual([
+                'Password must be at least 8 characters long',
+            ]);
+        });
+
+        it('should reject a gender outside the allowed set', async () => {
+            const response = await request(app)
+                .post('/auth/')
+                .send({ ...validUser, gender: 'invalid' })
+                .expect(400);
+
+            expect(response.body.error.code).toBe('VALIDATION_ERROR');
+            expect(response.body.error.details).toHaveProperty('gender');
         });
 
         it('should report a Mongoose validation error field by field', async () => {
+            // The body below is schema-valid, so it reaches save(); this covers
+            // the error handler's mapping of failures the schema cannot foresee.
             const mockValidationError = new mongoose.Error.ValidationError();
             mockValidationError.errors = {
-                gender: new mongoose.Error.ValidatorError({
-                    message: 'Gender is not valid',
-                    path: 'gender',
-                    value: 'invalid',
+                name: new mongoose.Error.ValidatorError({
+                    message: 'Name is not valid',
+                    path: 'name',
+                    value: 'Test',
                 }),
             };
 
@@ -94,12 +138,13 @@ describe('Auth Controller', () => {
 
             const response = await request(app)
                 .post('/auth/')
-                .send({ ...validUser, gender: 'invalid' })
+                .send(validUser)
                 .expect(400);
 
             expect(response.body.error.code).toBe('VALIDATION_ERROR');
             // Only the messages travel — not Mongoose's internal validator state.
-            expect(response.body.error.details).toEqual({ gender: ['Gender is not valid'] });
+            expect(response.body.error.details).toEqual({ name: ['Name is not valid'] });
+            expect(JSON.stringify(response.body)).not.toContain('ValidatorError');
 
             jest.restoreAllMocks();
         });
@@ -143,7 +188,8 @@ describe('Auth Controller', () => {
                 .send({ email: validUser.email })
                 .expect(400);
 
-            expect(response.body.error.message).toBe('Email and password are required');
+            expect(response.body.error.code).toBe('VALIDATION_ERROR');
+            expect(response.body.error.details.password).toEqual(['Password is required']);
         });
 
         it('should return 404 if user not found', async () => {
