@@ -132,7 +132,7 @@ describe('Auth Controller', () => {
                 }),
             };
 
-            jest.spyOn(User.prototype, 'save').mockImplementationOnce(() => {
+            jest.spyOn(User, 'create').mockImplementationOnce(() => {
                 throw mockValidationError;
             });
 

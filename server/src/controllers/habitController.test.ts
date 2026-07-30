@@ -275,6 +275,135 @@ describe('Habit Controller', () => {
         });
     });
 
+    describe('PUT /habits/:id', () => {
+        /** Marks the first `count` days of the plan as done. */
+        const completeFirstDays = async (habitId: string, count: number) => {
+            for (let offset = 0; offset < count; offset++) {
+                await request(app)
+                    .patch(`/habits/${habitId}/complete`)
+                    .set('Authorization', `Bearer ${token}`)
+                    .send({ date: daysFromToday(offset), completed: true })
+                    .expect(200);
+            }
+        };
+
+        const update = (habitId: string, changes: Record<string, unknown>) =>
+            request(app)
+                .put(`/habits/${habitId}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send(changes)
+                .expect(200);
+
+        it('rebuilds the plan when the duration is shortened', async () => {
+            const habit = await createHabit(token, { duration: 5 });
+            await completeFirstDays(habit._id, 2);
+
+            const response = await update(habit._id, { duration: 3 });
+
+            // Setting the field alone used to leave five scheduled days behind,
+            // which stayed completable while being invisible to the day view.
+            expect(response.body.data.habit.dailyCompletions).toHaveLength(3);
+            expect(
+                response.body.data.habit.dailyCompletions
+                    .slice(0, 2)
+                    .every((day: { completed: boolean }) => day.completed),
+            ).toBe(true);
+        });
+
+        it('rebuilds the plan when the duration is extended', async () => {
+            const habit = await createHabit(token, { duration: 3 });
+            await completeFirstDays(habit._id, 1);
+
+            const response = await update(habit._id, { duration: 6 });
+
+            expect(response.body.data.habit.dailyCompletions).toHaveLength(6);
+            expect(response.body.data.habit.dailyCompletions[0].completed).toBe(true);
+            expect(response.body.data.habit.dailyCompletions[5].completed).toBe(false);
+        });
+
+        it('shifts every scheduled date when the start moves, keeping progress', async () => {
+            const habit = await createHabit(token, { duration: 3 });
+            await completeFirstDays(habit._id, 1);
+
+            const response = await update(habit._id, { startDate: daysFromToday(10) });
+
+            const dates = response.body.data.habit.dailyCompletions.map(
+                (day: { date: string }) => day.date.slice(0, 10),
+            );
+            expect(dates[0]).toBe(daysFromToday(10).slice(0, 10));
+            expect(dates[2]).toBe(daysFromToday(12).slice(0, 10));
+            // Day one of the plan is still day one, and still done.
+            expect(response.body.data.habit.dailyCompletions[0].completed).toBe(true);
+        });
+
+        it('leaves the plan alone when neither the start nor the length changes', async () => {
+            const habit = await createHabit(token, { duration: 4 });
+            await completeFirstDays(habit._id, 2);
+
+            const response = await update(habit._id, { title: 'Renamed' });
+
+            expect(response.body.data.habit.title).toBe('Renamed');
+            expect(response.body.data.habit.dailyCompletions).toHaveLength(4);
+            expect(response.body.data.habit.dailyCompletions[1].completed).toBe(true);
+        });
+
+        it('refuses an update that changes nothing', async () => {
+            const habit = await createHabit(token);
+
+            const response = await request(app)
+                .put(`/habits/${habit._id}`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({})
+                .expect(400);
+
+            expect(response.body.error.message).toBe('Provide at least one field to update');
+        });
+    });
+
+    describe('streak', () => {
+        it('counts a day completed today', async () => {
+            const habit = await createHabit(token, { duration: 3 });
+
+            const response = await request(app)
+                .patch(`/habits/${habit._id}/complete`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ date: daysFromToday(0), completed: true })
+                .expect(200);
+
+            expect(response.body.data.habit.currentStreak).toBe(1);
+        });
+
+        it('does not count a day of the plan that today has not reached', async () => {
+            const habit = await createHabit(token, { duration: 5 });
+
+            const response = await request(app)
+                .patch(`/habits/${habit._id}/complete`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ date: daysFromToday(3), completed: true })
+                .expect(200);
+
+            expect(response.body.data.habit.currentStreak).toBe(0);
+        });
+
+        it('drops back when a completion is undone', async () => {
+            const habit = await createHabit(token, { duration: 3 });
+
+            await request(app)
+                .patch(`/habits/${habit._id}/complete`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ date: daysFromToday(0), completed: true })
+                .expect(200);
+
+            const response = await request(app)
+                .patch(`/habits/${habit._id}/complete`)
+                .set('Authorization', `Bearer ${token}`)
+                .send({ date: daysFromToday(0), completed: false })
+                .expect(200);
+
+            expect(response.body.data.habit.currentStreak).toBe(0);
+        });
+    });
+
     describe('PATCH /habits/:id/steps/:stepId', () => {
         it('flips a step and reports its new state', async () => {
             const habit = await createHabit(token, {
