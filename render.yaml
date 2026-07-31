@@ -1,0 +1,56 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# One web service serving both halves of the app from a single origin. See the
+# comment at the top of the Dockerfile for why they are not split.
+#
+# Apply with: Render Dashboard → New → Blueprint → point at this repository.
+
+services:
+  - type: web
+    name: focuspath
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # The build needs frontend/, server/ and shared/, so the context is the
+    # repository root rather than any one package.
+    dockerContext: .
+    plan: free
+    region: frankfurt
+    # Not "/": the SPA fallback answers only requests that ask for text/html,
+    # and a health checker sends */*, so it would get a JSON 404 and fail a
+    # perfectly good deploy. /healthz also reports the database, so an instance
+    # that is listening but cannot reach Mongo never enters rotation.
+    healthCheckPath: /healthz
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Separate keys per token kind, so a leak of one does not compromise the
+      # other. Both are mandatory in production — the server refuses to start
+      # without them rather than quietly falling back to JWT_SECRET.
+      # Render generates each once; changing either signs every session out.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+      # Prompted for on first apply and never stored in the repository.
+      - key: MONGO_URI
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+      - key: BCRYPT_ROUNDS
+        value: "12"
+
+      # The client is served from this same origin, so the session cookies are
+      # first-party and lax is correct. COOKIE_DOMAIN is deliberately unset:
+      # host-only cookies are what a single-origin deployment wants, and
+      # onrender.com is a public suffix, so a domain cookie would be refused
+      # anyway.
+      - key: COOKIE_SAMESITE
+        value: lax
+
+      # CORS_ORIGIN is intentionally absent. Same-origin requests are not
+      # subject to CORS at all, so there is nothing to allow. Set it only if
+      # the client is ever served from somewhere else.
