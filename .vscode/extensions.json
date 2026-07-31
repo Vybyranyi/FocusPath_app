@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    // Лінт обох пакетів (див. eslint.workingDirectories у settings.json)
+    "dbaeumer.vscode-eslint",
+    // Відступи та кінці рядків за .editorconfig
+    "editorconfig.editorconfig",
+    // Автодоповнення класів Tailwind 4, який використовує фронтенд
+    "bradlc.vscode-tailwindcss",
+    // Запуск і дебаг тестів Vitest прямо з редактора
+    "vitest.explorer"
+  ]
+}

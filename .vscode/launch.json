@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Те саме, що робить `npm --prefix server run dev`, але з точками зупину.
+      // -r tsconfig-paths/register обов'язковий: без нього аліаси @config/*,
+      // @services/* тощо не резолвляться в рантаймі.
+      "name": "Server: запустити з дебагером",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "program": "${workspaceFolder}/server/src/server.ts",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Server: дебаг поточного тесту (Jest)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/server",
+      "program": "${workspaceFolder}/server/node_modules/jest/bin/jest.js",
+      // Абсолютний шлях, а не ${relativeFile}: той рахується від кореня
+      // воркспейсу, а cwd тут — server/, і шлях би не збігся.
+      "args": ["--runInBand", "--runTestsByPath", "${file}"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Frontend: дебаг поточного тесту (Vitest)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "program": "${workspaceFolder}/frontend/node_modules/vitest/vitest.mjs",
+      "args": ["run", "${file}"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Frontend: дебаг у Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend/src"
+    }
+  ]
+}
