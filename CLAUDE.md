@@ -32,7 +32,13 @@ frontend/   React 19, Vite 7, Redux Toolkit, Tailwind 4, Vitest + jsdom
 server/     Express 5, Mongoose 8, Zod 4, Jest + supertest + mongodb-memory-server
 shared/     .d.ts-only contracts consumed by both via the @shared/* alias
 docs/       API reference
+Dockerfile  one image serving both halves; render.yaml deploys it
 ```
+
+Development runs two processes on two ports; production runs one, with Express
+serving the built client alongside the API. That is deliberate — the session
+lives in cookies, and cookies get complicated the moment the client and the API
+are on different sites. See "Топологія розгортання" in `DESIGN.md`.
 
 There is one `.env` at the repo root. Vite reads it through `envDir` in
 `frontend/vite.config.ts`; the server loads it explicitly in `src/server.ts`.
@@ -127,6 +133,19 @@ The server also needs `tsc-alias` at build time (`npm run build` is
   token on every use, so two concurrent refreshes would leave the loser holding
   a spent token. `refreshInFlight` in the API client makes everyone wait on one
   attempt. Do not add a second refresh path.
+- **The SPA fallback answers only requests that ask for `text/html`.** That is
+  what keeps a mistyped endpoint returning the JSON envelope instead of an HTML
+  page the client cannot parse, and what keeps the suite from depending on
+  whether `frontend/dist` happens to exist locally. `/healthz` exists because a
+  health checker sends `*/*` and would otherwise get a 404.
+- **`DEFAULT_CLIENT_DIST` is three levels up from `__dirname`, not two.**
+  `staticClient` lives under `middlewares/`, so it sits one level deeper than
+  the package root — the same depth under `src/` and `dist/`. Getting it wrong
+  fails nothing loudly: the app just serves no client and answers every
+  navigation with a JSON 404. `CLIENT_DIST` overrides it; the image sets it.
+- **helmet's default `img-src` blocks the emoji CDN.** `react-apple-emojis`
+  loads artwork from `em-content.zobj.net`, which the default `'self' data:`
+  refuses. Nothing on the server errors — the emoji simply vanish.
 
 ## Adding an endpoint
 
