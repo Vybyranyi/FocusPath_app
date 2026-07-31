@@ -1,26 +1,169 @@
 # FocusPath
 
-Monorepo for FocusPath: React/Vite frontend + Express/Mongoose backend.
+[![CI](https://github.com/Vybyranyi/FocusPath_app/actions/workflows/ci.yml/badge.svg)](https://github.com/Vybyranyi/FocusPath_app/actions/workflows/ci.yml)
 
-## Structure
+Застосунок для відстеження звичок: ставите ціль на певну кількість днів,
+відмічаєте виконання щодня і бачите свою серію та прогрес. План звички можна
+написати самому або згенерувати через AI.
 
-- [`frontend/`](frontend) — React + Vite + TypeScript client
-- [`server/`](server) — Express + Mongoose API
+Монорепозиторій: React-клієнт і Express-API з пакетом спільних типів між ними.
 
-## Getting started
+## Можливості
+
+- **Звички на період** — від 1 до 365 днів, розклад створюється наперед по
+  одному запису на день.
+- **Два типи** — виробити звичку (`build`) або позбутися її (`quit`).
+- **Кроки всередині звички** — підзадачі з окремими відмітками.
+- **Серії** — безперервний ряд виконаних днів. Серія не рветься, поки день не
+  завершився, тож невідмічене «сьогодні» її не обнуляє.
+- **Генерація плану через AI** — за назвою звички OpenAI складає розклад і,
+  якщо не задати тривалість, сам обирає її.
+- **Статистика** — зведення й розбивка по звичках.
+- **Профіль** — редагування даних, зміна пароля, аватар, видалення акаунта.
+- **Адаптивний інтерфейс** — тижневий і місячний вибір дати, свайпи для
+  навігації тижнями, анімовані переходи.
+
+## Стек
+
+| Частина | Технології |
+| --- | --- |
+| Клієнт | React 19, Vite 7, TypeScript, Redux Toolkit, Tailwind 4, Formik + Yup, framer-motion |
+| Сервер | Node 24, Express 5, Mongoose 8, Zod 4, JWT, bcrypt, helmet, pino |
+| Тести | Vitest + Testing Library (клієнт), Jest + supertest + mongodb-memory-server (сервер) |
+
+## Архітектура коротко
+
+```
+┌──────────────┐   fetch, cookie   ┌──────────────┐        ┌───────────┐
+│  frontend/   │ ────────────────► │   server/    │ ─────► │  MongoDB  │
+│ React + Vite │ ◄──────────────── │  Express API │        └───────────┘
+└──────────────┘   { success, … }  └──────┬───────┘
+        │                                 │
+        └────────── shared/ ──────────────┘         └──────► OpenAI
+              типи-контракти (.d.ts)
+```
+
+Три речі, які визначають усе інше:
+
+- **Один конверт відповіді.** Кожен ендпоінт повертає `{ success: true, data }`
+  або `{ success: false, error }`, тому в клієнта одна гілка обробки, а не по
+  одній на маршрут.
+- **Сесія в httpOnly cookie.** Токени недоступні для JavaScript, refresh
+  ротується при кожному використанні, від CSRF захищає double-submit токен.
+- **Zod-схеми — джерело правди.** Типи DTO виводяться зі схем, а сувора
+  перевірка типів заразом закриває NoSQL-ін'єкції.
+
+Детально — у [`DESIGN.md`](DESIGN.md).
+
+## Швидкий старт
+
+Потрібні Node 24 і MongoDB (локальна або Atlas).
 
 ```bash
-cp .env.example .env   # fill in MONGO_URI, JWT_SECRET, OPENAI_API_KEY, ADMIN_EMAIL, ADMIN_PASSWORD
+git clone https://github.com/Vybyranyi/FocusPath_app.git
+cd FocusPath_app
+cp .env.example .env      # заповнити MONGO_URI та JWT_SECRET
 npm install
 npm run install:all
 npm run dev
 ```
 
-There is a single `.env` at the repo root, shared by both `frontend` (Vite reads it via `envDir`) and `server` (loaded explicitly via `dotenv.config({ path: ... })`).
+Клієнт підніметься на `http://localhost:5173`, API — на `http://localhost:3000`.
 
-`npm run dev` starts both the frontend (Vite) and the server (nodemon) concurrently.
+## Змінні оточення
 
-Other scripts:
+`.env` **один на весь репозиторій** і лежить у корені. Vite читає його через
+`envDir`, сервер — через явний `dotenv.config()`. Другий `.env` усередині
+пакета створювати не треба.
 
-- `npm run build` — builds both frontend and server
-- `npm --prefix server run seed:admin` — creates an admin user from `ADMIN_EMAIL`/`ADMIN_PASSWORD` in `.env` (no-op if it already exists). Note: the `User` model has no role/admin flag yet, this just seeds a regular account you can log in with.
+| Змінна | Обов'язкова | За замовчуванням | Призначення |
+| --- | --- | --- | --- |
+| `NODE_ENV` | ні | `development` | Режим роботи. У `production` вмикає `secure` для cookie й вимагає окремі ключі підпису |
+| `PORT` | ні | `5000` | Порт API (`.env.example` пропонує `3000`) |
+| `MONGO_URI` | **так** | — | Рядок підключення до MongoDB |
+| `OPENAI_API_KEY` | ні | — | Без нього не працює лише генерація звички через AI |
+| `JWT_SECRET` | **так** | — | Спільний ключ підпису; поза production використовується як запасний |
+| `JWT_ACCESS_SECRET` | у production | `JWT_SECRET` | Ключ для access-токенів |
+| `JWT_REFRESH_SECRET` | у production | `JWT_SECRET` | Ключ для refresh-токенів |
+| `COOKIE_SAMESITE` | ні | `lax` | `lax` підходить, коли клієнт і API на одному сайті. Розділені домени вимагають `none` |
+| `COOKIE_DOMAIN` | ні | — | Домен cookie, якщо потрібен спільний для піддоменів |
+| `CORS_ORIGIN` | ні | `http://localhost:5173` | Список дозволених origin через кому |
+| `BCRYPT_ROUNDS` | ні | `12` | Вартість хешування пароля |
+| `VITE_API_URL` | **так** | — | Адреса API для клієнта |
+| `ADMIN_EMAIL` | ні | — | Для скрипта `seed:admin` |
+| `ADMIN_PASSWORD` | ні | — | Для скрипта `seed:admin` |
+
+Окремі ключі для access і refresh обмежують наслідки витоку одного з них. Поза
+production обидва падають назад на `JWT_SECRET` із попередженням у лозі; у
+production їхня відсутність — помилка запуску.
+
+## Скрипти
+
+З кореня:
+
+| Команда | Що робить |
+| --- | --- |
+| `npm run dev` | Клієнт і сервер одночасно |
+| `npm run build` | Прод-збірка обох пакетів |
+| `npm run lint` | ESLint обох пакетів |
+| `npm run typecheck` | `tsc` обох пакетів |
+| `npm test` | Обидва тест-сьюти |
+| `npm run install:all` | Залежності `frontend` і `server` |
+
+Один пакет — через `--prefix`:
+
+```bash
+npm --prefix frontend run test:watch
+npm --prefix server run test
+npm --prefix server run seed:admin
+```
+
+`seed:admin` створює акаунт із `ADMIN_EMAIL` / `ADMIN_PASSWORD`, якщо його ще
+немає. Ролей у моделі користувача поки що немає, тож це звичайний акаунт, під
+яким можна одразу зайти.
+
+## Тести
+
+```bash
+npm test
+```
+
+Серверному сьюту не потрібні ні `.env`, ні працююча база: оточення виставляє
+`jest.env.ts`, а MongoDB піднімається в пам'яті на кожен прогін. Перший запуск
+довший — завантажується бінарник `mongod`, далі він кешується.
+
+## Структура
+
+```
+.
+├── frontend/         React 19 + Vite 7 клієнт
+│   └── src/
+│       ├── api/          єдиний мережевий шар (apiRequest)
+│       ├── components/   ui, layout, habit, pickers, profile, stats
+│       ├── pages/        екрани застосунку
+│       ├── store/        зрізи Redux і мемоїзовані селектори
+│       └── __tests__/    тести компонентів і сторів
+├── server/           Express 5 + Mongoose 8 API
+│   └── src/
+│       ├── routes/       маршрути: middleware + схеми
+│       ├── controllers/  тонкі: HTTP ↔ виклик сервісу
+│       ├── services/     бізнес-логіка й перевірка власника
+│       ├── models/       схеми Mongoose
+│       ├── validation/   Zod-схеми, з яких виводяться типи DTO
+│       ├── middlewares/  auth, csrf, rate limit, validate, error handler
+│       └── utils/        токени, cookie, паролі, дати, конверт відповіді
+├── shared/           типи-контракти (.d.ts), спільні для обох пакетів
+└── docs/             довідник API
+```
+
+## Документація
+
+| Файл | Про що |
+| --- | --- |
+| [`DESIGN.md`](DESIGN.md) | Архітектура і причини рішень |
+| [`docs/API.md`](docs/API.md) | Усі ендпоінти, коди помилок, форми даних |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Як налаштувати середовище і вносити зміни |
+| [`CHANGELOG.md`](CHANGELOG.md) | Історія версій |
+| [`CLAUDE.md`](CLAUDE.md) | Контекст для Claude Code |
+| [`frontend/README.md`](frontend/README.md) | Деталі клієнта |
+| [`server/README.md`](server/README.md) | Деталі API |
