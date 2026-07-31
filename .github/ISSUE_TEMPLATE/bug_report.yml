@@ -1,0 +1,84 @@
+name: Звіт про помилку
+description: Щось працює не так, як має
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Перед створенням
+      options:
+        - label: Я пошукав серед відкритих issue і такої ще немає
+          required: true
+        - label: Я відтворив помилку на актуальному `main`
+          required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Де саме
+      description: Яка частина проєкту зачеплена
+      options:
+        - Frontend (React / Vite)
+        - Server (Express / Mongoose)
+        - Shared types
+        - Інфраструктура (CI, збірка, оточення)
+        - Не знаю
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Що сталося
+      description: Опиши поведінку, яку бачиш
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Що мало статися
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Кроки для відтворення
+      placeholder: |
+        1. Увійти як користувач
+        2. Відкрити /main і вибрати завтрашню дату
+        3. Натиснути «виконано»
+        4. Побачити помилку
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи або повідомлення про помилку
+      description: |
+        Консоль браузера, вивід сервера, тіло відповіді API.
+        Вставляй як є — поле форматується як код автоматично.
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Версія Node
+      description: Вивід `node -v`
+      placeholder: v24.11.1
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: Оточення
+      description: Браузер і ОС, якщо помилка на фронтенді
+      placeholder: Chrome 140, macOS 15
+    validations:
+      required: false

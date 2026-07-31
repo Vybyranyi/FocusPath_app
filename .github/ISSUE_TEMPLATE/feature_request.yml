@@ -1,0 +1,60 @@
+name: Пропозиція функціональності
+description: Ідея нової можливості або покращення наявної
+title: '[Feature]: '
+labels: ['enhancement']
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Перед створенням
+      options:
+        - label: Я пошукав серед відкритих issue і такої пропозиції ще немає
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Яку проблему це вирішує
+      description: |
+        Опиши ситуацію, а не одразу рішення. «Користувач не може X, тому змушений Y»
+        читається краще, ніж «додати кнопку Z».
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Пропоноване рішення
+      description: Як це має працювати з погляду користувача
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Що доведеться зачепити
+      multiple: true
+      options:
+        - Frontend (React / Vite)
+        - Server (Express / Mongoose)
+        - Shared types (контракт між клієнтом і сервером)
+        - База даних (схеми, міграція наявних даних)
+        - Інфраструктура (CI, збірка, оточення)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативи
+      description: Що ще розглядалося і чому не підійшло
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Додатковий контекст
+      description: Макети, посилання, приклади з інших застосунків
+    validations:
+      required: false

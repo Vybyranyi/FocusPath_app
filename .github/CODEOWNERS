@@ -1,0 +1,21 @@
+# Хто автоматично додається рецензентом до pull request'ів.
+# Виграє останнє правило, що збіглося, тому специфічні шляхи йдуть після
+# загального. Докладніше: https://docs.github.com/articles/about-code-owners
+
+# Усе за замовчуванням
+*                           @Vybyranyi
+
+# Автентифікація, сесії та захисні middleware — зміни тут ламають безпеку тихо
+/server/src/config/auth.ts  @Vybyranyi
+/server/src/middlewares/    @Vybyranyi
+/server/src/utils/cookies.ts @Vybyranyi
+/server/src/utils/tokens.ts @Vybyranyi
+/server/src/utils/password.ts @Vybyranyi
+
+# Контракт між фронтендом і сервером: зміна форми тут ламає обидві сторони
+/shared/                    @Vybyranyi
+/server/src/validation/     @Vybyranyi
+
+# Інфраструктура репозиторію
+/.github/                   @Vybyranyi
+/CLAUDE.md                  @Vybyranyi
