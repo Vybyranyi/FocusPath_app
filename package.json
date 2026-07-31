@@ -1,11 +1,14 @@
 {
   "name": "focuspath",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.3.0",
   "scripts": {
     "dev": "concurrently -n FRONTEND,SERVER -c blue,green \"npm --prefix frontend run dev\" \"npm --prefix server run dev\"",
     "install:all": "npm install --prefix frontend && npm install --prefix server",
-    "build": "npm --prefix frontend run build && npm --prefix server run build"
+    "build": "npm --prefix frontend run build && npm --prefix server run build",
+    "lint": "npm --prefix frontend run lint && npm --prefix server run lint",
+    "typecheck": "npm --prefix frontend run typecheck && npm --prefix server run typecheck",
+    "test": "npm --prefix frontend test && npm --prefix server test"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
