@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to the same branch makes the previous run irrelevant. Cancelling it
+# frees a runner instead of finishing an answer nobody is waiting for.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  frontend:
+    name: Frontend (lint, types, tests)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Vite reads env from the repo root (`envDir` in vite.config.ts). Nothing
+      # here is secret — the example file only carries defaults and blanks.
+      - name: Provide a root .env
+        run: cp .env.example .env
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Type-check
+        working-directory: frontend
+        # Both project references are noEmit, so this builds nothing and only
+        # reports type errors.
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: frontend
+        run: npm test
+
+  server:
+    name: Server (lint, types, tests)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      # The suite runs against mongodb-memory-server, which downloads a mongod
+      # binary on first use. Without this cache every run pays for that download.
+      - name: Cache MongoDB binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}
+          restore-keys: mongodb-binaries-${{ runner.os }}
+
+      - name: Install dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Lint
+        working-directory: server
+        run: npm run lint
+
+      - name: Type-check
+        working-directory: server
+        run: npm run typecheck
+
+      # No .env needed: jest.env.ts sets NODE_ENV, JWT_SECRET, BCRYPT_ROUNDS and
+      # CORS_ORIGIN itself, and the database is created per run in memory.
+      - name: Test
+        working-directory: server
+        run: npm test

@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import CircleLoader from '@components/habit/CircleLoader';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-apple-emojis', () => ({
-  Emoji: (props: any) => <span data-testid="emoji" {...props} />,
+  Emoji: (props: ComponentProps<'span'>) => <span data-testid="emoji" {...props} />,
 }));
 
 vi.mock('@assets/images/icons/tick.svg', () => ({

@@ -1,0 +1,29 @@
+# https://editorconfig.org
+#
+# У проєкті два різні стилі відступів, і це навмисно: серверний код писався з
+# чотирма пробілами, клієнтський — з двома. Файл фіксує те, що вже є, а не
+# нав'язує один стиль обом сторонам.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[server/src/**.ts]
+indent_size = 4
+
+[*.md]
+# У Markdown два пробіли в кінці рядка означають розрив рядка — обрізати їх
+# не можна, інакше текст злипається.
+trim_trailing_whitespace = false
+
+[*.{yml,yaml,json,jsonc}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab

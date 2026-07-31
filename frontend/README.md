@@ -1,69 +1,119 @@
-# React + TypeScript + Vite
+# FocusPath — клієнт
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite 7 + TypeScript. Загальний опис проєкту — у
+[кореневому README](../README.md), архітектура — у [`DESIGN.md`](../DESIGN.md).
 
-Currently, two official plugins are available:
+## Запуск
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Зазвичай клієнт піднімають разом із сервером із кореня (`npm run dev`). Окремо:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Змінні оточення читаються з **кореневого** `.env` через `envDir` у
+`vite.config.ts`. Свій `.env` у цій теці створювати не треба. Клієнту потрібна
+одна змінна — `VITE_API_URL`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Команди
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Команда | Що робить |
+| --- | --- |
+| `npm run dev` | Dev-сервер із HMR |
+| `npm run build` | `tsc -b` і збірка Vite у `dist/` |
+| `npm run preview` | Локальний перегляд зібраного `dist/` |
+| `npm run typecheck` | Перевірка типів без збірки |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest один раз (не watch) |
+| `npm run test:watch` | Vitest у watch-режимі |
+| `npm run test:coverage` | Vitest із покриттям |
+
+## Структура
+
 ```
+src/
+├── api/client.ts     єдиний мережевий шар
+├── store/            зрізи Redux, селектори, типізовані хуки
+├── pages/            екрани: Login, Register, Main, CreateHabit, Stats, Profile
+├── components/
+│   ├── ui/           Button, Input, Select, Switch, SegmentControl, …
+│   ├── layout/       Layout, Header, AppBar, ProtectedRoute, WeekSelector
+│   ├── habit/        HabitCard, ProgressBanner, HabitDetailPopup, лоадери
+│   ├── pickers/      дата, тиждень, тривалість, колір, емодзі, тип звички
+│   ├── profile/      картки профілю, зміна пароля, аватар
+│   └── stats/        зведення й рядки статистики
+├── lib/              чисті хелпери (habitProgress, utils)
+├── hooks/            useResponsiveHeader
+├── animation/        AILoadingAnimation
+├── types/            типи форм і UI
+└── __tests__/        тести
+```
+
+## Мережевий шар
+
+Усі запити йдуть через `apiRequest` з `@api/client`. Робити `fetch` напряму з
+компонента чи thunk'а не треба — це обійде все, що клієнт робить сам:
+
+- **розгортає конверт** відповіді, тому виклик отримує `data` напряму;
+- **зводить усі способи впасти** до одного `ApiError` з полями `code`,
+  `status` і `details` — мережевий збій, нечитабельна відповідь і помилка
+  сервера обробляються однаково;
+- **надсилає cookie** (`credentials: 'include'`) і додає заголовок
+  `X-CSRF-Token` для методів, що змінюють стан;
+- **оновлює сесію при 401** і повторює запит рівно один раз. Усі одночасні
+  оновлення чекають на один спільний `refreshInFlight`: сервер ротує
+  refresh-токен при кожному використанні, тож дві паралельні спроби лишили б
+  переможеного зі вже витраченим токеном.
+
+Для тексту, який показують користувачу, є `errorMessage(error)`.
+
+## Стан
+
+Три зрізи Redux Toolkit: `auth`, `habit`, `calendar`.
+
+Похідні значення живуть у `store/selectors.ts` і йдуть через `createSelector` —
+рахуються раз на зміну, а не на кожен рендер кожного підписника. Прості
+селектори полів навмисно **не** мемоїзовані: вони повертають шматок стану як є.
+
+Сесія на клієнті не зберігається. На старті `App` просто питає `GET /auth/me` —
+cookie браузер надішле сам. Відмова для гостя тут нормальний шлях, а не збій.
+
+## Стилі
+
+Tailwind 4 через `@tailwindcss/vite`. Токени дизайну (кольори, шрифт
+Montserrat) оголошені в `src/index.css` у блоці `@theme`. Окремого
+`tailwind.config` немає — конфігурація живе в CSS.
+
+## Тести
+
+Vitest + Testing Library + jsdom. Хелпери в `src/testUtils.tsx`:
+
+- `renderWithProviders(ui, { preloadedState, route })` — рендерить із Redux і
+  роутером; стор будується на кожен виклик, тому стан не протікає між тестами.
+  Повертає стор разом зі звичайним результатом RTL.
+- `makeHabitSummary(overrides)` — фікстура звички у формі `GET /habits/daily`.
+  Перевизначайте лише ті поля, про які тест справді міркує.
+- `habitState(overrides)` — готовий стан зрізу звичок.
+
+```bash
+npm test                                   # усе один раз
+npm run test:watch                         # watch
+npm test -- src/__tests__/Button.test.tsx  # один файл
+```
+
+## Аліаси
+
+`@`, `@assets`, `@components`, `@pages`, `@store`, `@hooks`, `@animation`,
+`@api`, `@shared`.
+
+Оголошені **двічі** — у `tsconfig.app.json` (`paths`) для компілятора і в
+`vite.config.ts` (`resolve.alias`) для збирача та Vitest. Новий аліас треба
+додати в обидва місця, інакше зламається або перевірка типів, або збірка.
+
+## Особливість збірки
+
+У `tsconfig.app.json` увімкнено `erasableSyntaxOnly` — дозволений лише той
+TypeScript, який зникає без сліду при компіляції. Тому, зокрема, не можна
+використовувати constructor parameter properties: клас `ApiError` оголошує й
+присвоює поля окремо саме через це.

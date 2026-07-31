@@ -1,10 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import IconButton from '@components/ui/IconButton';
 import { describe, expect, it, vi } from 'vitest';
 import notification from '@assets/images/icons/notification.svg';
 
 vi.mock('react-apple-emojis', () => ({
-  Emoji: (props: any) => <span role="img" aria-label={props.name} {...props} />,
+  Emoji: (props: { name: string } & ComponentProps<'span'>) => (
+    <span role="img" aria-label={props.name} {...props} />
+  ),
 }));
 
 describe('IconButton component', () => {
