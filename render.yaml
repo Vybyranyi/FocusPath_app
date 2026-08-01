@@ -9,7 +9,7 @@ projects:
             runtime: node
             plan: free
             rootDir: server
-            buildCommand: npm install && npm run build
+            buildCommand: npm install --include=dev && npm run build
             startCommand: npm run start
             envVars:
               - key: NODE_ENV
@@ -21,7 +21,7 @@ projects:
             name: focuspath-web
             runtime: static
             rootDir: frontend
-            buildCommand: npm install && npm run build
+            buildCommand: npm install --include=dev && npm run build
             staticPublishPath: ./dist
             routes:
               # Це важливо для React/Vue додатків (SPA роутинг)
