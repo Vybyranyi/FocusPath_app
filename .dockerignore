@@ -1,0 +1,29 @@
+# Keeps the build context small, but the first entry is the one that matters:
+# without it the root .env — real secrets — would be copied into the image.
+.env
+.env.*
+!.env.example
+
+**/node_modules
+**/dist
+**/coverage
+**/.tmp
+
+.git
+.gitignore
+.github
+.vscode
+.claude
+.editorconfig
+
+# Docs and tests are not part of the runtime image.
+*.md
+docs
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+
+**/.DS_Store
+**/*.log
+Dockerfile
+.dockerignore
