@@ -1,37 +1,65 @@
-projects:
-  - name: FocusPath
-    environments:
-      - name: Development
-        services:
-          # 1. Backend (API)
-          - type: web
-            name: focuspath-api
-            runtime: node
-            plan: free
-            rootDir: server
-            buildCommand: npm install --include=dev && npm run build
-            startCommand: npm run start
-            envVars:
-              - key: NODE_ENV
-                value: production
-              - fromGroup: dev
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# One web service serving both halves of the app from a single origin. See the
+# comment at the top of the Dockerfile for why they are not split — in short,
+# the session lives in cookies, and cookies stop being simple the moment the
+# client and the API are on different sites. onrender.com is on the Public
+# Suffix List, so two *.onrender.com services cannot share a session cookie no
+# matter how CORS or SameSite is configured; a single service sidesteps the
+# problem entirely and needs no custom domain to do it.
+#
+# Apply with: Render Dashboard → New → Blueprint → point at this repository.
+# If a prior two-service split (e.g. "focuspath-api" + "focuspath-web") exists
+# from an earlier attempt, delete both — they duplicate this one and were the
+# source of the cross-origin cookie problem in the first place.
 
-          # 2. Frontend (Static Site)
-          - type: web
-            name: focuspath-web
-            runtime: static
-            rootDir: frontend
-            buildCommand: npm install --include=dev && npm run build
-            staticPublishPath: ./dist
-            routes:
-              # Це важливо для React/Vue додатків (SPA роутинг)
-              - type: rewrite
-                source: /*
-                destination: /index.html
-            envVars:
-              # Автоматично бере URL бекенду (напр. https://focuspath-api.onrender.com)
-              - key: VITE_API_URL
-                fromService:
-                  type: web
-                  name: focuspath-api
-                  envVarKey: RENDER_EXTERNAL_URL
+services:
+  - type: web
+    name: focuspath
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # The build needs frontend/, server/ and shared/, so the context is the
+    # repository root rather than any one package.
+    dockerContext: .
+    plan: free
+    region: frankfurt
+    # Not "/": the SPA fallback answers only requests that ask for text/html
+    # (except the root, which is exempt), and a health checker may send
+    # anything, including a HEAD request. /healthz also reports the database,
+    # so an instance that is listening but cannot reach Mongo never enters
+    # rotation.
+    healthCheckPath: /healthz
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Separate keys per token kind, so a leak of one does not compromise the
+      # other. Both are mandatory in production — the server refuses to start
+      # without them rather than quietly falling back to JWT_SECRET.
+      # Render generates each once; changing either signs every session out.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+
+      # Prompted for on first apply and never stored in the repository.
+      - key: MONGO_URI
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
+      - key: BCRYPT_ROUNDS
+        value: "12"
+
+      # The client is served from this same origin, so the session cookies are
+      # first-party and lax is correct. COOKIE_DOMAIN is deliberately unset:
+      # host-only cookies are what a single-origin deployment wants, and
+      # onrender.com is a public suffix, so a domain cookie would be refused
+      # anyway.
+      - key: COOKIE_SAMESITE
+        value: lax
+
+      # CORS_ORIGIN is intentionally absent. Same-origin requests are not
+      # subject to CORS at all, so there is nothing to allow. Set it only if
+      # the client is ever served from somewhere else.

@@ -20,6 +20,23 @@ describe('Application hardening', () => {
 
             expect(response.headers['cross-origin-resource-policy']).toBe('cross-origin');
         });
+
+        it('lets the emoji CDN through the image policy', async () => {
+            // react-apple-emojis loads its artwork from this host. helmet's
+            // default img-src is `'self' data:`, which blanks every emoji in
+            // the app the moment Express serves the client — and does it
+            // silently, since a CSP on a JSON response has nothing to block.
+            const response = await request(app).get('/auth/me');
+            const policy = response.headers['content-security-policy'];
+
+            expect(policy).toContain("img-src 'self' data: https://em-content.zobj.net");
+        });
+
+        it('still confines scripts to this origin', async () => {
+            const response = await request(app).get('/auth/me');
+
+            expect(response.headers['content-security-policy']).toContain("script-src 'self'");
+        });
     });
 
     describe('CORS', () => {

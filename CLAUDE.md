@@ -32,7 +32,17 @@ frontend/   React 19, Vite 7, Redux Toolkit, Tailwind 4, Vitest + jsdom
 server/     Express 5, Mongoose 8, Zod 4, Jest + supertest + mongodb-memory-server
 shared/     .d.ts-only contracts consumed by both via the @shared/* alias
 docs/       API reference
+Dockerfile  one image serving both halves; render.yaml deploys it
 ```
+
+Development runs two processes on two ports; production runs one, with Express
+serving the built client alongside the API. This is not a style choice — a
+prior attempt to deploy client and API as two separate Render services broke
+login outright (`403 FORBIDDEN` on `/auth/refresh`), because `onrender.com` is
+on the Public Suffix List: two `*.onrender.com` services cannot share a
+session cookie no matter how CORS or SameSite is configured, and the CSRF
+cookie specifically becomes unreadable to the client's JS once it is set by a
+different origin. See "Топологія розгортання" in `DESIGN.md`.
 
 There is one `.env` at the repo root. Vite reads it through `envDir` in
 `frontend/vite.config.ts`; the server loads it explicitly in `src/server.ts`.
@@ -127,6 +137,26 @@ The server also needs `tsc-alias` at build time (`npm run build` is
   token on every use, so two concurrent refreshes would leave the loser holding
   a spent token. `refreshInFlight` in the API client makes everyone wait on one
   attempt. Do not add a second refresh path.
+- **The SPA fallback answers only requests that ask for `text/html`, except
+  the root.** That is what keeps a mistyped endpoint returning the JSON
+  envelope instead of an HTML page the client cannot parse, and what keeps the
+  suite from depending on whether `frontend/dist` happens to exist locally.
+  `/` is exempt because a health checker may send `*/*` or no `Accept` header
+  at all — a live deploy was briefly marked unhealthy over exactly this.
+  `/healthz` also exists, and additionally checks Mongo.
+- **The fallback and `/healthz` both accept `HEAD`, not just `GET`.** Express
+  maps `HEAD` onto `GET` *routes* automatically, but these are plain
+  middleware doing their own method check. A live deploy answered `HEAD /`
+  with 404 while `GET /` returned 200, which is precisely what takes a healthy
+  instance out of rotation.
+- **`DEFAULT_CLIENT_DIST` is three levels up from `__dirname`, not two.**
+  `staticClient` lives under `middlewares/`, so it sits one level deeper than
+  the package root — the same depth under `src/` and `dist/`. Getting it wrong
+  fails nothing loudly: the app just serves no client and answers every
+  navigation with a JSON 404. `CLIENT_DIST` overrides it; the image sets it.
+- **helmet's default `img-src` blocks the emoji CDN.** `react-apple-emojis`
+  loads artwork from `em-content.zobj.net`, which the default `'self' data:`
+  refuses. Nothing on the server errors — the emoji simply vanish.
 
 ## Adding an endpoint
 

@@ -1,6 +1,12 @@
 import type { ApiResponse } from "@shared/index";
 
-const API_URL = import.meta.env.VITE_API_URL;
+/**
+ * Empty means "same origin", which is how the Docker image serves this app —
+ * Express hands out the client and the API from one host, so every path below
+ * comes out relative. The fallback is not cosmetic: without it an unset
+ * variable would put the literal string "undefined" in front of every request.
+ */
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 /** Readable on purpose so it can be echoed back in a header the server checks. */
 const CSRF_COOKIE = "csrf_token";
