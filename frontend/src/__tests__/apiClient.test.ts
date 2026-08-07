@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiRequest, errorMessage } from "@api/client";
+import { ApiError, apiRequest, errorMessage, hasSessionCookie } from "@api/client";
 
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -149,6 +149,14 @@ describe("CSRF", () => {
 });
 
 describe("session renewal", () => {
+  // Every case here is about someone who is signed in and whose short-lived
+  // access cookie expired. That person still holds the csrf cookie — it shares
+  // the refresh token's lifetime — and the client uses its presence to tell a
+  // stale session apart from no session at all.
+  beforeEach(() => {
+    document.cookie = "csrf_token=session-hint; path=/";
+  });
+
   it("renews once and replays the request when the access cookie has aged out", async () => {
     fetchMock
       .mockResolvedValueOnce(failure("UNAUTHORIZED", "Not authenticated", 401))
@@ -213,6 +221,31 @@ describe("session renewal", () => {
     await expect(apiRequest("/habits/1")).rejects.toMatchObject({ code: "NOT_FOUND" });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a visitor with no session", () => {
+  it("does not try to renew a session that never existed", async () => {
+    // Without the cookie there is nothing to renew, so the 401 stands on its
+    // own. Attempting it anyway spent a second request and put a second red
+    // line in the console of everyone who merely opened the page.
+    document.cookie = "csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    fetchMock.mockResolvedValue(failure("UNAUTHORIZED", "Not authenticated", 401));
+
+    await expect(apiRequest("/auth/me")).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      status: 401,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports no session cookie, and sees one once it is set", () => {
+    document.cookie = "csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+    expect(hasSessionCookie()).toBe(false);
+
+    document.cookie = "csrf_token=abc123; path=/";
+    expect(hasSessionCookie()).toBe(true);
   });
 });
 

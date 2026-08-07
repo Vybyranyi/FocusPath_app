@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { User } from "@shared/index";
-import { apiRequest, errorMessage } from "@api/client";
+import { apiRequest, errorMessage, hasSessionCookie } from "@api/client";
 
 export interface IAuthSlice {
     user: User | null;
@@ -67,6 +67,15 @@ export const loginUser = createAsyncThunk(
 export const fetchCurrentUser = createAsyncThunk(
     "auth/fetchCurrentUser",
     async (_, { rejectWithValue }) => {
+        // A visitor with no session cookie has nothing to restore, and asking
+        // anyway costs a request whose only possible answer is 401 — which the
+        // browser then writes to the console of every guest who opens the page.
+        // Rejecting here lands in the same reducer as a refused request does,
+        // so the outcome is identical minus the round trip.
+        if (!hasSessionCookie()) {
+            return rejectWithValue(null);
+        }
+
         try {
             return await apiRequest<UserResponse>("/auth/me");
         } catch (error) {

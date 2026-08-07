@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import reducer, {
   deleteAccount,
   fetchCurrentUser,
@@ -7,6 +7,7 @@ import reducer, {
   registerUser,
 } from "../store/authSlice";
 import type { IAuthSlice } from "../store/authSlice";
+import { makeStore } from "../store/store";
 
 const initialState: IAuthSlice = {
   user: null,
@@ -149,5 +150,54 @@ describe("authSlice", () => {
       expect(state.user).toEqual(mockUser);
       expect(state.error).toBe("Password is incorrect");
     });
+  });
+});
+
+describe("restoring a session on load", () => {
+  const fetchMock = vi.fn();
+  const clearSessionCookie = () => {
+    document.cookie = "csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockReset();
+    clearSessionCookie();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    clearSessionCookie();
+  });
+
+  it("asks nobody who it is when there is no session to restore", async () => {
+    // The session cookies are issued and cleared as a set, so the readable one
+    // being absent settles the question without a request. Asking anyway put a
+    // 401 in the console of every visitor who merely opened the page.
+    const store = makeStore();
+
+    await store.dispatch(fetchCurrentUser());
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(store.getState().auth.user).toBeNull();
+    expect(store.getState().auth.error).toBeNull();
+  });
+
+  it("still asks when a session cookie is there", async () => {
+    document.cookie = "csrf_token=session-hint; path=/";
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ success: true, data: { user: mockUser } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const store = makeStore();
+
+    await store.dispatch(fetchCurrentUser());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain("/auth/me");
+    expect(store.getState().auth.user).toEqual(mockUser);
   });
 });
