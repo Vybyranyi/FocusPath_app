@@ -55,6 +55,22 @@ const readCookie = (name: string): string | null => {
 const isEnvelope = <T>(value: unknown): value is ApiResponse<T> =>
   typeof value === "object" && value !== null && "success" in value;
 
+/**
+ * Whether a session plausibly exists.
+ *
+ * The access and refresh tokens are httpOnly and unreadable from here by
+ * design, so the CSRF cookie is the only signal this side has — and it is a
+ * dependable one: all three are issued together, cleared together, and this one
+ * carries the refresh token's lifetime exactly.
+ *
+ * It exists so the app can avoid asking about a session that provably is not
+ * there. The browser writes every 4xx to the console, and a guest loading the
+ * page used to produce two of them; noise there is how real errors end up
+ * ignored. This mirrors the server's own rule in `csrf.ts` — a request with no
+ * session cookie has no session to ride.
+ */
+export const hasSessionCookie = (): boolean => readCookie(CSRF_COOKIE) !== null;
+
 let refreshInFlight: Promise<void> | null = null;
 
 /**
@@ -146,7 +162,15 @@ async function send<T>(
     // A 401 usually means the short-lived access cookie aged out while the
     // refresh cookie is still good. Renew once and replay, so the user never
     // sees a session that quietly expired underneath them.
-    if (response.status === 401 && mayRetry && !path.startsWith("/auth/refresh")) {
+    //
+    // Gated on there being a session at all: a guest gets 401 too, and renewing
+    // nothing would only spend a second request to be told the same thing.
+    if (
+      response.status === 401 &&
+      mayRetry &&
+      !path.startsWith("/auth/refresh") &&
+      hasSessionCookie()
+    ) {
       try {
         await refreshSession();
       } catch {
