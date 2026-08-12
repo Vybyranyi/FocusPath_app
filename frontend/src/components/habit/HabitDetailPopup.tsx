@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Emoji } from 'react-apple-emojis';
@@ -55,6 +55,19 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
+  /**
+   * Radix hands focus back to its own `Dialog.Trigger`. This sheet is mounted
+   * from state by the card instead, so there is no trigger to return to and
+   * focus was landing on the document body — closing the sheet dropped a
+   * keyboard user at the top of the page. It mounts already open, so whatever
+   * had focus at that moment is the card that opened it.
+   */
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    openerRef.current = document.activeElement as HTMLElement | null;
+  }, []);
+
   // Steps, when a habit has them, are a finer measure of the same thing.
   const steps = habit.steps ?? [];
   const progress = steps.length > 0
@@ -98,7 +111,18 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
           />
         </Dialog.Overlay>
 
-        <Dialog.Content asChild onOpenAutoFocus={(e) => e.preventDefault()}>
+        {/* Focus is allowed to move in. It used to be held back with
+            `preventDefault`, which left a keyboard user on the card behind the
+            overlay while the sheet covered it. */}
+        <Dialog.Content
+          asChild
+          onCloseAutoFocus={(event) => {
+            const opener = openerRef.current;
+            if (!opener?.isConnected) return;
+            event.preventDefault();
+            opener.focus();
+          }}
+        >
           <motion.div
             initial={{ y: '100%', scale: 0.95 }}
             animate={{ y: 0, scale: 1 }}
