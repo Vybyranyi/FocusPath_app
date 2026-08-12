@@ -85,7 +85,7 @@ export default function CreateHabit() {
       {creating === "ai" && <AILoadingAnimation />}
 
       <div className="page-gutter">
-        <h5 className="display-5 hidden md:block mb-4">Create Habit</h5>
+        <h1 className="display-5 hidden md:block mb-4">Create Habit</h1>
 
         <Formik
           initialValues={initialValues}
@@ -141,7 +141,7 @@ export default function CreateHabit() {
                       touched.habitDescription ? errors.habitDescription : ""
                     }
                   />
-                  <p className="text-xs font-normal text-gray-500">
+                  <p className="alternative text-ink-muted">
                     Provide more details about your habit to help the AI generate a better personalized plan.
                   </p>
                 </div>

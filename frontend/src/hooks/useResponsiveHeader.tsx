@@ -123,6 +123,17 @@ export const useResponsiveHeader = () => {
           profile: true,
         },
       },
+      "/explore": {
+        mobile: {
+          visible: true,
+          title: "Explore",
+        },
+        desktop: {
+          visible: true,
+          topContent: true,
+          profile: true,
+        },
+      },
       "/stats": {
         mobile: {
           visible: true,

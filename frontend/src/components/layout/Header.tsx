@@ -33,7 +33,7 @@ export default function Header({
   const user = useAppSelector((state) => state.auth.user);
 
   return (
-    <header className="bg-surface shadow-[inset_0_-1px_0_#EAECF0] pb-4 mb-3 md:mb-6">
+    <header className="bg-surface shadow-[inset_0_-1px_0_var(--line)] pb-4 mb-3 md:mb-6">
       <div
         className={[
           "page-gutter flex flex-col gap-3",
@@ -47,7 +47,7 @@ export default function Header({
         {(title || leftButtonIcon || rightButtonIcon) && (
           <div className="h-12 grid grid-cols-[auto_1fr_auto] items-center gap-2 md:hidden">
             {leftButtonIcon}
-            <h5 className="display-5 text-center">{title}</h5>
+            <h1 className="display-5 text-center">{title}</h1>
             {rightButtonIcon}
           </div>
         )}
@@ -56,10 +56,10 @@ export default function Header({
         {topContent && (
           <div className="h-12 flex items-center justify-between md:col-start-1">
             <div>
-              <p className="title">
-                {`Hi, ${user?.name}`}
+              <h1 className="title">
+                {user?.name ? `Hi, ${user.name}` : "Hi there"}
                 <Emoji name="waving hand" className="inline w-4.5 h-4.5 ml-1" />
-              </p>
+              </h1>
               <p className="body-light text-ink-muted mt-1">
                 Let's make habits together!
               </p>
@@ -80,7 +80,9 @@ export default function Header({
               className="w-14 h-14 rounded-full object-cover md:w-12 md:h-12"
             />
             <div className="flex items-center">
-              <p className="title">{`${user?.name} ${user?.surname}`}</p>
+              <p className="title">
+                {[user?.name, user?.surname].filter(Boolean).join(" ")}
+              </p>
               {/* <span className="inline-flex items-center gap-1 bg-warning-soft px-1 py-0.5 rounded-lg mt-1 md:mt-0">
                 <img src={medal_gold} alt="" className="w-4 h-4" />
                 <p className="body-bold text-warning">1452 Points</p>
@@ -100,7 +102,12 @@ export default function Header({
             <SegmentControl
               segments={segments}
               defaultSelectedId="1"
+              label="Habit list"
+              disabled
             />
+            <p className="alternative text-ink-muted mt-1">
+              Challenges are still being built.
+            </p>
           </div>
         )}
 

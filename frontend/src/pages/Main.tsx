@@ -9,10 +9,12 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { getHabitsForDate } from "@store/habitSlice";
 import { nextWeek, prevWeek } from "@store/calendarSlice";
 import { useSwipeable } from "react-swipeable";
+import { useNavigate } from "react-router";
 import HabitCard      from "@components/habit/HabitCard";
 import DatePicker     from "@components/pickers/DatePicker";
 import ProgressBanner from "@components/habit/ProgressBanner";
 import { toDayKey }   from "@/lib/dates";
+import Button        from "@components/ui/Button";
 
 const slideVariants: Variants = {
   enter: (dir: number) => ({ x: dir > 0 ? 50 : -50, opacity: 0 }),
@@ -27,6 +29,7 @@ const springTransition: Transition = {
 
 export default function Main() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { habitsForDate, loading, error } = useAppSelector((s) => s.habit);
   const { currentWeekStart } = useAppSelector((s) => s.calendar);
 
@@ -94,12 +97,17 @@ export default function Main() {
           key="empty"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center py-12 gap-2"
+          className="flex flex-col items-center py-12 gap-3 text-center"
         >
-          <p className="body-bold">No habits for this day</p>
-          <p className="alternative text-ink-muted">
-            Create your first habit to get started!
+          <p className="body-bold">Nothing scheduled for this day</p>
+          <p className="alternative text-ink-muted max-w-64">
+            Habits you create will show up here on the days they run.
           </p>
+          <div className="w-full max-w-56 pt-1">
+            <Button type="primary" size="medium" onClick={() => navigate("/createhabit")}>
+              Create a habit
+            </Button>
+          </div>
         </motion.div>
       );
     }

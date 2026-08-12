@@ -8,9 +8,12 @@ import {
   selectQuitHabits,
 } from "@store/selectors";
 import { useEffect } from "react";
+import { useNavigate } from "react-router";
+import Button from "@components/ui/Button";
 
 export default function StatsPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   // The store holds the API's Habit, so this page reads it directly. It used to
   // reach the shape it needed through a double cast, which switched off type
   // checking for everything below it.
@@ -31,11 +34,16 @@ export default function StatsPage() {
             <p className="body-bold text-ink-muted">Loading...</p>
           </div>
         ) : habits.length === 0 ? (
-          <div className="flex flex-col items-center py-16 gap-2">
+          <div className="flex flex-col items-center py-16 gap-3 text-center">
             <p className="body-bold">No habits yet</p>
-            <p className="alternative text-ink-muted">
-              Create your first habit to see stats here!
+            <p className="alternative text-ink-muted max-w-64">
+              Stats appear once you have a habit to track.
             </p>
+            <div className="w-full max-w-56 pt-1">
+              <Button type="primary" size="medium" onClick={() => navigate("/createhabit")}>
+                Create a habit
+              </Button>
+            </div>
           </div>
         ) : (
           <>

@@ -3,7 +3,7 @@ import Input from "@components/ui/Input";
 import Button from "@components/ui/Button";
 import Select from "@components/ui/Select";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -82,7 +82,7 @@ export default function RegisterPage() {
             onClick={() => setStep(1)}
           />
         )}
-        <h5 className="display-5">Create Account</h5>
+        <h1 className="display-5">Create Account</h1>
       </div>
 
       <div className="page-gutter">
@@ -190,12 +190,12 @@ export default function RegisterPage() {
               </div>
 
               <div className="fixed bottom-3 left-6 right-6 md:static md:max-w-86.25 md:mx-auto">
-                <p
-                  className="body-bold text-accent text-center mb-6 cursor-pointer"
-                  onClick={() => navigate("/login")}
+                <Link
+                  to="/login"
+                  className="block body-bold text-accent text-center mb-6"
                 >
-                  Already have an account? Let's log in!
-                </p>
+                  Already have an account? Log in
+                </Link>
                 <Button
                   type="primary"
                   size="large"
