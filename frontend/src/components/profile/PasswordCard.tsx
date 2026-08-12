@@ -44,7 +44,7 @@ export default function PasswordCard() {
   };
 
   return (
-    <div className="bg-surface rounded-2xl shadow-medium p-6 flex flex-col gap-5">
+    <div className="bg-surface rounded-2xl shadow-lifted p-6 flex flex-col gap-5">
       <h2 className="title font-bold">Change password</h2>
 
       <Formik

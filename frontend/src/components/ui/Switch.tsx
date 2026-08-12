@@ -28,7 +28,7 @@ export default function Switch({ label, toggled, onClick, disabled }: ISwitch) {
       <SwitchPrimitive.Thumb
         className={cn(
           "block w-[21px] h-[21px] rounded-full bg-on-brand",
-          "shadow-small",
+          "shadow-inset",
           "transition-transform duration-(--duration-slow) ease-in-out",
           "data-[state=checked]:translate-x-5",
           "data-[state=unchecked]:translate-x-0",

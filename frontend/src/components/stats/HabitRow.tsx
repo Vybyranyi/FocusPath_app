@@ -5,6 +5,12 @@ import { isDone } from "@/lib/habitStatus";
 import { Emoji } from "react-apple-emojis";
 import type { Habit } from "@shared/index";
 
+const FlameIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
+    <path d="M12 2c.5 3-1.5 4.5-3 6S6 11.5 6 14a6 6 0 0 0 12 0c0-2.5-1.2-4-2.5-5.5C14 7 13 5 12 2Zm0 17a3 3 0 0 1-3-3c0-1.3.7-2.1 1.5-3 .6.9 1.1 1.4 1.5 2.4.5-1 1-1.6 1.6-2.3.7.9 1.4 1.6 1.4 2.9a3 3 0 0 1-3 3Z" />
+  </svg>
+);
+
 interface HabitRowProps {
   habit: Habit;
 }
@@ -15,7 +21,7 @@ function HabitRow({ habit }: HabitRowProps) {
 
   return (
     <div
-      className="bg-surface rounded-2xl shadow-medium p-4 flex flex-col gap-3"
+      className="bg-surface rounded-2xl shadow-lifted p-4 flex flex-col gap-3"
       style={{ borderLeft: `4px solid ${habit.color || "#3843FF"}` }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -66,8 +72,9 @@ function HabitRow({ habit }: HabitRowProps) {
             {completed} / {habit.duration} days
           </p>
           {habit.currentStreak > 0 && (
-            <p className="alternative text-ink-2 font-bold">
-              🔥 {habit.currentStreak} streak
+            <p className="alternative text-ink-2 font-bold inline-flex items-center gap-1">
+              <FlameIcon className="w-3.5 h-3.5 text-warning" />
+              {habit.currentStreak} streak
             </p>
           )}
         </div>

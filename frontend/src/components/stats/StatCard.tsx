@@ -6,16 +6,16 @@ interface StatCardProps {
 
 export default function StatCard({ value, label, accent }: StatCardProps) {
   return (
-    <div className="bg-surface rounded-2xl shadow-medium p-5 flex flex-col gap-1.5">
+    <div className="bg-surface rounded-2xl shadow-lifted p-5 flex flex-col gap-1.5">
       <span
         className={[
-          "text-[32px] font-bold leading-10",
+          "display-4",
           accent ? "text-accent" : "text-ink",
         ].join(" ")}
       >
         {value}
       </span>
-      <p className="alternative text-ink-2 uppercase font-bold tracking-wide">
+      <p className="chip text-ink-2">
         {label}
       </p>
     </div>

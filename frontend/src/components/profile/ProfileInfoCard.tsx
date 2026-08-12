@@ -75,7 +75,7 @@ export default function ProfileInfoCard() {
   ];
 
   return (
-    <div className="bg-surface rounded-2xl shadow-medium p-6 flex flex-col gap-5">
+    <div className="bg-surface rounded-2xl shadow-lifted p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <h2 className="title font-bold">Personal information</h2>
         {!isEditing && (

@@ -54,7 +54,7 @@ export default function AccountActions() {
           <span className="body-bold text-danger">Delete Account</span>
         </button>
       ) : (
-        <div className="bg-surface rounded-2xl shadow-medium p-5 flex flex-col gap-4">
+        <div className="bg-surface rounded-2xl shadow-lifted p-5 flex flex-col gap-4">
           <p className="body-bold text-center">
             Are you sure you want to delete your account? This action cannot be
             undone.

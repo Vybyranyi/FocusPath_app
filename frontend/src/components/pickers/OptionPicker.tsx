@@ -73,9 +73,8 @@ export default function OptionPicker<TValue extends string>({
               "bg-surface rounded-2xl ring-card p-2 z-50",
               maxHeightClassName,
               "overflow-y-auto w-(--radix-popover-trigger-width)",
-              "shadow-medium",
-              "animate-in fade-in-0 zoom-in-95 duration-150",
-              "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+              "shadow-lifted",
+              "origin-(--radix-popover-content-transform-origin) animate-pop-in",
             )}
           >
             {options.map((option) => (
