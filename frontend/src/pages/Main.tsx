@@ -15,6 +15,7 @@ import DatePicker     from "@components/pickers/DatePicker";
 import ProgressBanner from "@components/habit/ProgressBanner";
 import { toDayKey }   from "@/lib/dates";
 import Button        from "@components/ui/Button";
+import { HabitCardSkeleton } from "@components/ui/Skeleton";
 
 const slideVariants: Variants = {
   enter: (dir: number) => ({ x: dir > 0 ? 50 : -50, opacity: 0 }),
@@ -79,16 +80,31 @@ export default function Main() {
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="flex justify-center py-8">
-          <p className="body-bold text-ink-muted">Loading habits...</p>
-        </div>
+        <motion.div
+          key="loading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-x-6"
+        >
+          <span className="sr-only" role="status">Loading habits</span>
+          {Array.from({ length: 3 }, (_, i) => (
+            <HabitCardSkeleton key={i} />
+          ))}
+        </motion.div>
       );
     }
     if (error) {
       return (
-        <div className="flex justify-center py-8">
-          <p className="body-bold text-danger">Error: {error}</p>
-        </div>
+        <motion.div
+          key="error"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex justify-center py-8"
+        >
+          <p role="alert" className="body-bold text-danger">{error}</p>
+        </motion.div>
       );
     }
     if (habitsForDate.length === 0) {
