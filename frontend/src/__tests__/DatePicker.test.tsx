@@ -23,11 +23,43 @@ describe("DatePicker component", () => {
         expect(screen.getByText("THU")).toBeInTheDocument();
     });
 
-    it("adds the active class if active=true is passed", () => {
-        render(<DatePicker date="09-03-25" active />);
-        const datePicker = screen.getByText("3").closest("div");
-        expect(datePicker?.className).toContain("active");
+    it("is a button, so the grid can be operated from the keyboard", () => {
+        // It used to be a <div onClick>: the week strip and the month grid had
+        // no keyboard path, and the day number was wrapped in an <h6>.
+        setup();
+        expect(screen.getByRole("button")).toBeInTheDocument();
+    });
 
+    it("names itself with the whole date, not just the number", () => {
+        setup({ date: new Date(2025, 8, 4) });
+        expect(
+            screen.getByRole("button", { name: "Thursday, 4 September 2025" }),
+        ).toBeInTheDocument();
+    });
+
+    it("reports the selected day as pressed", () => {
+        // The previous version added a class called `active` that was never
+        // defined in any stylesheet, and a test asserted its presence.
+        const { rerender } = render(<DatePicker date={new Date(2025, 8, 3)} active />);
+        expect(screen.getByRole("button")).toHaveAttribute("aria-pressed", "true");
+
+        rerender(<DatePicker date={new Date(2025, 8, 3)} active={false} />);
+        expect(screen.getByRole("button")).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("marks the selected day visually as well", () => {
+        render(<DatePicker date={new Date(2025, 8, 3)} active />);
+        expect(screen.getByRole("button").className).toContain("ring-accent");
+    });
+
+    it("does not call onClick while disabled", () => {
+        const handleClick = vi.fn();
+        setup({ onClick: handleClick, disabled: true });
+
+        fireEvent.click(screen.getByRole("button"));
+
+        expect(handleClick).not.toHaveBeenCalled();
+        expect(screen.getByRole("button")).toBeDisabled();
     });
 
     it("calls onClick on click", () => {

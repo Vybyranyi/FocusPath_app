@@ -71,6 +71,24 @@ describe("OptionPicker", () => {
     expect(screen.queryByText("Red")).not.toBeInTheDocument();
   });
 
+  it("is a button, so it can be reached from the keyboard", () => {
+    // The trigger used to be a <div>. Radix forwards handlers and
+    // aria-expanded through asChild but does not add tabIndex, so both
+    // required fields on the habit form had no keyboard path at all.
+    renderPicker();
+
+    const trigger = screen.getByRole("button", { name: /Color/ });
+    trigger.focus();
+
+    expect(trigger).toHaveFocus();
+  });
+
+  it("names itself with both the field and the current choice", () => {
+    renderPicker({ value: "red" });
+
+    expect(screen.getByRole("button", { name: "Color: Red" })).toBeInTheDocument();
+  });
+
   it("shows an error underneath when given one", () => {
     renderPicker({ error: "Color is required" });
 

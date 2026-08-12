@@ -45,21 +45,24 @@ export default function OptionPicker<TValue extends string>({
     <div className="flex flex-col gap-1">
       <Popover.Root open={open} onOpenChange={disabled ? undefined : setOpen}>
         <Popover.Trigger asChild>
-          <div
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={`${caption}: ${selected?.label ?? placeholder}`}
             className={cn(
-              "flex items-center gap-3 bg-surface p-4 rounded-2xl",
-              "ring-card transition-all duration-200 cursor-pointer",
+              "w-full flex items-center gap-3 bg-surface p-4 rounded-2xl text-left",
+              "ring-card transition-shadow duration-(--duration-base) cursor-pointer",
               "hover:ring-card-hover",
               open && "ring-card-focus",
               disabled && "cursor-not-allowed opacity-60 hover:ring-card",
             )}
           >
             {renderPreview(selected)}
-            <div>
-              <p className="body-bold">{selected?.label ?? placeholder}</p>
-              <p className="alternative text-ink-muted">{caption}</p>
-            </div>
-          </div>
+            <span>
+              <span className="body-bold block">{selected?.label ?? placeholder}</span>
+              <span className="alternative block text-ink-muted">{caption}</span>
+            </span>
+          </button>
         </Popover.Trigger>
 
         <Popover.Portal>
@@ -83,9 +86,10 @@ export default function OptionPicker<TValue extends string>({
                   onChange?.(option.value);
                   setOpen(false);
                 }}
+                aria-current={value === option.value}
                 className={cn(
                   "w-full flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer",
-                  "transition-colors duration-150 hover:bg-line",
+                  "transition-colors duration-(--duration-fast) hover:bg-line",
                   value === option.value && "bg-accent-soft",
                 )}
               >
