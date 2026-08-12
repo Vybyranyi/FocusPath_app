@@ -38,7 +38,7 @@ export default function Header({
   const onProfile = pathname === "/profile";
 
   return (
-    <header className="bg-surface shadow-[inset_0_-1px_0_var(--line)] pb-4 mb-3 md:mb-6">
+    <header className="bg-surface shadow-[inset_0_-1px_0_var(--line)] py-4 mb-3 md:mb-6">
       <div
         className={[
           "page-gutter flex flex-col gap-3",

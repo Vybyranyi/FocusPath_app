@@ -29,18 +29,20 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-screen bg-canvas pb-28 md:pb-12">
-      <div className="page-gutter max-w-120 mx-auto pt-6 md:pt-10 flex flex-col gap-6">
+      <div className="page-gutter max-w-120 md:max-w-5xl mx-auto pt-6 md:pt-10 flex flex-col gap-6">
         {loading && habits.length === 0 ? (
           <div className="flex flex-col gap-6">
             <span className="sr-only" role="status">Loading stats</span>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {Array.from({ length: 4 }, (_, i) => (
                 <Skeleton key={i} className="h-24 rounded-2xl" />
               ))}
             </div>
-            {Array.from({ length: 2 }, (_, i) => (
-              <Skeleton key={i} className="h-28 rounded-2xl" />
-            ))}
+            <div className="grid gap-6 md:grid-cols-2">
+              {Array.from({ length: 2 }, (_, i) => (
+                <Skeleton key={i} className="h-28 rounded-2xl" />
+              ))}
+            </div>
           </div>
         ) : habits.length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-3 text-center">
@@ -57,8 +59,14 @@ export default function StatsPage() {
         ) : (
           <>
             <StatsSummary habits={habits} />
-            <HabitGroup habits={buildHabits} type="build" />
-            <HabitGroup habits={quitHabits} type="quit" />
+            {/* Build and Quit sit side by side rather than stacking: they are
+                two different things the user compares, not two halves of one
+                list. An empty group renders nothing, so the other takes the
+                full width on its own. */}
+            <div className="grid gap-6 md:grid-cols-2 md:items-start">
+              <HabitGroup habits={buildHabits} type="build" />
+              <HabitGroup habits={quitHabits} type="quit" />
+            </div>
           </>
         )}
       </div>
