@@ -86,6 +86,11 @@
   --shadow-ambient: 58px 26px 68px 0 rgb(35 44 93 / 0.06);
   --shadow-lifted:  0 12px 24px 0 rgb(35 44 93 / 0.06);
   --shadow-inset:   0 3px 6px 0 rgb(11 43 81 / 0.20);
+
+  /* Chrome icons ship as <img>, so their fills cannot be restyled — only
+     filtered. They are duotone with a dark primary over a light secondary,
+     and inverting preserves that relationship. */
+  --icon-filter: none;
 }
 
 /* The viewer has three states, not two: an explicit choice stamps
@@ -125,6 +130,8 @@
     --shadow-ambient: 58px 26px 68px 0 rgb(0 0 0 / 0.45);
     --shadow-lifted:  0 12px 24px 0 rgb(0 0 0 / 0.40);
     --shadow-inset:   0 3px 6px 0 rgb(0 0 0 / 0.55);
+
+    --icon-filter: invert(1);
   }
 }
 
@@ -159,6 +166,8 @@
   --shadow-ambient: 58px 26px 68px 0 rgb(0 0 0 / 0.45);
   --shadow-lifted:  0 12px 24px 0 rgb(0 0 0 / 0.40);
   --shadow-inset:   0 3px 6px 0 rgb(0 0 0 / 0.55);
+
+  --icon-filter: invert(1);
 }
 
 /* ─── Theme-aware utilities ──────────────────────────────────────
@@ -365,6 +374,8 @@
       box-shadow: none;
     }
   }
+
+  .icon-adaptive { filter: var(--icon-filter); }
 
   /* Inset ring helpers — cleaner than long arbitrary shadow strings */
   .ring-card        { box-shadow: inset 0 0 0 1px var(--line); }

@@ -28,8 +28,8 @@ export default function WeekSelector() {
         <p className="alternative text-ink-2">{formattedRange}</p>
       </div>
       <div className="flex gap-2">
-        <IconButton size="medium" icon={arrow_left}  onClick={() => dispatch(prevWeek())} />
-        <IconButton size="medium" icon={arrow_right} onClick={() => dispatch(nextWeek())} />
+        <IconButton size="medium" label="Previous week" icon={arrow_left}  onClick={() => dispatch(prevWeek())} />
+        <IconButton size="medium" label="Next week" icon={arrow_right} onClick={() => dispatch(nextWeek())} />
       </div>
     </div>
   );

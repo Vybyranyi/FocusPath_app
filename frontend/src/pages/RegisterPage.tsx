@@ -77,6 +77,7 @@ export default function RegisterPage() {
         {step === 2 && (
           <IconButton
             size="large"
+            label="Back to the first step"
             icon={arrow_left}
             onClick={() => setStep(1)}
           />

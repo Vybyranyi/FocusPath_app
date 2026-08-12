@@ -105,7 +105,7 @@ describe("Select component", () => {
     expect(placeholderOption).toHaveAttribute("hidden");
   });
 
-  it("applies placeholder style when no value is selected", () => {
+  it("shows the placeholder in muted text when no value is selected", () => {
     render(
       <Select
         label="Category"
@@ -117,10 +117,10 @@ describe("Select component", () => {
     );
 
     const select = screen.getByRole("combobox");
-    expect(select.className).toMatch(/placeholder/);
+    expect(select.className).toContain("text-ink-muted");
   });
 
-  it("does not apply placeholder style when value is selected", () => {
+  it("does not mute the text once a value is selected", () => {
     render(
       <Select
         label="Category"
@@ -132,6 +132,6 @@ describe("Select component", () => {
     );
 
     const select = screen.getByRole("combobox");
-    expect(select.className).not.toMatch(/placeholder/);
+    expect(select.className).not.toContain("text-ink-muted");
   });
 });

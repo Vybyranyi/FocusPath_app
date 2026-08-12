@@ -31,6 +31,7 @@ export default function DurationPicker({
             Let AI determine the optimal number of days
           </p>
           <Switch
+            label="Let AI choose the number of days"
             toggled={aiEnabled}
             onClick={onAiToggle}
             disabled={disabled}

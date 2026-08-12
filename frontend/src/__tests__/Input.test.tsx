@@ -9,6 +9,21 @@ describe("Input component", () => {
         expect(screen.getByPlaceholderText("Enter email")).toBeInTheDocument();
     });
 
+    it("ties the label to the field so the field has a name", () => {
+        // There was no <label> anywhere in this app: every field announced
+        // itself to a screen reader as an unnamed "edit text".
+        render(<Input label="Email" placeholder="Enter email" type="email" />);
+        expect(screen.getByLabelText("Email")).toBe(screen.getByPlaceholderText("Enter email"));
+    });
+
+    it("marks itself invalid and points at the message", () => {
+        render(<Input label="Email" placeholder="Enter email" type="email" error="Invalid email address" />);
+        const input = screen.getByLabelText("Email");
+        expect(input).toHaveAttribute("aria-invalid", "true");
+        expect(input).toHaveAccessibleDescription("Invalid email address");
+        expect(screen.getByRole("alert")).toHaveTextContent("Invalid email address");
+    });
+
     it("updates value when typing", () => {
         render(<Input label="Name" placeholder="Enter name" type="text" />);
         const input = screen.getByPlaceholderText("Enter name") as HTMLInputElement;
@@ -55,7 +70,7 @@ describe("Input component", () => {
             />
         );
 
-        fireEvent.click(screen.getByRole("img", { name: "Clear input" }));
+        fireEvent.click(screen.getByRole("button", { name: "Clear Name" }));
 
         expect(handleClear).toHaveBeenCalledTimes(1);
     });
@@ -73,17 +88,16 @@ describe("Input component", () => {
             />
         );
 
-        expect(screen.queryByRole("img", { name: "Clear input" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Clear Name" })).not.toBeInTheDocument();
     });
 
     it("password toggle", () => {
         render(<Input label="Password" placeholder="Enter password" type="password" />);
         const input = screen.getByPlaceholderText("Enter password") as HTMLInputElement;
         fireEvent.change(input, { target: { value: "12345" } });
-        const icon = screen.getByRole("img", { name: "Toggle password visibility" });
-        fireEvent.click(icon);
+        fireEvent.click(screen.getByRole("button", { name: "Show password" }));
         expect(input.type).toBe("text");
-        fireEvent.click(icon);
+        fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
         expect(input.type).toBe("password");
     });
 

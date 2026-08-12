@@ -1,7 +1,7 @@
 import eye_show from "@assets/images/icons/eye_show.svg";
 import eye_hide from "@assets/images/icons/eye_hide.svg";
 import remove_cross from "@assets/images/icons/remove_cross.svg";
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import FieldError from "@components/ui/FieldError";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,11 @@ export default function Input({
     type === "date" ? "text" : type,
   );
 
+  // A real label needs a real id. There was no `<label>` anywhere in this app,
+  // so every field announced itself as an unnamed "edit text".
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
+
   const handleFocus = () => {
     if (type === "date") setInputType("date");
   };
@@ -48,12 +53,16 @@ export default function Input({
 
   return (
     <div className={cn("w-full min-w-fit", disabled && "opacity-70")}>
-      <p className={cn("chip mb-2", disabled && "text-ink-2")}>
+      <label
+        htmlFor={inputId}
+        className={cn("field-label block mb-1.5", disabled && "text-ink-2")}
+      >
         {label}
-      </p>
+      </label>
 
       <div className="relative">
         <input
+          id={inputId}
           type={currentType}
           placeholder={placeholder}
           disabled={disabled}
@@ -61,41 +70,53 @@ export default function Input({
           onChange={onChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={cn(
-            "w-full h-12 pr-8 text-[18px] font-medium leading-6 bg-transparent",
-            "ring-input focus:ring-input-focus outline-none",
+            "w-full h-12 pr-16 text-[1.0625rem] font-medium leading-6 bg-transparent",
+            "ring-input focus:ring-input-focus",
             "placeholder:text-ink-muted",
             "disabled:cursor-not-allowed",
-            error && "ring-input-danger",
+            error && "ring-input-error",
           )}
         />
 
-        <div className="absolute right-0 top-[52%] -translate-y-1/2 flex items-center gap-1">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center">
           {type === "password" && (
             <button
               type="button"
               onClick={() => setIsPasswordVisible((v) => !v)}
+              aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+              aria-pressed={isPasswordVisible}
+              className="inline-flex items-center justify-center w-11 h-11 rounded-lg cursor-pointer"
             >
               <img
                 src={isPasswordVisible ? eye_hide : eye_show}
-                className="w-6 h-6 cursor-pointer"
-                alt="Toggle password visibility"
+                alt=""
+                aria-hidden
+                className="w-6 h-6 icon-adaptive"
               />
             </button>
           )}
           {value && onClear && (
-            <button type="button" onClick={onClear}>
+            <button
+              type="button"
+              onClick={onClear}
+              aria-label={`Clear ${label}`}
+              className="inline-flex items-center justify-center w-11 h-11 rounded-lg cursor-pointer"
+            >
               <img
                 src={remove_cross}
-                className="w-6 h-6 cursor-pointer"
-                alt="Clear input"
+                alt=""
+                aria-hidden
+                className="w-6 h-6 icon-adaptive"
               />
             </button>
           )}
         </div>
       </div>
 
-      <FieldError message={error} />
+      <FieldError id={errorId} message={error} />
     </div>
   );
 }

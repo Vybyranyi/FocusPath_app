@@ -4,12 +4,6 @@ import { useLocation } from "react-router";
 import { useMediaQuery } from "react-responsive";
 import AppBar from "@components/layout/AppBar";
 import { renderWithProviders } from "../testUtils";
-// Compared by identity rather than by filename: Vite inlines these as data URIs,
-// so the path never reaches the rendered src.
-import activityActive from "@assets/images/icons/activity_active.svg";
-import home from "@assets/images/icons/home.svg";
-import homeActive from "@assets/images/icons/home_active.svg";
-import profileActive from "@assets/images/icons/profile_active.svg";
 
 vi.mock("react-responsive", () => ({ useMediaQuery: vi.fn() }));
 
@@ -32,9 +26,9 @@ const renderBar = (route = "/main") =>
 const onDesktop = () => mockUseMediaQuery.mockReturnValue(true);
 const onMobile = () => mockUseMediaQuery.mockReturnValue(false);
 
-/** The icon a desktop nav button is showing. Button renders it without alt text. */
-const desktopIcon = (label: string) =>
-  screen.getByText(label).closest("button")?.querySelector("img")?.getAttribute("src") ?? "";
+/** Whether a nav button reads as the destination the router is on. */
+const isCurrent = (name: string) =>
+  screen.getByRole("button", { name }).getAttribute("aria-current") === "page";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -46,7 +40,7 @@ describe("AppBar on desktop", () => {
   it("renders the create action alongside every destination", () => {
     renderBar();
 
-    for (const label of ["New habbit", "Home", "Explore", "Activity", "Profile"]) {
+    for (const label of ["New habit", "Home", "Explore", "Activity", "Profile"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
     expect(screen.getAllByRole("button")).toHaveLength(5);
@@ -57,7 +51,7 @@ describe("AppBar on desktop", () => {
     ["Explore", "/explore"],
     ["Activity", "/stats"],
     ["Profile", "/profile"],
-    ["New habbit", "/createhabit"],
+    ["New habit", "/createhabit"],
   ])("navigates to %s", (label, path) => {
     renderBar("/");
 
@@ -66,17 +60,17 @@ describe("AppBar on desktop", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(path);
   });
 
-  it("swaps in the active icon for the destination matching the route", () => {
+  it("marks the destination matching the route as current", () => {
     renderBar("/stats");
 
-    expect(desktopIcon("Activity")).toBe(activityActive);
-    expect(desktopIcon("Home")).toBe(home);
+    expect(isCurrent("Activity")).toBe(true);
+    expect(isCurrent("Home")).toBe(false);
   });
 
   it("treats any /main sub-route as home", () => {
     renderBar("/main/today");
 
-    expect(desktopIcon("Home")).toBe(homeActive);
+    expect(isCurrent("Home")).toBe(true);
   });
 });
 
@@ -87,42 +81,41 @@ describe("AppBar on mobile", () => {
     renderBar();
 
     expect(screen.getAllByRole("button")).toHaveLength(5);
-    for (const icon of ["home", "explore", "activity", "profile"]) {
-      expect(screen.getByAltText(icon)).toBeInTheDocument();
+    for (const label of ["Home", "Explore", "Activity", "Profile", "New habit"]) {
+      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     }
-    expect(screen.getByAltText("add")).toBeInTheDocument();
   });
 
   it("marks the destination matching the current route as active", () => {
     renderBar("/profile");
 
-    expect(screen.getByAltText("profile")).toHaveAttribute("src", profileActive);
-    expect(screen.getByAltText("home")).toHaveAttribute("src", home);
+    expect(isCurrent("Profile")).toBe(true);
+    expect(isCurrent("Home")).toBe(false);
   });
 
   it("treats any /main sub-route as home", () => {
     renderBar("/main/today");
 
-    expect(screen.getByAltText("home")).toHaveAttribute("src", homeActive);
+    expect(isCurrent("Home")).toBe(true);
   });
 
   it("navigates to habit creation from the add button", () => {
     renderBar();
 
-    fireEvent.click(screen.getByAltText("add").closest("button")!);
+    fireEvent.click(screen.getByRole("button", { name: "New habit" }));
 
     expect(screen.getByTestId("location")).toHaveTextContent("/createhabit");
   });
 
   it.each([
-    ["home", "/main"],
-    ["explore", "/explore"],
-    ["activity", "/stats"],
-    ["profile", "/profile"],
-  ])("navigates to %s", (icon, path) => {
+    ["Home", "/main"],
+    ["Explore", "/explore"],
+    ["Activity", "/stats"],
+    ["Profile", "/profile"],
+  ])("navigates to %s", (label, path) => {
     renderBar("/");
 
-    fireEvent.click(screen.getByAltText(icon).closest("button")!);
+    fireEvent.click(screen.getByRole("button", { name: label }));
 
     expect(screen.getByTestId("location")).toHaveTextContent(path);
   });
@@ -132,19 +125,24 @@ describe("destinations", () => {
   it("offers the same set on both layouts", () => {
     // Two separate components had drifted: Explore was wired on desktop and
     // rendered with no handler at all on mobile, so tapping it did nothing.
+    // The bars put the create action in different places, so compare the set
+    // of destinations rather than the rendered order.
+    const destinations = () =>
+      screen
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label") ?? b.textContent)
+        .filter((name) => name !== "New habit")
+        .sort();
+
     onDesktop();
     const { unmount } = renderBar();
-    const desktop = ["Home", "Explore", "Activity", "Profile"].map((label) =>
-      screen.getByText(label).textContent?.toLowerCase(),
-    );
+    const desktop = destinations();
     unmount();
 
     onMobile();
     renderBar();
-    const mobile = ["home", "explore", "activity", "profile"].map(
-      (icon) => screen.getByAltText(icon).getAttribute("alt"),
-    );
 
-    expect(mobile).toEqual(desktop);
+    expect(destinations()).toEqual(desktop);
+    expect(desktop).toEqual(["Activity", "Explore", "Home", "Profile"]);
   });
 });
