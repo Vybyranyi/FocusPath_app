@@ -126,7 +126,7 @@ export default function AppBar() {
       className={[
         "bg-surface border border-line-strong rounded-full",
         "px-4 py-2",
-        "fixed bottom-3 left-4 right-4 max-w-120 mx-auto z-10",
+        "fixed bottom-3 left-4 right-4 max-w-120 mx-auto z-100",
       ].join(" ")}
     >
       <ul className="flex justify-between items-center">
