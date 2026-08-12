@@ -120,7 +120,7 @@ export default function CreateHabit() {
                     onChange={(v) => handleChange("emoji")(v)}
                   />
                   <Input
-                    label="Habit Name"
+                    label="Habit name"
                     placeholder="Enter Habit Name"
                     type="text"
                     value={values.habitName}
@@ -130,7 +130,7 @@ export default function CreateHabit() {
                     error={touched.habitName ? errors.habitName : ""}
                   />
                   <Input
-                    label="Habit Description"
+                    label="Habit description"
                     placeholder="Describe your habit"
                     type="text"
                     value={values.habitDescription}
@@ -148,7 +148,7 @@ export default function CreateHabit() {
 
                 <div className="flex flex-col gap-4">
                   <WeekDatePicker
-                    label="When you want to start?"
+                    label="Start date"
                     selectedDate={values.startDate}
                     onDateSelect={(date) => {
                       setFieldValue("startDate", date, true);

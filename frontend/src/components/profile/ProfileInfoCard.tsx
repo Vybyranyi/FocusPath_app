@@ -131,7 +131,7 @@ export default function ProfileInfoCard() {
           {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
             <Form className="flex flex-col gap-4">
               <Input
-                label="name"
+                label="Name"
                 placeholder="Enter your name"
                 type="text"
                 value={values.name}
@@ -141,7 +141,7 @@ export default function ProfileInfoCard() {
                 error={touched.name ? errors.name : ""}
               />
               <Input
-                label="surname"
+                label="Surname"
                 placeholder="Enter your surname"
                 type="text"
                 value={values.surname}
@@ -151,7 +151,7 @@ export default function ProfileInfoCard() {
                 error={touched.surname ? errors.surname : ""}
               />
               <Input
-                label="email"
+                label="Email"
                 placeholder="Enter your email"
                 type="email"
                 value={values.email}
@@ -161,7 +161,7 @@ export default function ProfileInfoCard() {
                 error={touched.email ? errors.email : ""}
               />
               <Input
-                label="birthday"
+                label="Date of birth"
                 placeholder="dd.mm.yyyy"
                 type="date"
                 value={values.birthdate}
@@ -171,7 +171,7 @@ export default function ProfileInfoCard() {
                 error={touched.birthdate ? errors.birthdate : ""}
               />
               <Select
-                label="gender"
+                label="Gender"
                 placeholder="Choose your gender"
                 options={[
                   { label: "Male", value: "male" },

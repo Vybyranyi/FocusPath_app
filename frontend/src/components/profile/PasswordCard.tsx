@@ -55,7 +55,7 @@ export default function PasswordCard() {
         {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
           <Form className="flex flex-col gap-4">
             <Input
-              label="current password"
+              label="Current password"
               placeholder="Enter current password"
               type="password"
               value={values.currentPassword}
@@ -65,7 +65,7 @@ export default function PasswordCard() {
               error={touched.currentPassword ? errors.currentPassword : ""}
             />
             <Input
-              label="new password"
+              label="New password"
               placeholder="Enter new password"
               type="password"
               value={values.newPassword}
@@ -75,7 +75,7 @@ export default function PasswordCard() {
               error={touched.newPassword ? errors.newPassword : ""}
             />
             <Input
-              label="confirm new password"
+              label="Confirm new password"
               placeholder="Repeat new password"
               type="password"
               value={values.confirmPassword}

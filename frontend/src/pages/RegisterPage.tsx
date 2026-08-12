@@ -105,7 +105,7 @@ export default function RegisterPage() {
                 {step === 1 && (
                   <>
                     <Input
-                      label="name"
+                      label="Name"
                       placeholder="Enter your name"
                       type="text"
                       value={values.name}
@@ -115,7 +115,7 @@ export default function RegisterPage() {
                       error={touched.name ? errors.name : ""}
                     />
                     <Input
-                      label="surname"
+                      label="Surname"
                       placeholder="Enter your surname"
                       type="text"
                       value={values.surname}
@@ -125,7 +125,7 @@ export default function RegisterPage() {
                       error={touched.surname ? errors.surname : ""}
                     />
                     <Input
-                      label="birthdate"
+                      label="Date of birth"
                       placeholder="dd.mm.yyyy"
                       type="date"
                       value={values.birthdate}
@@ -135,7 +135,7 @@ export default function RegisterPage() {
                       error={touched.birthdate ? errors.birthdate : ""}
                     />
                     <Select
-                      label="gender"
+                      label="Gender"
                       placeholder="Choose your gender"
                       options={[
                         { label: "Male", value: "male" },
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                 {step === 2 && (
                   <>
                     <Input
-                      label="email"
+                      label="Email"
                       placeholder="Enter your email"
                       type="email"
                       value={values.email}
@@ -162,7 +162,7 @@ export default function RegisterPage() {
                       error={touched.email ? errors.email : ""}
                     />
                     <Input
-                      label="password"
+                      label="Password"
                       placeholder="Enter your password"
                       type="password"
                       value={values.password}
@@ -172,7 +172,7 @@ export default function RegisterPage() {
                       error={touched.password ? errors.password : ""}
                     />
                     <Input
-                      label="confirm password"
+                      label="Confirm password"
                       placeholder="Repeat your password"
                       type="password"
                       value={values.confirmPassword}

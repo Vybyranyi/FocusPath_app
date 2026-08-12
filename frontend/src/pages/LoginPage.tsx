@@ -37,7 +37,7 @@ export default function LoginPage() {
             <Form>
               <div className="flex flex-col gap-4 pt-2 md:pt-0 md:max-w-110.5 md:mx-auto md:mb-22.5">
                 <Input
-                  label="e-mail"
+                  label="Email"
                   placeholder="Enter your e-mail"
                   type="email"
                   value={values.email}
