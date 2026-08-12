@@ -2,8 +2,8 @@ import plus from "@assets/images/icons/plus.svg";
 import Button from "@components/ui/Button";
 import MenuButton from "@components/ui/MenuButton";
 import { navIcons, type NavIconName } from "@components/icons/navIconMap";
-import { useMediaQuery } from "react-responsive";
 import { useNavigate, useLocation } from "react-router";
+import { useIsDesktop } from "@hooks/useIsDesktop";
 
 interface NavItem {
   icon: NavIconName;
@@ -11,6 +11,12 @@ interface NavItem {
   path: string;
   /** Home stays lit across its sub-routes; the rest match exactly. */
   isActive: (pathname: string) => boolean;
+  /**
+   * Reached through the avatar rather than the nav on desktop, where there is
+   * a header to put it in. The mobile bar has no such place, so it stays a
+   * button there.
+   */
+  accountOnly?: boolean;
 }
 
 /**
@@ -44,6 +50,7 @@ const navItems: readonly NavItem[] = [
     label: "Profile",
     path: "/profile",
     isActive: (pathname) => pathname === "/profile",
+    accountOnly: true,
   },
 ];
 
@@ -51,16 +58,20 @@ const CREATE_PATH = "/createhabit";
 const CREATE_LABEL = "New habit";
 
 /**
- * Navigation for both layouts. One component rather than two, so a destination
- * cannot exist on one and not the other, and only the layout that is actually
- * on screen subscribes to the router.
+ * Navigation for both layouts, from one list.
  *
- * This was a `<menu>`, which the spec defines as a list and which expects
- * `<li>` children rather than a run of buttons, and nothing told a screen
- * reader which destination was the current one.
+ * The invariant this protects is that a *destination* cannot exist on one
+ * layout and not the other — the two used to be separate components and had
+ * already drifted, leaving mobile's Explore button wired to nothing.
+ *
+ * Profile is deliberately exempt, and `accountOnly` is how that exemption is
+ * spelled rather than left to a second copy of the list. It is an account,
+ * not a place: on desktop it is reached by clicking your own avatar in the
+ * header, which is where people look for it. The mobile layout has no header
+ * to put an avatar in, so there it stays a button in the bar.
  */
 export default function AppBar() {
-  const isDesktop = useMediaQuery({ query: "(min-width: 769px)" });
+  const isDesktop = useIsDesktop();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -81,7 +92,7 @@ export default function AppBar() {
           </Button>
 
           <ul className="contents">
-            {navItems.map((item) => {
+            {navItems.filter((item) => !item.accountOnly).map((item) => {
               const active = item.isActive(pathname);
               const Icon = navIcons[item.icon];
               return (
