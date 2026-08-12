@@ -64,10 +64,6 @@ export default function Header({
                 Let's make habits together!
               </p>
             </div>
-            <Emoji
-              name="smiling face with halo"
-              className="w-6 h-6 bg-info-soft p-3 rounded-full md:hidden"
-            />
           </div>
         )}
 
