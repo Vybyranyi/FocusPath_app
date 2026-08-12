@@ -2,69 +2,78 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import MenuButton from '@components/ui/MenuButton';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@assets/images/icons/home.svg',         () => ({ default: 'home.svg' }));
-vi.mock('@assets/images/icons/home_active.svg',  () => ({ default: 'home_active.svg' }));
-vi.mock('@assets/images/icons/explore.svg',      () => ({ default: 'explore.svg' }));
-vi.mock('@assets/images/icons/explore_active.svg',() => ({ default: 'explore_active.svg' }));
-vi.mock('@assets/images/icons/activity.svg',     () => ({ default: 'activity.svg' }));
-vi.mock('@assets/images/icons/activity_active.svg',() => ({ default: 'activity_active.svg' }));
-vi.mock('@assets/images/icons/profile.svg',      () => ({ default: 'profile.svg' }));
-vi.mock('@assets/images/icons/profile_active.svg',() => ({ default: 'profile_active.svg' }));
-
+/**
+ * The icons are inline SVG drawn in `currentColor` rather than eight image
+ * files, so these assert what a user can actually perceive — the button's
+ * name and whether it reads as the current destination — instead of which
+ * file landed in a `src`.
+ */
 describe('MenuButton component', () => {
-  it('renders button with home icon', () => {
-    render(<MenuButton icon="home" />);
-    expect(screen.getByRole('button')).toBeInTheDocument();
-    const icon = screen.getByRole('img', { name: 'home' });
-    expect(icon).toHaveAttribute('src', 'home.svg');
+  it('names the destination for a screen reader', () => {
+    render(<MenuButton icon="home" label="Home" />);
+    expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
   });
 
-  it('renders active icon when active prop is true', () => {
-    render(<MenuButton icon="home" active />);
-    expect(screen.getByRole('img', { name: 'home' })).toHaveAttribute('src', 'home_active.svg');
+  it('renders an icon', () => {
+    render(<MenuButton icon="home" label="Home" />);
+    expect(screen.getByRole('button').querySelector('svg')).toBeInTheDocument();
   });
 
-  it('renders default icon when active prop is false', () => {
-    render(<MenuButton icon="home" active={false} />);
-    expect(screen.getByRole('img', { name: 'home' })).toHaveAttribute('src', 'home.svg');
+  it('carries the accent colour when active', () => {
+    render(<MenuButton icon="home" label="Home" active />);
+    expect(screen.getByRole('button').className).toContain('text-accent');
   });
 
-  it('renders explore, activity, profile icons correctly', () => {
-    const { rerender } = render(<MenuButton icon="explore" />);
-    expect(screen.getByRole('img', { name: 'explore' })).toHaveAttribute('src', 'explore.svg');
+  it('is muted when not active', () => {
+    render(<MenuButton icon="home" label="Home" active={false} />);
+    const button = screen.getByRole('button');
+    expect(button.className).toContain('text-ink-muted');
+    expect(button.className).not.toContain('text-accent');
+  });
 
-    rerender(<MenuButton icon="activity" />);
-    expect(screen.getByRole('img', { name: 'activity' })).toHaveAttribute('src', 'activity.svg');
+  it.each(['home', 'explore', 'activity', 'profile'] as const)(
+    'renders the %s destination',
+    (icon) => {
+      render(<MenuButton icon={icon} label={icon} />);
+      expect(screen.getByRole('button', { name: icon })).toBeInTheDocument();
+    },
+  );
 
-    rerender(<MenuButton icon="profile" />);
-    expect(screen.getByRole('img', { name: 'profile' })).toHaveAttribute('src', 'profile.svg');
+  it('meets the minimum touch target', () => {
+    // The bar is the app's primary navigation and every target in it used to
+    // be 24x24, roughly a third of the recommended area.
+    render(<MenuButton icon="home" label="Home" />);
+    const button = screen.getByRole('button');
+    expect(button.className).toContain('min-w-11');
+    expect(button.className).toContain('min-h-11');
   });
 
   it('renders dot notification when dot prop is true', () => {
-    render(<MenuButton icon="home" dot />);
+    render(<MenuButton icon="home" label="Home" dot />);
     const dot = screen.getByRole('button').querySelector('span');
     expect(dot).toBeInTheDocument();
-    expect(dot?.className).toContain('bg-error');
+    expect(dot?.className).toContain('bg-danger');
   });
 
   it('does not render dot when dot prop is false', () => {
-    render(<MenuButton icon="home" dot={false} />);
+    render(<MenuButton icon="home" label="Home" dot={false} />);
     expect(screen.getByRole('button').querySelector('span')).not.toBeInTheDocument();
   });
 
   it('calls onClick when button is clicked', () => {
     const handleClick = vi.fn();
-    render(<MenuButton icon="home" onClick={handleClick} />);
+    render(<MenuButton icon="home" label="Home" onClick={handleClick} />);
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
   it('works with combination of props', () => {
     const handleClick = vi.fn();
-    render(<MenuButton icon="activity" active dot onClick={handleClick} />);
-    expect(screen.getByRole('img', { name: 'activity' })).toHaveAttribute('src', 'activity_active.svg');
-    expect(screen.getByRole('button').querySelector('span')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button'));
+    render(<MenuButton icon="activity" label="Activity" active dot onClick={handleClick} />);
+    const button = screen.getByRole('button', { name: 'Activity' });
+    expect(button.className).toContain('text-accent');
+    expect(button.querySelector('span')).toBeInTheDocument();
+    fireEvent.click(button);
     expect(handleClick).toHaveBeenCalled();
   });
 });

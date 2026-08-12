@@ -1,189 +1,82 @@
 import { useEffect, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
-const AILoadingAnimation = () => {
-  const [progress, setProgress] = useState(0);
-  const [currentPhrase, setCurrentPhrase] = useState(0);
+/**
+ * Shown while the server builds a plan.
+ *
+ * The previous version ran four animations at once — a rotating ring, a
+ * pulsing glow, a floating robot emoji and a fading caption — injected its own
+ * `<style>` block from the render body on every mount, wrote every colour as an
+ * inline literal outside the token system, and used emoji as icons. It also
+ * showed a progress bar driven by `Math.random() * 15` on a timer that stopped
+ * at 95%, which is a number about nothing: a request that finished in a second
+ * showed 15%, and a slow one sat at 95% indefinitely.
+ *
+ * What is left is one ring, and a caption that says what is happening. The
+ * work has no measurable progress, so nothing here claims otherwise.
+ */
 
-  const phrases = [
-    "🧠 Analyzing your habit...",
-    "📊 Creating personalized plan...",
-    "✨ Generating daily tasks...",
-    "🎯 Optimizing duration...",
-    "🚀 Almost ready..."
-  ];
+const PHRASES = [
+  'Reading your habit',
+  'Shaping a plan',
+  'Working out the daily steps',
+  'Choosing a sensible length',
+  'Almost there',
+];
+
+const PHRASE_MS = 2600;
+
+export default function AILoadingAnimation() {
+  const [phrase, setPhrase] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    // Симуляція прогресу
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 95) {
-          clearInterval(progressInterval);
-          return 95;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 1600);
-
-    // Зміна фраз
-    const phraseInterval = setInterval(() => {
-      setCurrentPhrase(prev => (prev + 1) % phrases.length);
-    }, 5000);
-
-    return () => {
-      clearInterval(progressInterval);
-      clearInterval(phraseInterval);
-    };
+    const id = setInterval(
+      () => setPhrase((current) => (current + 1) % PHRASES.length),
+      PHRASE_MS,
+    );
+    return () => clearInterval(id);
   }, []);
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(4, 4, 21, 0.95)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      gap: '32px'
-    }}>
-      {/* Animated Brain Icon */}
-      <div style={{
-        position: 'relative',
-        width: '120px',
-        height: '120px'
-      }}>
-        {/* Outer Glow */}
-        <div style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(56, 67, 255, 0.3) 0%, transparent 70%)',
-          animation: 'ai-pulse 2s ease-in-out infinite'
-        }} />
-        
-        {/* Rotating Ring */}
-        <svg
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            animation: 'ai-rotate 3s linear infinite'
-          }}
-          viewBox="0 0 120 120"
-        >
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-[400] flex flex-col items-center justify-center gap-8 bg-canvas/95 backdrop-blur-sm px-6"
+    >
+      <div className="relative w-24 h-24">
+        <svg viewBox="0 0 96 96" className="w-full h-full" aria-hidden>
           <circle
-            cx="60"
-            cy="60"
-            r="50"
+            cx="48"
+            cy="48"
+            r="42"
             fill="none"
-            stroke="url(#gradient)"
-            strokeWidth="3"
-            strokeDasharray="60 250"
-            strokeLinecap="round"
+            stroke="currentColor"
+            strokeWidth="4"
+            className="text-line"
           />
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#3843FF" />
-              <stop offset="50%" stopColor="#8A24FF" />
-              <stop offset="100%" stopColor="#FF7D7D" />
-            </linearGradient>
-          </defs>
+          <motion.circle
+            cx="48"
+            cy="48"
+            r="42"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray="66 198"
+            className="text-accent"
+            style={{ transformOrigin: '50% 50%' }}
+            animate={reduceMotion ? undefined : { rotate: 360 }}
+            transition={{ duration: 1.4, ease: 'linear', repeat: Infinity }}
+          />
         </svg>
-
-        {/* Center Icon */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          fontSize: '48px',
-          animation: 'ai-float 3s ease-in-out infinite'
-        }}>
-          🤖
-        </div>
       </div>
 
-      {/* Current Phrase */}
-      <div style={{
-        fontSize: '20px',
-        fontWeight: '500',
-        color: '#ffffff',
-        textAlign: 'center',
-        minHeight: '60px',
-        display: 'flex',
-        alignItems: 'center',
-        animation: 'ai-fadeInOut 2.5s ease-in-out infinite'
-      }}>
-        {phrases[currentPhrase]}
+      <div className="flex flex-col items-center gap-2 text-center">
+        <p className="title text-ink">Building your plan</p>
+        {/* Announced as one region, so the caption changing does not interrupt. */}
+        <p className="body-light text-ink-2 min-h-6">{PHRASES[phrase]}…</p>
       </div>
-
-      {/* Progress Bar */}
-      <div style={{
-        width: '300px',
-        height: '4px',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          width: `${progress}%`,
-          height: '100%',
-          background: 'linear-gradient(90deg, #3843FF 0%, #8A24FF 50%, #FF7D7D 100%)',
-          borderRadius: '8px',
-          transition: 'width 0.8s ease-out',
-          boxShadow: '0 0 10px rgba(56, 67, 255, 0.5)'
-        }} />
-      </div>
-
-      {/* Percentage */}
-      <div style={{
-        fontSize: '14px',
-        fontWeight: '300',
-        color: 'rgba(255, 255, 255, 0.6)'
-      }}>
-        {Math.round(progress)}%
-      </div>
-
-      <style>{`
-        @keyframes ai-rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes ai-pulse {
-          0%, 100% { 
-            transform: scale(1);
-            opacity: 0.5;
-          }
-          50% { 
-            transform: scale(1.1);
-            opacity: 0.8;
-          }
-        }
-
-        @keyframes ai-float {
-          0%, 100% { 
-            transform: translate(-50%, -50%) translateY(0px);
-          }
-          50% { 
-            transform: translate(-50%, -50%) translateY(-10px);
-          }
-        }
-
-        @keyframes ai-fadeInOut {
-          0%, 100% { opacity: 0; transform: translateY(10px); }
-          20%, 80% { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
-};
-
-export default AILoadingAnimation;
+}

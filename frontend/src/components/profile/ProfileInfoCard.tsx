@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { format } from "date-fns";
 import { Form, Formik } from "formik";
 import { useState } from "react";
+import { useToast } from "@hooks/useToast";
 import * as Yup from "yup";
 
 const profileSchema = Yup.object({
@@ -36,7 +37,7 @@ export default function ProfileInfoCard() {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((s) => s.auth);
   const [isEditing, setIsEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { notify } = useToast();
 
   if (!user) return null;
 
@@ -59,8 +60,9 @@ export default function ProfileInfoCard() {
     );
     if (updateProfile.fulfilled.match(result)) {
       setIsEditing(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      notify("Profile saved");
+    } else {
+      notify("Could not save your profile", "danger");
     }
   };
 
@@ -73,13 +75,13 @@ export default function ProfileInfoCard() {
   ];
 
   return (
-    <div className="bg-base-white rounded-2xl shadow-medium p-6 flex flex-col gap-5">
+    <div className="bg-surface rounded-2xl shadow-lifted p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <p className="title font-bold">Personal information</p>
+        <h2 className="title font-bold">Personal information</h2>
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1.5 text-primary-blue body-bold hover:opacity-70 transition-opacity"
+            className="flex items-center gap-1.5 text-accent body-bold hover:opacity-70 transition-opacity"
           >
             <svg
               width="16"
@@ -102,16 +104,13 @@ export default function ProfileInfoCard() {
 
       {!isEditing ? (
         <>
-          {saved && (
-            <p className="chip text-success">Saved successfully</p>
-          )}
           <div className="flex flex-col gap-4">
             {fields.map(({ label, value }) => (
               <div
                 key={label}
-                className="flex items-center justify-between border-b border-primary-black-10 pb-3 last:border-0 last:pb-0"
+                className="flex items-center justify-between border-b border-line pb-3 last:border-0 last:pb-0"
               >
-                <p className="chip text-primary-black-40">{label}</p>
+                <p className="chip text-ink-muted">{label}</p>
                 <p className="body-bold">{value}</p>
               </div>
             ))}
@@ -132,7 +131,7 @@ export default function ProfileInfoCard() {
           {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
             <Form className="flex flex-col gap-4">
               <Input
-                label="name"
+                label="Name"
                 placeholder="Enter your name"
                 type="text"
                 value={values.name}
@@ -142,7 +141,7 @@ export default function ProfileInfoCard() {
                 error={touched.name ? errors.name : ""}
               />
               <Input
-                label="surname"
+                label="Surname"
                 placeholder="Enter your surname"
                 type="text"
                 value={values.surname}
@@ -152,7 +151,7 @@ export default function ProfileInfoCard() {
                 error={touched.surname ? errors.surname : ""}
               />
               <Input
-                label="email"
+                label="Email"
                 placeholder="Enter your email"
                 type="email"
                 value={values.email}
@@ -162,7 +161,7 @@ export default function ProfileInfoCard() {
                 error={touched.email ? errors.email : ""}
               />
               <Input
-                label="birthday"
+                label="Date of birth"
                 placeholder="dd.mm.yyyy"
                 type="date"
                 value={values.birthdate}
@@ -172,7 +171,7 @@ export default function ProfileInfoCard() {
                 error={touched.birthdate ? errors.birthdate : ""}
               />
               <Select
-                label="gender"
+                label="Gender"
                 placeholder="Choose your gender"
                 options={[
                   { label: "Male", value: "male" },

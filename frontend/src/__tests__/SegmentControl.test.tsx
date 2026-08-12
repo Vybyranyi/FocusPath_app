@@ -27,15 +27,15 @@ describe('SegmentControl component', () => {
 
   it('highlights the default selected segment with blue text', () => {
     render(<SegmentControl {...defaultProps} />);
-    expect(screen.getByText('Habits').className).toContain('text-primary-blue');
-    expect(screen.getByText('Challenges').className).not.toContain('text-primary-blue');
+    expect(screen.getByText('Habits').className).toContain('text-accent');
+    expect(screen.getByText('Challenges').className).not.toContain('text-accent');
   });
 
   it('switches active segment on click', () => {
     render(<SegmentControl {...defaultProps} />);
     fireEvent.click(screen.getByText('Challenges'));
-    expect(screen.getByText('Challenges').className).toContain('text-primary-blue');
-    expect(screen.getByText('Habits').className).not.toContain('text-primary-blue');
+    expect(screen.getByText('Challenges').className).toContain('text-accent');
+    expect(screen.getByText('Habits').className).not.toContain('text-accent');
   });
 
   it('calls onSelect with correct id when segment is clicked', () => {
@@ -58,12 +58,12 @@ describe('SegmentControl component', () => {
     render(<SegmentControl {...defaultProps} onSelect={mockOnSelect} />);
 
     fireEvent.click(screen.getByText('Challenges'));
-    expect(screen.getByText('Challenges').className).toContain('text-primary-blue');
+    expect(screen.getByText('Challenges').className).toContain('text-accent');
     expect(mockOnSelect).toHaveBeenCalledWith('2');
 
     fireEvent.click(screen.getByText('Goals'));
-    expect(screen.getByText('Goals').className).toContain('text-primary-blue');
-    expect(screen.getByText('Challenges').className).not.toContain('text-primary-blue');
+    expect(screen.getByText('Goals').className).toContain('text-accent');
+    expect(screen.getByText('Challenges').className).not.toContain('text-accent');
     expect(mockOnSelect).toHaveBeenCalledWith('3');
 
     expect(mockOnSelect).toHaveBeenCalledTimes(2);
@@ -77,7 +77,7 @@ describe('SegmentControl component', () => {
     fireEvent.click(screen.getByText('Habits'));
     fireEvent.click(screen.getByText('Habits'));
 
-    expect(screen.getByText('Habits').className).toContain('text-primary-blue');
+    expect(screen.getByText('Habits').className).toContain('text-accent');
     expect(mockOnSelect).toHaveBeenCalledTimes(3);
     expect(mockOnSelect).toHaveBeenCalledWith('1');
   });
@@ -85,7 +85,7 @@ describe('SegmentControl component', () => {
   it('handles invalid defaultSelectedId gracefully', () => {
     render(<SegmentControl {...defaultProps} defaultSelectedId="invalid" />);
     screen.getAllByText(/Habits|Challenges|Goals/).forEach(seg => {
-      expect(seg.className).not.toContain('text-primary-blue');
+      expect(seg.className).not.toContain('text-accent');
     });
   });
 

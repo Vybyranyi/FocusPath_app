@@ -37,25 +37,27 @@ export default function ProfileAvatar() {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div
-        className="relative w-24 h-24 rounded-full cursor-pointer group"
+      <button
+        type="button"
         onClick={() => fileInputRef.current?.click()}
+        aria-label={user.avatar ? "Change profile photo" : "Add a profile photo"}
+        className="relative w-24 h-24 rounded-full cursor-pointer group"
       >
         {user.avatar ? (
           <img
             src={user.avatar}
-            alt="avatar"
+            alt=""
             className="w-full h-full rounded-full object-cover"
           />
         ) : (
-          <div className="w-full h-full rounded-full bg-blue-gradient flex items-center justify-center">
-            <span className="text-base-white text-2xl font-bold">
+          <span className="w-full h-full rounded-full bg-blue-gradient flex items-center justify-center">
+            <span className="text-on-brand text-2xl font-bold" aria-hidden>
               {initials}
             </span>
-          </div>
+          </span>
         )}
 
-        <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <span className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity flex items-center justify-center">
           <svg
             fill="none"
             stroke="white"
@@ -74,14 +76,14 @@ export default function ProfileAvatar() {
               d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-        </div>
+        </span>
 
         {avatarLoading && (
-          <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-[spinApp_1s_linear_infinite]" />
-          </div>
+          <span className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+            <span className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin-app" />
+          </span>
         )}
-      </div>
+      </button>
 
       <input
         ref={fileInputRef}
@@ -92,10 +94,10 @@ export default function ProfileAvatar() {
       />
 
       <div className="text-center">
-        <h6>
+        <h2 className="display-6">
           {user.name} {user.surname}
-        </h6>
-        <p className="body-light text-primary-black-60 mt-0.5">{user.email}</p>
+        </h2>
+        <p className="body-light text-ink-2 mt-0.5">{user.email}</p>
       </div>
     </div>
   );

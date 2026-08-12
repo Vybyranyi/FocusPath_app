@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
 import arrow_right from "@assets/images/icons/arrow-right.svg";
 import DatePicker from "@components/pickers/DatePicker";
+import IconButton from "@components/ui/IconButton";
 import { useCallback, useMemo, useState } from "react";
 
 export interface IWeekDatePickerProps {
@@ -109,13 +110,11 @@ export default function WeekDatePicker({
 
   return (
     <div className="flex flex-col w-full min-w-0">
-      <p className="chip mb-1">{label}</p>
+      <p className="field-label mb-1.5">{label}</p>
 
       {!isExpanded && (
         <div className="flex items-center gap-2">
-          <button type="button" onClick={handlePrevWeek} className="p-1">
-            <img src={arrow_left} alt="Previous week" className="w-5 h-5" />
-          </button>
+          <IconButton size="small" label="Previous week" icon={arrow_left} onClick={handlePrevWeek} />
           <div className={datesRowClass}>
             {weekDates.map((date) => (
               <DatePicker
@@ -127,24 +126,18 @@ export default function WeekDatePicker({
               />
             ))}
           </div>
-          <button type="button" onClick={handleNextWeek} className="p-1">
-            <img src={arrow_right} alt="Next week" className="w-5 h-5" />
-          </button>
+          <IconButton size="small" label="Next week" icon={arrow_right} onClick={handleNextWeek} />
         </div>
       )}
 
       {isExpanded && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-center gap-4 mb-2">
-            <button type="button" onClick={handlePrevMonth} className="p-1">
-              <img src={arrow_left} alt="Previous month" className="w-5 h-5" />
-            </button>
+            <IconButton size="small" label="Previous month" icon={arrow_left} onClick={handlePrevMonth} />
             <p className="body-bold min-w-[120px] text-center">
               {currentMonth}
             </p>
-            <button type="button" onClick={handleNextMonth} className="p-1">
-              <img src={arrow_right} alt="Next month" className="w-5 h-5" />
-            </button>
+            <IconButton size="small" label="Next month" icon={arrow_right} onClick={handleNextMonth} />
           </div>
 
           {monthWeeks.map((week) => (
@@ -173,7 +166,7 @@ export default function WeekDatePicker({
             setViewDate(new Date(selectedDate ?? currentWeekStart));
           }
         }}
-        className="alternative text-center mt-4 cursor-pointer text-primary-black-60 hover:text-primary-blue transition-colors"
+        className="alternative text-center mt-4 cursor-pointer text-ink-2 hover:text-accent transition-colors"
       >
         {isExpanded ? "Show less" : "Show more"}
       </button>

@@ -84,8 +84,8 @@ export default function CreateHabit() {
     <>
       {creating === "ai" && <AILoadingAnimation />}
 
-      <div className="container">
-        <h5 className="hidden md:block mb-4">Create Habit</h5>
+      <div className="page-gutter">
+        <h1 className="display-5 hidden md:block mb-4">Create Habit</h1>
 
         <Formik
           initialValues={initialValues}
@@ -120,7 +120,7 @@ export default function CreateHabit() {
                     onChange={(v) => handleChange("emoji")(v)}
                   />
                   <Input
-                    label="Habit Name"
+                    label="Habit name"
                     placeholder="Enter Habit Name"
                     type="text"
                     value={values.habitName}
@@ -130,7 +130,7 @@ export default function CreateHabit() {
                     error={touched.habitName ? errors.habitName : ""}
                   />
                   <Input
-                    label="Habit Description"
+                    label="Habit description"
                     placeholder="Describe your habit"
                     type="text"
                     value={values.habitDescription}
@@ -141,14 +141,14 @@ export default function CreateHabit() {
                       touched.habitDescription ? errors.habitDescription : ""
                     }
                   />
-                  <p className="text-xs font-normal text-gray-500">
+                  <p className="alternative text-ink-muted">
                     Provide more details about your habit to help the AI generate a better personalized plan.
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-4">
                   <WeekDatePicker
-                    label="When you want to start?"
+                    label="Start date"
                     selectedDate={values.startDate}
                     onDateSelect={(date) => {
                       setFieldValue("startDate", date, true);
@@ -208,12 +208,12 @@ export default function CreateHabit() {
                   </div>
 
                   {creating !== null && (
-                    <p className="alternative text-primary-black-40 mt-1">
+                    <p className="alternative text-ink-muted mt-1">
                       Creating habit...
                     </p>
                   )}
                   {error && (
-                    <p className="alternative text-error mt-1">{error}</p>
+                    <p className="alternative text-danger mt-1">{error}</p>
                   )}
                 </div>
               </div>

@@ -50,6 +50,7 @@ export const useResponsiveHeader = () => {
           leftButtonIcon: (
             <IconButton
               size="large"
+              label="Go back"
               icon={arrow_left}
               onClick={() => navigate(-1)}
               // onClick={() => setStep(1)}
@@ -86,6 +87,7 @@ export const useResponsiveHeader = () => {
           leftButtonIcon: (
             <IconButton
               size="large"
+              label="Go back"
               icon={arrow_left}
               onClick={() => navigate(-1)}
             />
@@ -107,6 +109,7 @@ export const useResponsiveHeader = () => {
           leftButtonIcon: (
             <IconButton
               size="large"
+              label="Go back"
               icon={arrow_left}
               onClick={() => navigate(-1)}
             />
@@ -120,6 +123,17 @@ export const useResponsiveHeader = () => {
           profile: true,
         },
       },
+      "/explore": {
+        mobile: {
+          visible: true,
+          title: "Explore",
+        },
+        desktop: {
+          visible: true,
+          topContent: true,
+          profile: true,
+        },
+      },
       "/stats": {
         mobile: {
           visible: true,
@@ -127,6 +141,7 @@ export const useResponsiveHeader = () => {
           leftButtonIcon: (
             <IconButton
               size="large"
+              label="Go back"
               icon={arrow_left}
               onClick={() => navigate(-1)}
             />

@@ -58,7 +58,7 @@ export default function CircleLoader({
           <span
             className={cn(
               "alternative",
-              isWhite ? "text-base-white" : "text-base-black",
+              isWhite ? "text-on-brand" : "text-ink",
             )}
           >
             {`%${percentages}`}

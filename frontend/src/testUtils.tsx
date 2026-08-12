@@ -3,6 +3,7 @@ import { render, type RenderOptions } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router";
 import { makeStore, type RootState } from "@store/store";
+import { ToastProvider } from "@components/ui/Toast";
 import type { HabitSummary } from "@shared/index";
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, "wrapper"> {
@@ -32,7 +33,9 @@ export function renderWithProviders(
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <Provider store={store}>
-      <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+      <MemoryRouter initialEntries={[route]}>
+        <ToastProvider>{children}</ToastProvider>
+      </MemoryRouter>
     </Provider>
   );
 

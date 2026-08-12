@@ -22,16 +22,30 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        "min-h-screen w-full bg-base-bg",
+        "min-h-screen w-full bg-canvas",
         !(hideOnMobile && hideOnDesktop) &&
           "md:grid md:grid-cols-[minmax(160px,240px)_1fr]",
       )}
     >
+      <a
+        href="#main"
+        className={cn(
+          "sr-only focus:not-sr-only",
+          "focus:fixed focus:top-3 focus:left-3 focus:z-50",
+          "focus:bg-surface focus:text-ink focus:body-bold",
+          "focus:px-4 focus:py-3 focus:rounded-xl focus:shadow-lifted",
+        )}
+      >
+        Skip to content
+      </a>
+
       {!hidden && <AppBar />}
 
       <div className="w-full max-w-full box-border">
         <ResponsiveHeader />
-        <main>{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none">
+          {children}
+        </main>
       </div>
     </div>
   );

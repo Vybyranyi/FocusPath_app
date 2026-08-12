@@ -1,21 +1,10 @@
-import activity from "@assets/images/icons/activity.svg";
-import activityActive from "@assets/images/icons/activity_active.svg";
-import explore from "@assets/images/icons/explore.svg";
-import exploreActive from "@assets/images/icons/explore_active.svg";
-import home from "@assets/images/icons/home.svg";
-import homeActive from "@assets/images/icons/home_active.svg";
-import profile from "@assets/images/icons/profile.svg";
-import profileActive from "@assets/images/icons/profile_active.svg";
-
-const iconsMap = {
-  home: { default: home, active: homeActive },
-  explore: { default: explore, active: exploreActive },
-  activity: { default: activity, active: activityActive },
-  profile: { default: profile, active: profileActive },
-};
+import { navIcons, type NavIconName } from "@components/icons/navIconMap";
+import { cn } from "@/lib/utils";
 
 export interface IMenuButton {
-  icon: keyof typeof iconsMap;
+  icon: NavIconName;
+  /** What the destination is called. Becomes the button's accessible name. */
+  label: string;
   active?: boolean;
   dot?: boolean;
   onClick?: () => void;
@@ -23,19 +12,35 @@ export interface IMenuButton {
 
 export default function MenuButton({
   icon,
+  label,
   active,
   dot,
   onClick,
 }: IMenuButton) {
+  const Icon = navIcons[icon];
+
   return (
-    <button className="relative w-6 h-6 cursor-pointer" onClick={onClick}>
-      <img
-        src={active ? iconsMap[icon].active : iconsMap[icon].default}
-        alt={icon}
-        className="w-6 h-6"
-      />
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-current={active ? "page" : undefined}
+      // The bar is the app's primary navigation and every target in it was
+      // 24x24 — about a third of the recommended area. The icon keeps its
+      // size; the button grows around it.
+      className={cn(
+        "relative inline-flex items-center justify-center",
+        "min-w-11 min-h-11 rounded-xl cursor-pointer",
+        "transition-colors duration-(--duration-base)",
+        active ? "text-accent" : "text-ink-muted hover:text-ink-2",
+      )}
+    >
+      <Icon className="w-6 h-6" />
       {dot && (
-        <span className="absolute -top-1.25 -right-1.25 w-2 h-2 bg-error rounded-full" />
+        <span
+          className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full"
+          aria-hidden
+        />
       )}
     </button>
   );

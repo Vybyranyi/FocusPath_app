@@ -7,13 +7,16 @@ import emojiData from "react-apple-emojis/src/data.json";
 import { Provider } from 'react-redux';
 import { store } from '@store/store.ts';
 import { BrowserRouter } from 'react-router';
+import { ToastProvider } from '@components/ui/Toast';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <BrowserRouter>
         <EmojiProvider data={emojiData}>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </EmojiProvider>
       </BrowserRouter>
     </Provider>

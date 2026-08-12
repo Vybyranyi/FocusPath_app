@@ -25,7 +25,7 @@ function StatsSummary({ habits }: StatsSummaryProps) {
       <StatCard value={activeCount} label="Active" />
       <StatCard value={completedCount} label="Completed" />
       <StatCard value={`${overallRate}%`} label="Done rate" accent />
-      <StatCard value={`${bestStreak} 🔥`} label="Best streak" />
+      <StatCard value={bestStreak} label="Best streak" />
     </div>
   );
 }

@@ -1,100 +1,254 @@
 @import "tailwindcss";
 
 /* ─── Fonts ─────────────────────────────────────────────────────── */
+/* WOFF2, not TTF: the four faces were 1.3 MB together and are 386 KB now.
+   Regular and Medium are preloaded in index.html — they carry the first
+   screen, and `swap` otherwise paints it in a fallback and reflows. */
 @font-face {
   font-family: 'Montserrat';
-  src: url('./assets/fonts/Montserrat-Light.ttf') format('truetype');
+  src: url('./assets/fonts/Montserrat-Light.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('./assets/fonts/Montserrat-Regular.ttf') format('truetype');
+  src: url('./assets/fonts/Montserrat-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('./assets/fonts/Montserrat-Medium.ttf') format('truetype');
+  src: url('./assets/fonts/Montserrat-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('./assets/fonts/Montserrat-Bold.ttf') format('truetype');
+  src: url('./assets/fonts/Montserrat-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
-/* ─── Design Tokens ──────────────────────────────────────────────── */
+/* ─── Palette ────────────────────────────────────────────────────
+   Two layers. Down here are plain CSS variables, which is what lets a
+   theme swap them at runtime; `@theme inline` below turns them into
+   utilities without copying their values, so `bg-surface` compiles to
+   `var(--surface)` and follows whatever the current theme sets.
+   Components therefore need almost no `dark:` variants — the token moves,
+   not the markup.
+
+   Every text pair here clears WCAG AA (4.5:1) in both themes, and every
+   border that carries meaning clears 3:1. The previous palette had nine
+   pairs below the line, three of them under 2:1.
+   ───────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  /* Grounds */
+  --canvas:    #F6F9FF;
+  --surface:   #FFFFFF;
+  --surface-2: #F3F4F6;
+
+  /* Text, darkest to faintest. `ink-faint` is for disabled controls only,
+     which WCAG exempts — it is not legible enough for anything a user is
+     meant to read. Placeholders use `ink-muted`. */
+  --ink:        #040415;
+  --ink-2:      #686873;
+  --ink-muted:  #6E6E77;
+  --ink-faint:  #B0B0B8;
+
+  /* Borders. `line` is decorative, `line-strong` is for edges that carry
+     meaning — an input underline is the control's only visible boundary. */
+  --line:        #EAECF0;
+  --line-strong: #8E8E99;
+
+  /* Accent */
+  --accent:      #3843FF;
+  --accent-soft: #EBECFF;
+  --on-accent:   #FFFFFF;
+
+  /* Status. Each has a soft ground and stays legible on it — the old
+     tokens were tuned against white and dropped to 2.3:1 on their own
+     tinted backgrounds. */
+  --danger:       #C22F2C;
+  --danger-soft:  #FBE9E8;
+  --success:      #277021;
+  --success-soft: #E4F3E3;
+  --warning:      #8A5A00;
+  --warning-soft: #FBF0DC;
+
+  /* A day that was never decided and is now over. Semantically a warning,
+     and deliberately the same hue — it is the same kind of statement. */
+  --missed:      #8A5A00;
+  --missed-soft: #FBF0DC;
+
+  --shadow-ambient: 58px 26px 68px 0 rgb(35 44 93 / 0.06);
+  --shadow-lifted:  0 12px 24px 0 rgb(35 44 93 / 0.06);
+  --shadow-inset:   0 3px 6px 0 rgb(11 43 81 / 0.20);
+
+  /* Chrome icons ship as <img>, so their fills cannot be restyled — only
+     filtered. They are duotone with a dark primary over a light secondary,
+     and inverting preserves that relationship. */
+  --icon-filter: none;
+}
+
+/* The viewer has three states, not two: an explicit choice stamps
+   `data-theme`, and the default "system" setting stamps nothing at all.
+   The media query is guarded so an explicit light choice still wins over a
+   dark OS, and the attribute block repeats the tokens so the toggle wins in
+   the other direction. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --canvas:    #0F1420;
+    --surface:   #171C29;
+    --surface-2: #1E2434;
+
+    --ink:       #E7EBF2;
+    --ink-2:     #AAB3C2;
+    --ink-muted: #8B95A6;
+    --ink-faint: #5A6478;
+
+    --line:        #2B3243;
+    --line-strong: #66718A;
+
+    --accent:      #9AA1FF;
+    --accent-soft: #242C4E;
+    --on-accent:   #0F1420;
+
+    --danger:       #FF9086;
+    --danger-soft:  #3A1F1D;
+    --success:      #6FCF67;
+    --success-soft: #1B2F1A;
+    --warning:      #E0A93F;
+    --warning-soft: #332714;
+    --missed:       #E0A93F;
+    --missed-soft:  #332714;
+
+    --shadow-ambient: 58px 26px 68px 0 rgb(0 0 0 / 0.45);
+    --shadow-lifted:  0 12px 24px 0 rgb(0 0 0 / 0.40);
+    --shadow-inset:   0 3px 6px 0 rgb(0 0 0 / 0.55);
+
+    --icon-filter: invert(1);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --canvas:    #0F1420;
+  --surface:   #171C29;
+  --surface-2: #1E2434;
+
+  --ink:       #E7EBF2;
+  --ink-2:     #AAB3C2;
+  --ink-muted: #8B95A6;
+  --ink-faint: #5A6478;
+
+  --line:        #2B3243;
+  --line-strong: #66718A;
+
+  --accent:      #9AA1FF;
+  --accent-soft: #242C4E;
+  --on-accent:   #0F1420;
+
+  --danger:       #FF9086;
+  --danger-soft:  #3A1F1D;
+  --success:      #6FCF67;
+  --success-soft: #1B2F1A;
+  --warning:      #E0A93F;
+  --warning-soft: #332714;
+  --missed:       #E0A93F;
+  --missed-soft:  #332714;
+
+  --shadow-ambient: 58px 26px 68px 0 rgb(0 0 0 / 0.45);
+  --shadow-lifted:  0 12px 24px 0 rgb(0 0 0 / 0.40);
+  --shadow-inset:   0 3px 6px 0 rgb(0 0 0 / 0.55);
+
+  --icon-filter: invert(1);
+}
+
+/* ─── Theme-aware utilities ──────────────────────────────────────
+   `inline` is what makes these follow the theme: without it Tailwind
+   copies the value at build time and the dark blocks above would never
+   reach the compiled utility.
+   ───────────────────────────────────────────────────────────────── */
+@theme inline {
+  --color-canvas:    var(--canvas);
+  --color-surface:   var(--surface);
+  --color-surface-2: var(--surface-2);
+
+  --color-ink:       var(--ink);
+  --color-ink-2:     var(--ink-2);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-line:        var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent:      var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent:   var(--on-accent);
+
+  --color-danger:       var(--danger);
+  --color-danger-soft:  var(--danger-soft);
+  --color-success:      var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning:      var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-missed:       var(--missed);
+  --color-missed-soft:  var(--missed-soft);
+
+  --shadow-ambient: var(--shadow-ambient);
+  --shadow-lifted:  var(--shadow-lifted);
+  --shadow-inset:   var(--shadow-inset);
+}
+
+/* ─── Fixed design tokens ────────────────────────────────────────
+   These do not vary by theme. The brand blue ramp stays because the
+   gradient and the progress ring are drawn from specific steps of it.
+   ───────────────────────────────────────────────────────────────── */
 @theme {
   --font-sans: 'Montserrat', sans-serif;
 
-  /* Base */
-  --color-base-white: #ffffff;
-  --color-base-black: #000000;
-  --color-base-bg:    #F6F9FF;
+  --color-brand-blue:    #3843FF;
+  --color-brand-blue-80: #6069FF;
+  --color-brand-blue-60: #888EFF;
+  --color-brand-blue-40: #AFB4FF;
+  --color-brand-blue-20: #D7D9FF;
+  --color-brand-blue-10: #EBECFF;
 
-  /* Primary Black */
-  --color-primary-black:    #040415;
-  --color-primary-black-80: #363644;
-  --color-primary-black-60: #686873;
-  --color-primary-black-40: #9B9BA1;
-  --color-primary-black-20: #CDCDD0;
-  --color-primary-black-10: #EAECF0;
+  /* Always white, whatever the theme. The blue gradient and the AI button
+     keep their colour in dark mode, so text on them cannot follow `surface`
+     — that would turn it dark on a bright blue ground. */
+  --color-on-brand: #FFFFFF;
 
-  /* Primary Blue */
-  --color-primary-blue:    #3843FF;
-  --color-primary-blue-80: #6069FF;
-  --color-primary-blue-60: #888EFF;
-  --color-primary-blue-40: #AFB4FF;
-  --color-primary-blue-20: #D7D9FF;
-  --color-primary-blue-10: #EBECFF;
+  --color-info:       #12A4ED;
+  --color-info-soft:  #DDF2FC;
 
-  /* Blue Info */
-  --color-blue-info:    #12A4ED;
-  --color-blue-info-80: #34B1F0;
-  --color-blue-info-60: #56BEF2;
-  --color-blue-info-40: #78CBF5;
-  --color-blue-info-20: #BBE5FA;
-  --color-blue-info-10: #DDF2FC;
+  --color-s-orange:      #A83810;
+  --color-s-orange-soft: #FCDCD3;
+  --color-s-purple:      #7A1FE0;
+  --color-s-purple-soft: #E8D3FF;
+  --color-s-teal:        #1F7A4A;
+  --color-s-teal-soft:   #D5ECE0;
 
-  /* Status */
-  --color-error:      #E3524F;
-  --color-error-20:   #F7CECD;
-  --color-success:    #3BA935;
-  --color-success-20: #C3EBC0;
-  --color-warning:    #FEA800;
-  --color-warning-10: #FFF3DA;
-  --color-warning-20: #FFE6B6;
+  /* Motion. Durations and curves were inline literals in nine places and
+     had drifted: the same kind of transition ran at 150, 200, 300 and
+     500ms depending on which component you were looking at. */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Secondary */
-  --color-s-orange:    #F15223;
-  --color-s-orange-20: #FCDCD3;
-  --color-s-purple:    #8A24FF;
-  --color-s-purple-60: #B97CFF;
-  --color-s-purple-20: #E8D3FF;
-  --color-s-pink:      #FF7D7D;
-  --color-s-pink-60:   #FFB1B1;
-  --color-s-teal:      #2D9E64;
-  --color-s-teal-20:   #D5ECE0;
-  --color-s-yellow-20: #FFF4CC;
-  --color-s-darkblue:    #878EA8;
-  --color-s-darkblue-10: #F3F4F6;
-  --color-s-darkblue-20: #E7E8EE;
-
-  /* Shadows */
-  --shadow-box:    58px 26px 68px 0 rgba(35, 44, 93, 0.06);
-  --shadow-medium: 0px 12px 24px 0 rgba(35, 44, 93, 0.06);
-  --shadow-small:  0px 3px 6px 0 rgba(11, 43, 81, 0.2);
-
-  /* Animations */
   --animate-ai-gradient: aiGradientShift 4s ease infinite;
   --animate-spin-app:    spinApp 1s linear infinite;
+  --animate-pop-in:      popIn var(--duration-fast) var(--ease-out-soft);
 }
 
 /* ─── Keyframes ──────────────────────────────────────────────────── */
@@ -109,61 +263,111 @@
   100% { transform: rotate(360deg); }
 }
 
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
 /* ─── Base ───────────────────────────────────────────────────────── */
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+  }
+
+  /* Font and colour belong on the root, not on `*`. Setting them on the
+     universal selector gave every node its own declaration, which meant no
+     element could inherit a colour from its parent. */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
     font-family: 'Montserrat', sans-serif;
-    color: #040415;
+  }
+
+  /* Scoped to controls. On `*` this also blocked selecting an email, a habit
+     description or an error message, and disabled the browser's translator. */
+  button, [role="button"], .chip, nav {
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
   }
 
-  body { background-color: #F6F9FF; }
+  button { background: none; border: none; cursor: pointer; color: inherit; }
 
-  button { background: none; border: none; cursor: pointer; }
+  input, select, textarea { font-family: inherit; color: inherit; }
 
-  input, select, textarea { font-family: inherit; }
+  /* One visible focus ring for everything. Individual components used to
+     switch the outline off without putting anything in its place, so a
+     keyboard user had no way to tell where they were. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 
-  h1 { font-size: 48px; font-weight: 700; line-height: 56px; }
-  h2 { font-size: 40px; font-weight: 700; line-height: 48px; }
-  h3 { font-size: 36px; font-weight: 700; line-height: 40px; }
-  h4 { font-size: 32px; font-weight: 700; line-height: 40px; }
-  h5 { font-size: 24px; font-weight: 700; line-height: 32px; }
-  h6 { font-size: 20px; font-weight: 500; line-height: 24px; }
+  /* Headings carry structure. Their size is set by the display classes
+     below, so a page can use the right level without inheriting a size it
+     did not ask for. */
+  h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
 }
 
 /* ─── Utilities ──────────────────────────────────────────────────── */
 @layer utilities {
-  /* Typography scale — kept as global classes used throughout JSX */
-  .title       { font-size: 18px; font-weight: 500; line-height: 24px; }
-  .body-light  { font-size: 14px; font-weight: 400; line-height: 20px; }
-  .body-bold   { font-size: 14px; font-weight: 500; line-height: 20px; }
-  .alternative { font-size: 12px; font-weight: 300; line-height: 16px; }
-  .chip        { font-size: 10px; font-weight: 700; line-height: 16px; text-transform: uppercase; }
+  /* Type scale. In rem so it follows the reader's own base size, and fluid
+     at the top end — 48px was fixed on a 360px screen. */
+  .display-1 { font-size: clamp(2rem, 1.4rem + 3vw, 3rem);     font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+  .display-2 { font-size: clamp(1.75rem, 1.3rem + 2.2vw, 2.5rem); font-weight: 700; line-height: 1.2;  letter-spacing: -0.02em; }
+  .display-3 { font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem); font-weight: 700; line-height: 1.22; letter-spacing: -0.015em; }
+  .display-4 { font-size: clamp(1.375rem, 1.15rem + 1vw, 2rem);   font-weight: 700; line-height: 1.25; }
+  .display-5 { font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem); font-weight: 700; line-height: 1.33; }
+  .display-6 { font-size: 1.25rem;  font-weight: 500; line-height: 1.2; }
 
-  /* Layout */
-  .container { width: 100%; padding-left: 24px; padding-right: 24px; margin-left: auto; margin-right: auto; max-width: none; }
+  .title       { font-size: 1.125rem; font-weight: 500; line-height: 1.33; }
+  .body-light  { font-size: 0.875rem; font-weight: 400; line-height: 1.43; }
+  .body-bold   { font-size: 0.875rem; font-weight: 500; line-height: 1.43; }
 
-  /* Gradient fills */
-  .bg-blue-gradient {
-    background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+  /* Was 12px at weight 300, which is where error messages were set. Montserrat
+     Light at that size has almost no stroke left. */
+  .alternative { font-size: 0.8125rem; font-weight: 400; line-height: 1.38; }
+
+  /* The label above a form control. Split out of `.chip`, which is 10px
+     uppercase and was doing duty as the accessible name of every field. */
+  .field-label { font-size: 0.8125rem; font-weight: 600; line-height: 1.23; }
+
+  /* A badge, and only a badge. */
+  .chip { font-size: 0.625rem; font-weight: 700; line-height: 1.6; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* Page gutter. Named for what it does — `container` collided with
+     Tailwind's own utility and won only by accident of layer order. */
+  .page-gutter {
+    width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  /* AI animated gradient button */
-  .btn-ai {
-    background: linear-gradient(135deg, #888EFF 0%, #56BEF2 35%, #B97CFF 70%, #FFB1B1 100%);
-    background-size: 200% 200%;
-    animation: aiGradientShift 4s ease infinite;
-    box-shadow: 0 0 12px rgba(56, 67, 255, 0.35), 0 0 24px rgba(138, 36, 255, 0.25);
-    transition: box-shadow 0.3s ease;
+  .bg-blue-gradient {
+    background: linear-gradient(135deg, #4550E0 0%, #2029E0 100%);
+  }
 
-    &:hover {
-      background-position: 100% 0;
-      box-shadow: 0 0 20px rgba(56, 67, 255, 0.6), 0 0 30px rgba(138, 36, 255, 0.4);
+  /* The AI button. The gradient used to cycle forever while the button just
+     sat there; now it only moves when the pointer or keyboard is on it. */
+  .btn-ai {
+    background: linear-gradient(135deg, #888EFF 0%, #56BEF2 35%, #B97CFF 70%, #FF9BA0 100%);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+    box-shadow: 0 0 12px rgb(56 67 255 / 0.35), 0 0 24px rgb(138 36 255 / 0.25);
+    transition: box-shadow var(--duration-slow) ease, background-position var(--duration-slow) ease;
+
+    &:hover, &:focus-visible {
+      animation: aiGradientShift 4s ease infinite;
+      box-shadow: 0 0 20px rgb(56 67 255 / 0.6), 0 0 30px rgb(138 36 255 / 0.4);
     }
 
     &:disabled {
@@ -174,11 +378,25 @@
     }
   }
 
+  .icon-adaptive { filter: var(--icon-filter); }
+
   /* Inset ring helpers — cleaner than long arbitrary shadow strings */
-  .ring-card        { box-shadow: inset 0 0 0 1px #EAECF0; }
-  .ring-card-hover  { box-shadow: inset 0 0 0 1px #3843FF; }
-  .ring-card-focus  { box-shadow: inset 0 0 0 2px #3843FF; }
-  .ring-input       { box-shadow: inset 0 -1px 0 #CDCDD0; }
-  .ring-input-focus { box-shadow: inset 0 -2px 0 #3BA935; }
-  .ring-input-error { box-shadow: inset 0 -2px 0 #E3524F; }
+  .ring-card        { box-shadow: inset 0 0 0 1px var(--line); }
+  .ring-card-hover  { box-shadow: inset 0 0 0 1px var(--accent); }
+  .ring-card-focus  { box-shadow: inset 0 0 0 2px var(--accent); }
+  .ring-input       { box-shadow: inset 0 -1px 0 var(--line-strong); }
+  .ring-input-focus { box-shadow: inset 0 -2px 0 var(--accent); }
+  .ring-input-error { box-shadow: inset 0 -2px 0 var(--danger); }
+}
+
+/* Honour the reader's motion setting. Nothing in this app checked it, so a
+   vestibular user got spring-loaded sheets, sliding day transitions and three
+   simultaneous infinite loops on the AI screen. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

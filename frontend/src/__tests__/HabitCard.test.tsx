@@ -5,10 +5,6 @@ import type { DayStatus } from "@shared/index";
 import HabitCard from "@components/habit/HabitCard";
 import { makeHabitSummary, renderWithProviders } from "../testUtils";
 
-const NEUTRAL = "inset 0 0 0 1px #EAECF0";
-const RED = "inset 0 0 0 1.5px #E3524F";
-const GREEN = "inset 0 0 0 1.5px #3BA935";
-const AMBER = "inset 0 0 0 1.5px #F0A73B";
 
 /** The suite's own zone, restored after any case that moves it. */
 const SUITE_TZ = process.env.TZ;
@@ -29,10 +25,16 @@ const daysFromToday = (days: number) => {
   return date;
 };
 
-const ringOf = (title: string) => {
-  const card = screen.getByText(title).closest("div[style]");
-  return (card as HTMLElement).style.boxShadow;
-};
+/**
+ * The verdict the card is showing.
+ *
+ * These used to compare the exact `boxShadow` string, hardcoded hex and all,
+ * which meant the suite could only pass while the colours were inline literals
+ * — the very thing the audit asked to move into tokens. `data-status` says the
+ * same thing without pinning the paint.
+ */
+const statusOf = (title: string) =>
+  screen.getByText(title).closest("[data-status]")?.getAttribute("data-status");
 
 const renderDay = (offset: number, status: DayStatus = "pending") =>
   renderWithProviders(
@@ -53,13 +55,13 @@ describe("HabitCard", () => {
     it("leaves today neutral while it is still unmarked", () => {
       renderDay(0);
 
-      expect(ringOf("Read")).toBe(NEUTRAL);
+      expect(statusOf("Read")).toBe("pending");
     });
 
     it("marks a finished day done", () => {
       renderDay(0, "done");
 
-      expect(ringOf("Read")).toBe(GREEN);
+      expect(statusOf("Read")).toBe("done");
     });
 
     /**
@@ -70,19 +72,28 @@ describe("HabitCard", () => {
     it("shows a day that slipped past as missed, not failed", () => {
       renderDay(-1);
 
-      expect(ringOf("Read")).toBe(AMBER);
+      expect(statusOf("Read")).toBe("missed");
     });
 
     it("shows a day the user marked failed as failed", () => {
       renderDay(-1, "failed");
 
-      expect(ringOf("Read")).toBe(RED);
+      expect(statusOf("Read")).toBe("failed");
     });
 
     it("offers no verdict on a day that has not arrived", () => {
       renderDay(1);
 
-      expect(screen.queryByAltText("Done")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Mark Read done/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Mark Read not done/ })).not.toBeInTheDocument();
+    });
+
+    it("states the verdict in words, not only in colour", () => {
+      // done / failed / missed used to differ by ring colour alone, and the
+      // amber was 2:1 against white.
+      renderDay(-1);
+
+      expect(screen.getByText("Missed")).toBeInTheDocument();
     });
   });
 
@@ -95,22 +106,45 @@ describe("HabitCard", () => {
   describe("a verdict on today", () => {
     it("survives being remounted", () => {
       const { unmount } = renderDay(0, "failed");
-      expect(ringOf("Read")).toBe(RED);
+      expect(statusOf("Read")).toBe("failed");
 
       unmount();
       renderDay(0, "failed");
 
-      expect(ringOf("Read")).toBe(RED);
+      expect(statusOf("Read")).toBe("failed");
     });
 
     it("is not the same as an unmarked day", () => {
       const { unmount } = renderDay(0, "failed");
-      const failed = ringOf("Read");
+      const failed = statusOf("Read");
       unmount();
 
       renderDay(0, "pending");
 
-      expect(ringOf("Read")).not.toBe(failed);
+      expect(statusOf("Read")).not.toBe(failed);
+    });
+  });
+
+  describe("marking a day", () => {
+    /**
+     * Both buttons were `hidden lg:flex`, so under 1024px the only way to mark
+     * a habit was a horizontal swipe that nothing on screen mentioned — and
+     * there was no keyboard path at any width.
+     */
+    it("offers done and not-done as real buttons at every width", () => {
+      renderDay(0);
+
+      expect(screen.getByRole("button", { name: "Mark Read done" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Mark Read not done" })).toBeInTheDocument();
+    });
+
+    it("reports which verdict is currently set", () => {
+      renderDay(0, "done");
+
+      expect(screen.getByRole("button", { name: "Mark Read done" }))
+        .toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Mark Read not done" }))
+        .toHaveAttribute("aria-pressed", "false");
     });
   });
 
@@ -125,7 +159,7 @@ describe("HabitCard", () => {
 
       renderDay(0);
 
-      expect(ringOf("Read")).toBe(NEUTRAL);
+      expect(statusOf("Read")).toBe("pending");
     });
 
     it("still treats yesterday as passed west of UTC", () => {
@@ -133,7 +167,7 @@ describe("HabitCard", () => {
 
       renderDay(-1);
 
-      expect(ringOf("Read")).toBe(AMBER);
+      expect(statusOf("Read")).toBe("missed");
     });
   });
 });

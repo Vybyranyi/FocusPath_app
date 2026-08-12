@@ -23,14 +23,15 @@ export default function DurationPicker({
 }: IDurationPickerProps) {
   return (
     <div className="flex flex-col gap-1">
-      <p className="chip mb-1">Choose the number of days</p>
+      <p className="field-label mb-1.5" id="duration-heading">Choose the number of days</p>
 
-      <div className="bg-base-white ring-card rounded-2xl p-[18px_16px] flex flex-col gap-2">
+      <div className="bg-surface ring-card rounded-2xl p-[18px_16px] flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
-          <p className="alternative text-primary-black-40 font-normal flex-1">
+          <p className="alternative text-ink-muted font-normal flex-1">
             Let AI determine the optimal number of days
           </p>
           <Switch
+            label="Let AI choose the number of days"
             toggled={aiEnabled}
             onClick={onAiToggle}
             disabled={disabled}
@@ -42,19 +43,20 @@ export default function DurationPicker({
             type="number"
             min="1"
             max="365"
+            aria-label="Number of days"
             placeholder="Enter number of days (1-365)"
             value={duration}
             onChange={onDurationChange}
             onBlur={onDurationBlur}
             disabled={disabled}
             className={cn(
-              "h-8 bg-s-darkblue-10 rounded-xl px-3",
-              "text-xs font-normal leading-4 text-primary-black",
-              "border border-transparent transition-all duration-200 outline-none",
-              "placeholder:text-primary-black-40",
-              "focus:border-primary-blue focus:bg-base-white",
+              "h-11 bg-surface-2 rounded-xl px-3",
+              "text-xs font-normal leading-4 text-ink",
+              "border border-transparent transition-colors duration-(--duration-base)",
+              "placeholder:text-ink-muted",
+              "focus:border-accent focus:bg-surface",
               "disabled:cursor-not-allowed disabled:opacity-60",
-              error && "border-error",
+              error && "border-danger",
             )}
           />
         )}

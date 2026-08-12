@@ -3,7 +3,7 @@ import Input from "@components/ui/Input";
 import Button from "@components/ui/Button";
 import Select from "@components/ui/Select";
 import arrow_left from "@assets/images/icons/arrow-left.svg";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
@@ -77,14 +77,15 @@ export default function RegisterPage() {
         {step === 2 && (
           <IconButton
             size="large"
+            label="Back to the first step"
             icon={arrow_left}
             onClick={() => setStep(1)}
           />
         )}
-        <h5>Create Account</h5>
+        <h1 className="display-5">Create Account</h1>
       </div>
 
-      <div className="container">
+      <div className="page-gutter">
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}
@@ -104,7 +105,7 @@ export default function RegisterPage() {
                 {step === 1 && (
                   <>
                     <Input
-                      label="name"
+                      label="Name"
                       placeholder="Enter your name"
                       type="text"
                       value={values.name}
@@ -114,7 +115,7 @@ export default function RegisterPage() {
                       error={touched.name ? errors.name : ""}
                     />
                     <Input
-                      label="surname"
+                      label="Surname"
                       placeholder="Enter your surname"
                       type="text"
                       value={values.surname}
@@ -124,7 +125,7 @@ export default function RegisterPage() {
                       error={touched.surname ? errors.surname : ""}
                     />
                     <Input
-                      label="birthdate"
+                      label="Date of birth"
                       placeholder="dd.mm.yyyy"
                       type="date"
                       value={values.birthdate}
@@ -134,7 +135,7 @@ export default function RegisterPage() {
                       error={touched.birthdate ? errors.birthdate : ""}
                     />
                     <Select
-                      label="gender"
+                      label="Gender"
                       placeholder="Choose your gender"
                       options={[
                         { label: "Male", value: "male" },
@@ -151,7 +152,7 @@ export default function RegisterPage() {
                 {step === 2 && (
                   <>
                     <Input
-                      label="email"
+                      label="Email"
                       placeholder="Enter your email"
                       type="email"
                       value={values.email}
@@ -161,7 +162,7 @@ export default function RegisterPage() {
                       error={touched.email ? errors.email : ""}
                     />
                     <Input
-                      label="password"
+                      label="Password"
                       placeholder="Enter your password"
                       type="password"
                       value={values.password}
@@ -171,7 +172,7 @@ export default function RegisterPage() {
                       error={touched.password ? errors.password : ""}
                     />
                     <Input
-                      label="confirm password"
+                      label="Confirm password"
                       placeholder="Repeat your password"
                       type="password"
                       value={values.confirmPassword}
@@ -185,16 +186,16 @@ export default function RegisterPage() {
                   </>
                 )}
 
-                {error && <p className="chip text-error">{error}</p>}
+                {error && <p className="chip text-danger">{error}</p>}
               </div>
 
               <div className="fixed bottom-3 left-6 right-6 md:static md:max-w-86.25 md:mx-auto">
-                <p
-                  className="body-bold text-primary-blue text-center mb-6 cursor-pointer"
-                  onClick={() => navigate("/login")}
+                <Link
+                  to="/login"
+                  className="block body-bold text-accent text-center mb-6"
                 >
-                  Already have an account? Let's log in!
-                </p>
+                  Already have an account? Log in
+                </Link>
                 <Button
                   type="primary"
                   size="large"

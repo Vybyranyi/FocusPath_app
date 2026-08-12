@@ -3,8 +3,8 @@ import Input from "@components/ui/Input";
 import { changePassword } from "@store/authSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { Form, Formik } from "formik";
-import { useState } from "react";
 import * as Yup from "yup";
+import { useToast } from "@hooks/useToast";
 
 const passwordSchema = Yup.object({
   currentPassword: Yup.string().required("Required"),
@@ -19,7 +19,7 @@ const passwordSchema = Yup.object({
 export default function PasswordCard() {
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((s) => s.auth);
-  const [saved, setSaved] = useState(false);
+  const { notify } = useToast();
 
   const handleSubmit = async (
     values: {
@@ -37,14 +37,15 @@ export default function PasswordCard() {
     );
     if (changePassword.fulfilled.match(result)) {
       resetForm();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      notify("Password changed");
+    } else {
+      notify("Could not change the password", "danger");
     }
   };
 
   return (
-    <div className="bg-base-white rounded-2xl shadow-medium p-6 flex flex-col gap-5">
-      <p className="title font-bold">Change Password</p>
+    <div className="bg-surface rounded-2xl shadow-lifted p-6 flex flex-col gap-5">
+      <h2 className="title font-bold">Change password</h2>
 
       <Formik
         initialValues={{ currentPassword: "", newPassword: "", confirmPassword: "" }}
@@ -54,7 +55,7 @@ export default function PasswordCard() {
         {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
           <Form className="flex flex-col gap-4">
             <Input
-              label="current password"
+              label="Current password"
               placeholder="Enter current password"
               type="password"
               value={values.currentPassword}
@@ -64,7 +65,7 @@ export default function PasswordCard() {
               error={touched.currentPassword ? errors.currentPassword : ""}
             />
             <Input
-              label="new password"
+              label="New password"
               placeholder="Enter new password"
               type="password"
               value={values.newPassword}
@@ -74,7 +75,7 @@ export default function PasswordCard() {
               error={touched.newPassword ? errors.newPassword : ""}
             />
             <Input
-              label="confirm new password"
+              label="Confirm new password"
               placeholder="Repeat new password"
               type="password"
               value={values.confirmPassword}
@@ -83,10 +84,6 @@ export default function PasswordCard() {
               onBlur={handleBlur("confirmPassword")}
               error={touched.confirmPassword ? errors.confirmPassword : ""}
             />
-
-            {saved && (
-              <p className="chip text-success">Password changed successfully</p>
-            )}
 
             <div className="pt-2">
               <Button
