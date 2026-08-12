@@ -1,13 +1,13 @@
 import AppBar from "@components/layout/AppBar";
 import ResponsiveHeader from "@components/layout/ResponsiveHeader";
 import type { ReactNode } from "react";
-import { useMediaQuery } from "react-responsive";
 import { useLocation } from "react-router";
 import { cn } from "@/lib/utils";
+import { useIsDesktop } from "@hooks/useIsDesktop";
 
 export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const isDesktop = useMediaQuery({ query: "(min-width: 769px)" });
+  const isDesktop = useIsDesktop();
 
   // Creating a habit hides the bar on mobile — the form needs the room — but
   // keeps it on desktop, where it sits beside the content.

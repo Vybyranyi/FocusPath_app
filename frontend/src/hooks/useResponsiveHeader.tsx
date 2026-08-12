@@ -1,8 +1,8 @@
 import arrow_left from "@assets/images/icons/arrow-left.svg";
 import IconButton from "@components/ui/IconButton";
 import { useMemo } from "react";
-import { useMediaQuery } from "react-responsive";
 import { useLocation, useNavigate } from "react-router";
+import { useIsDesktop } from "@hooks/useIsDesktop";
 
 interface HeaderConfig {
   mobile: {
@@ -30,7 +30,7 @@ interface HeaderConfig {
 export const useResponsiveHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isDesktop = useMediaQuery({ query: "(min-width: 769px)" });
+  const isDesktop = useIsDesktop();
 
   const headerConfigs: Record<string, HeaderConfig> = useMemo(
     () => ({
@@ -115,12 +115,11 @@ export const useResponsiveHeader = () => {
             />
           ),
         },
+        // No header at all on desktop: the page opens with its own identity
+        // block, and the header would repeat the same avatar and name a
+        // hundred pixels above it.
         desktop: {
-          visible: true,
-          // leftButtonIcon: <IconButton size="large" icon={calendar} />,
-          // rightButtonIcon: <IconButton size="large" icon={notification} />,
-          topContent: true,
-          profile: true,
+          visible: false,
         },
       },
       "/explore": {

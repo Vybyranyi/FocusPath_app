@@ -40,17 +40,25 @@ describe("AppBar on desktop", () => {
   it("renders the create action alongside every destination", () => {
     renderBar();
 
-    for (const label of ["New habit", "Home", "Explore", "Activity", "Profile"]) {
+    for (const label of ["New habit", "Home", "Explore", "Activity"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
-    expect(screen.getAllByRole("button")).toHaveLength(5);
+    expect(screen.getAllByRole("button")).toHaveLength(4);
+  });
+
+  it("leaves the account out of the sidebar", () => {
+    // Profile is reached by clicking your own avatar in the header, which is
+    // where people look for an account. The mobile bar keeps it because that
+    // layout has no header to put an avatar in.
+    renderBar();
+
+    expect(screen.queryByText("Profile")).not.toBeInTheDocument();
   });
 
   it.each([
     ["Home", "/main"],
     ["Explore", "/explore"],
     ["Activity", "/stats"],
-    ["Profile", "/profile"],
     ["New habit", "/createhabit"],
   ])("navigates to %s", (label, path) => {
     renderBar("/");
@@ -122,27 +130,44 @@ describe("AppBar on mobile", () => {
 });
 
 describe("destinations", () => {
-  it("offers the same set on both layouts", () => {
-    // Two separate components had drifted: Explore was wired on desktop and
-    // rendered with no handler at all on mobile, so tapping it did nothing.
-    // The bars put the create action in different places, so compare the set
-    // of destinations rather than the rendered order.
-    const destinations = () =>
-      screen
-        .getAllByRole("button")
-        .map((b) => b.getAttribute("aria-label") ?? b.textContent)
-        .filter((name) => name !== "New habit")
-        .sort();
+  /** Everything in the bar except the create action, which sits in a different
+   *  place on each layout. */
+  const listed = () =>
+    screen
+      .getAllByRole("button")
+      .map((b) => b.getAttribute("aria-label") ?? b.textContent)
+      .filter((name) => name !== "New habit")
+      .sort();
 
+  it("offers the same destinations on both layouts", () => {
+    // Two separate components had drifted once: Explore was wired on desktop
+    // and rendered with no handler at all on mobile, so tapping it did
+    // nothing. One list is what keeps a *destination* from existing on one
+    // layout and not the other.
     onDesktop();
     const { unmount } = renderBar();
-    const desktop = destinations();
+    const desktop = listed();
     unmount();
 
     onMobile();
     renderBar();
+    const mobile = listed().filter((name) => name !== "Profile");
 
-    expect(destinations()).toEqual(desktop);
-    expect(desktop).toEqual(["Activity", "Explore", "Home", "Profile"]);
+    expect(mobile).toEqual(desktop);
+    expect(desktop).toEqual(["Activity", "Explore", "Home"]);
+  });
+
+  it("keeps the account in the bar on mobile only", () => {
+    // The one deliberate exception to the rule above: an account is not a
+    // destination. Desktop reaches it through the header avatar; mobile has
+    // no header, so it stays a button here.
+    onMobile();
+    const { unmount } = renderBar();
+    expect(listed()).toContain("Profile");
+    unmount();
+
+    onDesktop();
+    renderBar();
+    expect(listed()).not.toContain("Profile");
   });
 });

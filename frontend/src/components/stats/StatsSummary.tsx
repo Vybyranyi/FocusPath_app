@@ -21,7 +21,7 @@ function StatsSummary({ habits }: StatsSummaryProps) {
   const overallRate = getHabitProgress(doneDays, totalDays);
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <StatCard value={activeCount} label="Active" />
       <StatCard value={completedCount} label="Completed" />
       <StatCard value={`${overallRate}%`} label="Done rate" accent />

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { useAppSelector } from "@store/hooks";
+import { useLocation, useNavigate } from "react-router";
+import { cn } from "@/lib/utils";
 import { Emoji } from "react-apple-emojis";
 import default_user from "@assets/images/default_user.png";
 import SegmentControl from "@components/ui/SegmentControl";
@@ -31,18 +33,18 @@ export default function Header({
 }: IHeaderProps) {
   // Narrowed to the user: this header does not care about loading or errors.
   const user = useAppSelector((state) => state.auth.user);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const onProfile = pathname === "/profile";
 
   return (
-    <header className="bg-surface shadow-[inset_0_-1px_0_var(--line)] pb-4 mb-3 md:mb-6">
+    <header className="bg-surface shadow-[inset_0_-1px_0_var(--line)] py-4 mb-3 md:mb-6">
       <div
         className={[
           "page-gutter flex flex-col gap-3",
           "md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-3 md:pt-8",
         ].join(" ")}
       >
-        {/* Status bar — iOS safe area, hidden on desktop */}
-        <div className="h-[max(env(safe-area-inset-top),59px)] md:hidden" />
-
         {/* Title row — visible only on mobile */}
         {(title || leftButtonIcon || rightButtonIcon) && (
           <div className="h-12 grid grid-cols-[auto_1fr_auto] items-center gap-2 md:hidden">
@@ -67,14 +69,29 @@ export default function Header({
           </div>
         )}
 
-        {/* Profile block */}
+        {/* Profile block. On desktop this is the only route to the account —
+            Profile is no longer a destination in the sidebar — so the avatar
+            has to be a control, not a decoration. */}
         {profile && (
-          <div className="flex gap-2 md:col-start-2 md:flex-row-reverse">
-            <img
-              src={user?.avatar || default_user}
-              alt="User profile"
-              className="w-14 h-14 rounded-full object-cover md:w-12 md:h-12"
-            />
+          <div className="flex gap-2 md:col-start-2 md:flex-row-reverse md:items-center">
+            <button
+              type="button"
+              onClick={() => navigate("/profile")}
+              aria-label="Open your profile"
+              aria-current={onProfile ? "page" : undefined}
+              className={cn(
+                "shrink-0 rounded-full cursor-pointer",
+                "transition-shadow duration-(--duration-base)",
+                "hover:shadow-[0_0_0_3px_var(--accent-soft)]",
+              )}
+            >
+              <img
+                src={user?.avatar || default_user}
+                alt=""
+                aria-hidden
+                className="w-14 h-14 rounded-full object-cover md:w-12 md:h-12"
+              />
+            </button>
             <div className="flex items-center">
               <p className="title">
                 {[user?.name, user?.surname].filter(Boolean).join(" ")}
