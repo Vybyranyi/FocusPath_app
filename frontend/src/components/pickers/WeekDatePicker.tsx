@@ -173,7 +173,7 @@ export default function WeekDatePicker({
             setViewDate(new Date(selectedDate ?? currentWeekStart));
           }
         }}
-        className="alternative text-center mt-4 cursor-pointer text-primary-black-60 hover:text-primary-blue transition-colors"
+        className="alternative text-center mt-4 cursor-pointer text-ink-2 hover:text-accent transition-colors"
       >
         {isExpanded ? "Show less" : "Show more"}
       </button>

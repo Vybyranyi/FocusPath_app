@@ -48,7 +48,7 @@ export default function Input({
 
   return (
     <div className={cn("w-full min-w-fit", disabled && "opacity-70")}>
-      <p className={cn("chip mb-2", disabled && "text-primary-black-60")}>
+      <p className={cn("chip mb-2", disabled && "text-ink-2")}>
         {label}
       </p>
 
@@ -64,9 +64,9 @@ export default function Input({
           className={cn(
             "w-full h-12 pr-8 text-[18px] font-medium leading-6 bg-transparent",
             "ring-input focus:ring-input-focus outline-none",
-            "placeholder:text-primary-black-20",
+            "placeholder:text-ink-muted",
             "disabled:cursor-not-allowed",
-            error && "ring-input-error",
+            error && "ring-input-danger",
           )}
         />
 

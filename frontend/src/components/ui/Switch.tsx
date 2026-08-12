@@ -18,7 +18,7 @@ export default function Switch({ toggled, onClick, disabled }: ISwitch) {
         "flex items-center cursor-pointer",
         "transition-colors duration-300 ease-in-out",
         "data-[state=checked]:bg-success",
-        "data-[state=unchecked]:bg-primary-black-10",
+        "data-[state=unchecked]:bg-line",
         "disabled:cursor-not-allowed disabled:opacity-60",
       )}
     >

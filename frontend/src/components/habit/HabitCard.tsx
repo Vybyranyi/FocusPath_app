@@ -77,8 +77,8 @@ function HabitCard({ habit }: IHabitCardProps) {
     { boxShadow: 'inset 0 0 0 1px #EAECF0' };
 
   const swipeBgClass =
-    swipeDelta > 30  ? 'bg-success-20' :
-    swipeDelta < -30 ? 'bg-error-20'   :
+    swipeDelta > 30  ? 'bg-success-soft' :
+    swipeDelta < -30 ? 'bg-danger-soft'   :
     '';
 
   return (
@@ -89,14 +89,14 @@ function HabitCard({ habit }: IHabitCardProps) {
           animate={{ x: isFuture ? 0 : Math.min(Math.max(swipeDelta * 0.2, -24), 24) }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           style={ringStyle}
-          className={`relative z-20 flex items-center justify-between p-4 rounded-2xl cursor-pointer bg-base-white ${isFuture ? 'opacity-50' : ''}`}
+          className={`relative z-20 flex items-center justify-between p-4 rounded-2xl cursor-pointer bg-surface ${isFuture ? 'opacity-50' : ''}`}
           onClick={handleClick}
         >
           <div className="flex items-center gap-3">
             <CircleLoader percentages={progress} emoji={habit.icon} isWhite />
             <div>
               <p className="body-bold">{habit.title}</p>
-              <p className="alternative text-primary-black-40">
+              <p className="alternative text-ink-muted">
                 {habit.dayInfo.dayTitle || `Day ${habit.currentStreak}`}
               </p>
             </div>
@@ -106,13 +106,13 @@ function HabitCard({ habit }: IHabitCardProps) {
           {!isFuture && (
             <div className="hidden lg:flex items-center gap-1 shrink-0">
               <button
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-success-20 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-success-soft transition-colors"
                 onClick={e => { e.stopPropagation(); handleMark('done'); }}
               >
                 <img src={tick_success} className="w-4 h-4" alt="Done" />
               </button>
               <button
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-error-20 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-danger-soft transition-colors"
                 onClick={e => { e.stopPropagation(); handleMark('failed'); }}
               >
                 <img src={cross_red} className="w-4 h-4" alt="Fail" />

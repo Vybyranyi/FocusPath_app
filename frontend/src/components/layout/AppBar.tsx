@@ -78,7 +78,7 @@ export default function AppBar() {
 
   if (isDesktop) {
     return (
-      <menu className="bg-base-white shadow-[inset_-1px_0_0_#EAECF0] px-8 h-screen sticky top-0 left-0">
+      <menu className="bg-surface shadow-[inset_-1px_0_0_#EAECF0] px-8 h-screen sticky top-0 left-0">
         <div className="flex flex-col gap-3 pt-[15vh]">
           <Button
             type="primary"
@@ -113,7 +113,7 @@ export default function AppBar() {
     <menu
       className={[
         "flex justify-between items-center",
-        "bg-base-white border border-primary-black-20 rounded-full",
+        "bg-surface border border-ink-faint rounded-full",
         "px-6 py-3",
         "fixed bottom-3 left-4 right-4 max-w-120 mx-auto z-10",
       ].join(" ")}

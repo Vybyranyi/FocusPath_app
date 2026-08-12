@@ -24,16 +24,16 @@ export default function StatsPage() {
   }, [dispatch]);
 
   return (
-    <div className="min-h-screen bg-base-bg pb-28 md:pb-12">
-      <div className="container max-w-120 mx-auto pt-6 md:pt-10 flex flex-col gap-6">
+    <div className="min-h-screen bg-canvas pb-28 md:pb-12">
+      <div className="page-gutter max-w-120 mx-auto pt-6 md:pt-10 flex flex-col gap-6">
         {loading && habits.length === 0 ? (
           <div className="flex justify-center py-16">
-            <p className="body-bold text-primary-black-40">Loading...</p>
+            <p className="body-bold text-ink-muted">Loading...</p>
           </div>
         ) : habits.length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-2">
             <p className="body-bold">No habits yet</p>
-            <p className="alternative text-primary-black-40">
+            <p className="alternative text-ink-muted">
               Create your first habit to see stats here!
             </p>
           </div>

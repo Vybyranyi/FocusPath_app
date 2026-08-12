@@ -29,16 +29,16 @@ export default function IconButton({
       onClick={onClick}
       className={cn(
         "relative flex items-center justify-center",
-        "bg-base-white border border-primary-black-10",
+        "bg-surface border border-line",
         "transition-all duration-200",
-        "hover:bg-primary-blue-10 hover:border-primary-blue",
+        "hover:bg-accent-soft hover:border-accent",
         btn,
       )}
     >
       {emoji && <Emoji name={emoji} className={media} />}
       {icon && <img src={icon} alt="" aria-hidden className="w-6 h-6" />}
       {show_dot && (
-        <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full" />
+        <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full" />
       )}
     </button>
   );

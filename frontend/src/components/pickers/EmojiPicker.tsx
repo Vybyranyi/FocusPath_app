@@ -65,11 +65,11 @@ export default function EmojiPicker(props: IEmojiPicker) {
       placeholder="Select Icon"
       maxHeightClassName="max-h-72"
       renderPreview={(option) => (
-        <PreviewFrame className="bg-primary-blue-10">
+        <PreviewFrame className="bg-accent-soft">
           {option ? (
             <Emoji name={option.value} className="w-6 h-6" />
           ) : (
-            <span className="text-primary-black-40 text-lg font-bold">?</span>
+            <span className="text-ink-muted text-lg font-bold">?</span>
           )}
         </PreviewFrame>
       )}

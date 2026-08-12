@@ -44,7 +44,7 @@ describe('MenuButton component', () => {
     render(<MenuButton icon="home" dot />);
     const dot = screen.getByRole('button').querySelector('span');
     expect(dot).toBeInTheDocument();
-    expect(dot?.className).toContain('bg-error');
+    expect(dot?.className).toContain('bg-danger');
   });
 
   it('does not render dot when dot prop is false', () => {

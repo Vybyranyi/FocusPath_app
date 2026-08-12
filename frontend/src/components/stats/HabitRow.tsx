@@ -15,7 +15,7 @@ function HabitRow({ habit }: HabitRowProps) {
 
   return (
     <div
-      className="bg-base-white rounded-2xl shadow-medium p-4 flex flex-col gap-3"
+      className="bg-surface rounded-2xl shadow-medium p-4 flex flex-col gap-3"
       style={{ borderLeft: `4px solid ${habit.color || "#3843FF"}` }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -32,8 +32,8 @@ function HabitRow({ habit }: HabitRowProps) {
               className={[
                 "chip px-2 py-0.5 rounded-full",
                 habit.type === "build"
-                  ? "bg-primary-blue-10 text-primary-blue"
-                  : "bg-s-orange-20 text-s-orange",
+                  ? "bg-accent-soft text-accent"
+                  : "bg-s-orange-soft text-s-orange",
               ].join(" ")}
             >
               {habit.type === "build" ? "Build" : "Quit"}
@@ -44,7 +44,7 @@ function HabitRow({ habit }: HabitRowProps) {
         <div className="flex items-center gap-2 shrink-0">
           <CircleLoader percentages={pct} emoji={habit.icon} />
           {habit.isCompleted && (
-            <span className="chip text-success bg-success-20 px-2 py-0.5 rounded-full">
+            <span className="chip text-success bg-success-soft px-2 py-0.5 rounded-full">
               Done
             </span>
           )}
@@ -52,7 +52,7 @@ function HabitRow({ habit }: HabitRowProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <div className="w-full h-1.5 bg-primary-black-10 rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-line rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -62,11 +62,11 @@ function HabitRow({ habit }: HabitRowProps) {
           />
         </div>
         <div className="flex items-center justify-between">
-          <p className="alternative text-primary-black-40">
+          <p className="alternative text-ink-muted">
             {completed} / {habit.duration} days
           </p>
           {habit.currentStreak > 0 && (
-            <p className="alternative text-primary-black-60 font-bold">
+            <p className="alternative text-ink-2 font-bold">
               🔥 {habit.currentStreak} streak
             </p>
           )}

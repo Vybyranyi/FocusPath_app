@@ -81,10 +81,10 @@ export default function RegisterPage() {
             onClick={() => setStep(1)}
           />
         )}
-        <h5>Create Account</h5>
+        <h5 className="display-5">Create Account</h5>
       </div>
 
-      <div className="container">
+      <div className="page-gutter">
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}
@@ -185,12 +185,12 @@ export default function RegisterPage() {
                   </>
                 )}
 
-                {error && <p className="chip text-error">{error}</p>}
+                {error && <p className="chip text-danger">{error}</p>}
               </div>
 
               <div className="fixed bottom-3 left-6 right-6 md:static md:max-w-86.25 md:mx-auto">
                 <p
-                  className="body-bold text-primary-blue text-center mb-6 cursor-pointer"
+                  className="body-bold text-accent text-center mb-6 cursor-pointer"
                   onClick={() => navigate("/login")}
                 >
                   Already have an account? Let's log in!

@@ -34,7 +34,7 @@ describe('IconButton component', () => {
     render(<IconButton size="medium" show_dot />);
     const dot = screen.getByRole('button').querySelector('span');
     expect(dot).toBeInTheDocument();
-    expect(dot?.className).toContain('bg-error');
+    expect(dot?.className).toContain('bg-danger');
   });
 
   it('calls onClick when clicked', () => {

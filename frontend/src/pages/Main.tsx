@@ -77,14 +77,14 @@ export default function Main() {
     if (loading) {
       return (
         <div className="flex justify-center py-8">
-          <p className="body-bold text-primary-black-40">Loading habits...</p>
+          <p className="body-bold text-ink-muted">Loading habits...</p>
         </div>
       );
     }
     if (error) {
       return (
         <div className="flex justify-center py-8">
-          <p className="body-bold text-error">Error: {error}</p>
+          <p className="body-bold text-danger">Error: {error}</p>
         </div>
       );
     }
@@ -97,7 +97,7 @@ export default function Main() {
           className="flex flex-col items-center py-12 gap-2"
         >
           <p className="body-bold">No habits for this day</p>
-          <p className="alternative text-primary-black-40">
+          <p className="alternative text-ink-muted">
             Create your first habit to get started!
           </p>
         </motion.div>
@@ -126,7 +126,7 @@ export default function Main() {
   };
 
   return (
-    <div className="container overflow-hidden">
+    <div className="page-gutter overflow-hidden">
       <div className="flex flex-col gap-4">
         <div {...swipeHandlers}>
           <AnimatePresence mode="wait" custom={calendarDirection}>

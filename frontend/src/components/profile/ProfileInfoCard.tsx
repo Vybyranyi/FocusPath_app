@@ -73,13 +73,13 @@ export default function ProfileInfoCard() {
   ];
 
   return (
-    <div className="bg-base-white rounded-2xl shadow-medium p-6 flex flex-col gap-5">
+    <div className="bg-surface rounded-2xl shadow-medium p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <p className="title font-bold">Personal information</p>
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1.5 text-primary-blue body-bold hover:opacity-70 transition-opacity"
+            className="flex items-center gap-1.5 text-accent body-bold hover:opacity-70 transition-opacity"
           >
             <svg
               width="16"
@@ -109,9 +109,9 @@ export default function ProfileInfoCard() {
             {fields.map(({ label, value }) => (
               <div
                 key={label}
-                className="flex items-center justify-between border-b border-primary-black-10 pb-3 last:border-0 last:pb-0"
+                className="flex items-center justify-between border-b border-line pb-3 last:border-0 last:pb-0"
               >
-                <p className="chip text-primary-black-40">{label}</p>
+                <p className="chip text-ink-muted">{label}</p>
                 <p className="body-bold">{value}</p>
               </div>
             ))}

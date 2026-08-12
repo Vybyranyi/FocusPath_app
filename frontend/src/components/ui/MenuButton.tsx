@@ -35,7 +35,7 @@ export default function MenuButton({
         className="w-6 h-6"
       />
       {dot && (
-        <span className="absolute -top-1.25 -right-1.25 w-2 h-2 bg-error rounded-full" />
+        <span className="absolute -top-1.25 -right-1.25 w-2 h-2 bg-danger rounded-full" />
       )}
     </button>
   );

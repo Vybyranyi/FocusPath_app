@@ -5,8 +5,8 @@ import ProfileInfoCard from "@components/profile/ProfileInfoCard";
 
 export default function ProfilePage() {
   return (
-    <div className="min-h-screen bg-base-bg pb-28 md:pb-12">
-      <div className="container max-w-120 mx-auto pt-6 md:pt-10 flex flex-col gap-6">
+    <div className="min-h-screen bg-canvas pb-28 md:pb-12">
+      <div className="page-gutter max-w-120 mx-auto pt-6 md:pt-10 flex flex-col gap-6">
         <ProfileAvatar />
         <ProfileInfoCard />
         <PasswordCard />

@@ -46,12 +46,12 @@ export default function AccountActions() {
       {!showConfirm ? (
         <button
           onClick={() => setShowConfirm(true)}
-          className="w-full py-4 rounded-3xl ring-card flex items-center justify-center hover:bg-error-20 transition-colors"
+          className="w-full py-4 rounded-3xl ring-card flex items-center justify-center hover:bg-danger-soft transition-colors"
         >
-          <span className="body-bold text-error">Delete Account</span>
+          <span className="body-bold text-danger">Delete Account</span>
         </button>
       ) : (
-        <div className="bg-base-white rounded-2xl shadow-medium p-5 flex flex-col gap-4">
+        <div className="bg-surface rounded-2xl shadow-medium p-5 flex flex-col gap-4">
           <p className="body-bold text-center">
             Are you sure you want to delete your account? This action cannot be
             undone.
@@ -75,9 +75,9 @@ export default function AccountActions() {
             <button
               onClick={handleDelete}
               disabled={loading || password.length === 0}
-              className="flex-1 py-3 rounded-[22px] bg-error hover:bg-error/80 disabled:opacity-50 transition-colors"
+              className="flex-1 py-3 rounded-[22px] bg-danger hover:bg-danger/80 disabled:opacity-50 transition-colors"
             >
-              <span className="body-bold text-base-white">
+              <span className="body-bold text-on-accent">
                 {loading ? "Deleting..." : "Yes, delete"}
               </span>
             </button>

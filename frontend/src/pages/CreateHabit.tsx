@@ -84,8 +84,8 @@ export default function CreateHabit() {
     <>
       {creating === "ai" && <AILoadingAnimation />}
 
-      <div className="container">
-        <h5 className="hidden md:block mb-4">Create Habit</h5>
+      <div className="page-gutter">
+        <h5 className="display-5 hidden md:block mb-4">Create Habit</h5>
 
         <Formik
           initialValues={initialValues}
@@ -208,12 +208,12 @@ export default function CreateHabit() {
                   </div>
 
                   {creating !== null && (
-                    <p className="alternative text-primary-black-40 mt-1">
+                    <p className="alternative text-ink-muted mt-1">
                       Creating habit...
                     </p>
                   )}
                   {error && (
-                    <p className="alternative text-error mt-1">{error}</p>
+                    <p className="alternative text-danger mt-1">{error}</p>
                   )}
                 </div>
               </div>

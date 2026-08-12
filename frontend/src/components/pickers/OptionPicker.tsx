@@ -47,7 +47,7 @@ export default function OptionPicker<TValue extends string>({
         <Popover.Trigger asChild>
           <div
             className={cn(
-              "flex items-center gap-3 bg-base-white p-4 rounded-2xl",
+              "flex items-center gap-3 bg-surface p-4 rounded-2xl",
               "ring-card transition-all duration-200 cursor-pointer",
               "hover:ring-card-hover",
               open && "ring-card-focus",
@@ -57,7 +57,7 @@ export default function OptionPicker<TValue extends string>({
             {renderPreview(selected)}
             <div>
               <p className="body-bold">{selected?.label ?? placeholder}</p>
-              <p className="alternative text-primary-black-40">{caption}</p>
+              <p className="alternative text-ink-muted">{caption}</p>
             </div>
           </div>
         </Popover.Trigger>
@@ -67,7 +67,7 @@ export default function OptionPicker<TValue extends string>({
             sideOffset={6}
             align="start"
             className={cn(
-              "bg-base-white rounded-2xl ring-card p-2 z-50",
+              "bg-surface rounded-2xl ring-card p-2 z-50",
               maxHeightClassName,
               "overflow-y-auto w-(--radix-popover-trigger-width)",
               "shadow-medium",
@@ -85,8 +85,8 @@ export default function OptionPicker<TValue extends string>({
                 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-2 py-2 rounded-lg cursor-pointer",
-                  "transition-colors duration-150 hover:bg-primary-black-10",
-                  value === option.value && "bg-primary-blue-10",
+                  "transition-colors duration-150 hover:bg-line",
+                  value === option.value && "bg-accent-soft",
                 )}
               >
                 {renderPreview(option)}
@@ -113,7 +113,7 @@ export const PreviewFrame = ({
   <span
     className={cn(
       "w-9 h-9 rounded-xl shrink-0 inline-flex items-center justify-center",
-      "border border-primary-black-10",
+      "border border-line",
       className,
     )}
   >

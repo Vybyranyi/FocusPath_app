@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        "min-h-screen w-full bg-base-bg",
+        "min-h-screen w-full bg-canvas",
         !(hideOnMobile && hideOnDesktop) &&
           "md:grid md:grid-cols-[minmax(160px,240px)_1fr]",
       )}

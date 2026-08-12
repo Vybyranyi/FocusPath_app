@@ -25,9 +25,9 @@ export default function LoginPage() {
     /* Mobile: flex-col full height with fixed bottom button
        Desktop (≥768px): centered column */
     <div className="md:h-screen md:flex md:flex-col md:justify-center">
-      <h5 className="hidden md:block text-center mb-9">Continue with E-mail</h5>
+      <h5 className="display-5 hidden md:block text-center mb-9">Continue with E-mail</h5>
 
-      <div className="container w-full">
+      <div className="page-gutter w-full">
         <Formik
           initialValues={{ email: '', password: '' }}
           validationSchema={validationSchema}
@@ -56,9 +56,9 @@ export default function LoginPage() {
                   onBlur={handleBlur('password')}
                   error={touched.password ? errors.password : ''}
                 />
-                {error && <p className="chip text-error">{error}</p>}
+                {error && <p className="chip text-danger">{error}</p>}
                 <p
-                  className="body-bold text-primary-black-60 cursor-not-allowed"
+                  className="body-bold text-ink-2 cursor-not-allowed"
                   onClick={() => alert('This feature is not implemented yet.')}
                 >
                   I forgot my password
@@ -67,7 +67,7 @@ export default function LoginPage() {
 
               <div className="fixed bottom-3 left-6 right-6 md:static md:max-w-86.25 md:mx-auto">
                 <p
-                  className="body-bold text-primary-blue text-center mb-6 cursor-pointer"
+                  className="body-bold text-accent text-center mb-6 cursor-pointer"
                   onClick={() => navigate('/register')}
                 >
                   Don't have account? Let's create!

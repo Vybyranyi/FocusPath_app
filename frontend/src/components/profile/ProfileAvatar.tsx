@@ -49,7 +49,7 @@ export default function ProfileAvatar() {
           />
         ) : (
           <div className="w-full h-full rounded-full bg-blue-gradient flex items-center justify-center">
-            <span className="text-base-white text-2xl font-bold">
+            <span className="text-on-brand text-2xl font-bold">
               {initials}
             </span>
           </div>
@@ -92,10 +92,10 @@ export default function ProfileAvatar() {
       />
 
       <div className="text-center">
-        <h6>
+        <h6 className="display-6">
           {user.name} {user.surname}
         </h6>
-        <p className="body-light text-primary-black-60 mt-0.5">{user.email}</p>
+        <p className="body-light text-ink-2 mt-0.5">{user.email}</p>
       </div>
     </div>
   );

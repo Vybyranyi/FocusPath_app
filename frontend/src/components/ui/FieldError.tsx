@@ -13,5 +13,5 @@ interface FieldErrorProps {
 export default function FieldError({ message, className }: FieldErrorProps) {
   if (!message) return null;
 
-  return <p className={cn("alternative text-error mt-1", className)}>{message}</p>;
+  return <p className={cn("alternative text-danger mt-1", className)}>{message}</p>;
 }

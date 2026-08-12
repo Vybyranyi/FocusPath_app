@@ -30,7 +30,7 @@ export default function Select({
 }: ISelectProps) {
   return (
     <div className={cn("w-full min-w-fit", disabled && "opacity-70")}>
-      <p className={cn("chip mb-2", disabled && "text-primary-black-60")}>
+      <p className={cn("chip mb-2", disabled && "text-ink-2")}>
         {label}
       </p>
 
@@ -45,8 +45,8 @@ export default function Select({
             "bg-transparent border-none outline-none",
             "ring-input focus:ring-input-focus focus-visible:outline-none",
             "disabled:cursor-not-allowed",
-            !value && "placeholder text-primary-black-20",
-            error && "ring-input-error",
+            !value && "placeholder text-ink-faint",
+            error && "ring-input-danger",
           )}
         >
           <option value="" disabled hidden>
@@ -56,7 +56,7 @@ export default function Select({
             <option
               key={opt.value}
               value={opt.value}
-              className="bg-base-bg text-primary-black"
+              className="bg-canvas text-ink"
             >
               {opt.label}
             </option>
@@ -64,7 +64,7 @@ export default function Select({
         </select>
 
         {/* Custom arrow */}
-        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-primary-black-60">
+        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-ink-2">
           ▼
         </span>
       </div>

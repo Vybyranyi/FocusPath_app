@@ -29,18 +29,18 @@ function DatePicker({
       onClick={disabled ? undefined : onClick}
       className={cn(
         "flex flex-col items-center justify-center h-16 rounded-2xl cursor-pointer",
-        "bg-base-white transition-all duration-150",
+        "bg-surface transition-all duration-150",
         active && "active",
         disabled && "opacity-40 cursor-not-allowed pointer-events-none",
         active
           ? isActiveError
-            ? "ring-2 ring-inset ring-error **:text-error"
-            : "ring-2 ring-inset ring-primary-blue **:text-primary-blue"
-          : "border border-primary-black-10",
+            ? "ring-2 ring-inset ring-danger **:text-danger"
+            : "ring-2 ring-inset ring-accent **:text-accent"
+          : "border border-line",
       )}
     >
-      <h6>{day}</h6>
-      <span className={cn("chip", !active && "text-primary-black-40")}>
+      <span className="display-6">{day}</span>
+      <span className={cn("chip", !active && "text-ink-muted")}>
         {weekday}
       </span>
     </div>

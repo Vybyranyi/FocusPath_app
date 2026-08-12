@@ -28,7 +28,7 @@ export default function SegmentControl({
   };
 
   return (
-    <div className="flex w-full bg-primary-black-10 rounded-2xl p-0.5">
+    <div className="flex w-full bg-line rounded-2xl p-0.5">
       {segments.map((segment) => (
         <p
           key={segment.id}
@@ -37,8 +37,8 @@ export default function SegmentControl({
             "body-bold flex-1 text-center py-1 rounded-[14px] cursor-pointer",
             "transition-all duration-200",
             selectedId === segment.id
-              ? "bg-base-white text-primary-blue"
-              : "text-primary-black-60",
+              ? "bg-surface text-accent"
+              : "text-ink-2",
           )}
         >
           {segment.label}

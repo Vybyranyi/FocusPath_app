@@ -7,7 +7,7 @@ interface HabitGroupProps {
 }
 
 const config = {
-  build: { label: "Build habits", dotClass: "bg-primary-blue" },
+  build: { label: "Build habits", dotClass: "bg-accent" },
   quit: { label: "Quit habits", dotClass: "bg-s-orange" },
 };
 
@@ -20,7 +20,7 @@ export default function HabitGroup({ habits, type }: HabitGroupProps) {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 px-1">
         <span className={`w-2 h-2 rounded-full ${dotClass}`} />
-        <p className="chip text-primary-black-60">{label}</p>
+        <p className="chip text-ink-2">{label}</p>
       </div>
       {habits.map((h) => (
         <HabitRow key={h._id} habit={h} />

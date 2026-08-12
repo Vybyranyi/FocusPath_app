@@ -25,7 +25,7 @@ export default function WeekSelector() {
     <div className="flex items-center justify-between">
       <div>
         <p className="body-bold">{label}</p>
-        <p className="alternative text-primary-black-60">{formattedRange}</p>
+        <p className="alternative text-ink-2">{formattedRange}</p>
       </div>
       <div className="flex gap-2">
         <IconButton size="medium" icon={arrow_left}  onClick={() => dispatch(prevWeek())} />
