@@ -2,9 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <title>FocusPath — habit tracker</title>
+    <meta name="description" content="Track the habits you are building and the ones you are quitting, one day at a time." />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- The app ships both themes, so let the browser paint its own chrome to
+         match instead of assuming light. -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F6F9FF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F1420" media="(prefers-color-scheme: dark)" />
+
+    <!-- The two faces that carry the first screen. Without these `swap` paints
+         it in a fallback and then reflows once Montserrat lands. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          href="/src/assets/fonts/Montserrat-Regular.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          href="/src/assets/fonts/Montserrat-Medium.woff2" />
   </head>
   <body>
     <div id="root"></div>
