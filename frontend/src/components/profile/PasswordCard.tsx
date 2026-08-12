@@ -3,8 +3,8 @@ import Input from "@components/ui/Input";
 import { changePassword } from "@store/authSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { Form, Formik } from "formik";
-import { useState } from "react";
 import * as Yup from "yup";
+import { useToast } from "@hooks/useToast";
 
 const passwordSchema = Yup.object({
   currentPassword: Yup.string().required("Required"),
@@ -19,7 +19,7 @@ const passwordSchema = Yup.object({
 export default function PasswordCard() {
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((s) => s.auth);
-  const [saved, setSaved] = useState(false);
+  const { notify } = useToast();
 
   const handleSubmit = async (
     values: {
@@ -37,14 +37,15 @@ export default function PasswordCard() {
     );
     if (changePassword.fulfilled.match(result)) {
       resetForm();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      notify("Password changed");
+    } else {
+      notify("Could not change the password", "danger");
     }
   };
 
   return (
     <div className="bg-surface rounded-2xl shadow-medium p-6 flex flex-col gap-5">
-      <p className="title font-bold">Change Password</p>
+      <h2 className="title font-bold">Change password</h2>
 
       <Formik
         initialValues={{ currentPassword: "", newPassword: "", confirmPassword: "" }}
@@ -83,10 +84,6 @@ export default function PasswordCard() {
               onBlur={handleBlur("confirmPassword")}
               error={touched.confirmPassword ? errors.confirmPassword : ""}
             />
-
-            {saved && (
-              <p className="chip text-success">Password changed successfully</p>
-            )}
 
             <div className="pt-2">
               <Button

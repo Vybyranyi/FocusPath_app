@@ -3,12 +3,14 @@ import Input from "@components/ui/Input";
 import { deleteAccount, logoutUser } from "@store/authSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { useState } from "react";
+import { useToast } from "@hooks/useToast";
 import { useNavigate } from "react-router";
 
 export default function AccountActions() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { loading } = useAppSelector((s) => s.auth);
+  const { notify } = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
   const [password, setPassword] = useState("");
   const [problem, setProblem] = useState("");
@@ -16,6 +18,7 @@ export default function AccountActions() {
   const handleLogout = async () => {
     // Only the server can clear an httpOnly cookie, so signing out is a request.
     await dispatch(logoutUser());
+    notify("Signed out");
     navigate("/login");
   };
 

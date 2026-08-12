@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { format } from "date-fns";
 import { Form, Formik } from "formik";
 import { useState } from "react";
+import { useToast } from "@hooks/useToast";
 import * as Yup from "yup";
 
 const profileSchema = Yup.object({
@@ -36,7 +37,7 @@ export default function ProfileInfoCard() {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((s) => s.auth);
   const [isEditing, setIsEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { notify } = useToast();
 
   if (!user) return null;
 
@@ -59,8 +60,9 @@ export default function ProfileInfoCard() {
     );
     if (updateProfile.fulfilled.match(result)) {
       setIsEditing(false);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      notify("Profile saved");
+    } else {
+      notify("Could not save your profile", "danger");
     }
   };
 
@@ -75,7 +77,7 @@ export default function ProfileInfoCard() {
   return (
     <div className="bg-surface rounded-2xl shadow-medium p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <p className="title font-bold">Personal information</p>
+        <h2 className="title font-bold">Personal information</h2>
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
@@ -102,9 +104,6 @@ export default function ProfileInfoCard() {
 
       {!isEditing ? (
         <>
-          {saved && (
-            <p className="chip text-success">Saved successfully</p>
-          )}
           <div className="flex flex-col gap-4">
             {fields.map(({ label, value }) => (
               <div

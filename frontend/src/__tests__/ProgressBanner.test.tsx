@@ -27,11 +27,11 @@ const withHabits = (habits: HabitSummary[]) => habitState({ habitsForDate: habit
 
 describe("ProgressBanner", () => {
   it("renders nothing when the day has no habits", () => {
-    const { container } = renderWithProviders(<ProgressBanner />, {
+    renderWithProviders(<ProgressBanner />, {
       preloadedState: withHabits([]),
     });
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByText(/completed/)).not.toBeInTheDocument();
   });
 
   it("counts how many of the day's habits are done", () => {

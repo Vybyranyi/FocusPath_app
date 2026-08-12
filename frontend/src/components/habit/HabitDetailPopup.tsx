@@ -11,6 +11,7 @@ import type { HabitSummary } from '@shared/index';
 import { format, addDays } from 'date-fns';
 import Button from '@components/ui/Button';
 import { cn } from '@/lib/utils';
+import { useToast } from '@hooks/useToast';
 
 interface IHabitDetailPopupProps {
   habit: HabitSummary;
@@ -50,6 +51,7 @@ const CloseIcon = () => (
  */
 export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupProps) {
   const dispatch = useAppDispatch();
+  const { notify } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -65,6 +67,7 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
 
   const handleDelete = () => {
     dispatch(deleteHabit(habit._id));
+    notify(`Deleted “${habit.title}”`);
     onClose();
   };
 
