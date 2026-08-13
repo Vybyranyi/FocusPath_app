@@ -13,14 +13,22 @@ const failure = (code: string, message: string, status: number) =>
 
 const fetchMock = vi.fn();
 
+const clearCookie = (name: string) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+};
+
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockReset();
-  document.cookie = "csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+  clearCookie("csrf_token");
+  clearCookie("__Host-csrf_token");
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // Some cases reach the cookies through a stubbed getter; leaving it in place
+  // would hide the real jar from every case after them.
+  vi.restoreAllMocks();
 });
 
 const initAt = (call: number) => fetchMock.mock.calls[call][1] as RequestInit;
@@ -146,6 +154,38 @@ describe("CSRF", () => {
 
     expect(initAt(0).headers).not.toHaveProperty("X-CSRF-Token");
   });
+
+  /**
+   * In production the server issues this cookie under the `__Host-` prefix,
+   * which is what stops a neighbouring subdomain from overwriting the value the
+   * CSRF check compares against. The prefix is only legal on a secure origin, so
+   * locally the name stays bare and both have to be readable from here.
+   *
+   * Handed to the client through the getter rather than the cookie jar: jsdom
+   * runs the suite on http, where it correctly refuses to store a `__Host-`
+   * cookie at all, so there is no other way to put one in front of this code.
+   */
+  const holdingCookies = (value: string) =>
+    vi.spyOn(document, "cookie", "get").mockReturnValue(value);
+
+  it("reads the __Host- prefixed cookie the server issues in production", async () => {
+    holdingCookies("__Host-csrf_token=prefixed");
+    fetchMock.mockResolvedValue(ok());
+
+    await apiRequest("/habits/", { method: "POST", body: {} });
+
+    expect(initAt(0).headers).toMatchObject({ "X-CSRF-Token": "prefixed" });
+    expect(hasSessionCookie()).toBe(true);
+  });
+
+  it("prefers the prefixed cookie over one left behind by an older session", async () => {
+    holdingCookies("csrf_token=legacy; __Host-csrf_token=prefixed");
+    fetchMock.mockResolvedValue(ok());
+
+    await apiRequest("/habits/", { method: "POST", body: {} });
+
+    expect(initAt(0).headers).toMatchObject({ "X-CSRF-Token": "prefixed" });
+  });
 });
 
 describe("session renewal", () => {
@@ -219,6 +259,24 @@ describe("session renewal", () => {
     fetchMock.mockResolvedValue(failure("NOT_FOUND", "Habit not found", 404));
 
     await expect(apiRequest("/habits/1")).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * A refused sign-in answers 401 now that it no longer distinguishes a wrong
+   * password from an address with no account. Renewing cannot rescue it — the
+   * credentials are wrong, not stale — so someone attempting one while still
+   * holding a session must not have it replayed on their behalf.
+   */
+  it("does not try to renew a refused sign-in", async () => {
+    fetchMock.mockResolvedValue(
+      failure("UNAUTHORIZED", "Invalid email or password", 401),
+    );
+
+    await expect(
+      apiRequest("/auth/login", { method: "POST", body: {} }),
+    ).rejects.toMatchObject({ message: "Invalid email or password" });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

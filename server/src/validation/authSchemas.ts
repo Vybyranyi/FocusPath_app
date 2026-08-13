@@ -10,7 +10,18 @@ import { validateAvatar } from '@utils/avatar';
 // Trimmed before the format check, not after: z.email().trim() would reject a
 // perfectly good address that arrived with a trailing space, and no form on the
 // client trims for us.
-const email = z.string().trim().pipe(z.email('Must be a valid email address'));
+//
+// Folded to lower case for the same reason it is trimmed — the domain is
+// case-insensitive and mailboxes in practice are too, so `Ann@example.com` and
+// `ann@example.com` are one address. Storing them as written made them two
+// accounts that the unique index had no reason to object to, let someone claim a
+// case variant of an address already in use, and locked out anyone who signed up
+// with a capital and later typed their address in lower case.
+const email = z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email('Must be a valid email address'));
 
 const password = z
     .string()
@@ -44,11 +55,20 @@ export type RegisterDto = z.infer<typeof registerSchema>;
 
 export const loginSchema = z.object({
     // Deliberately not the strict email format: an existing account should get
-    // "invalid credentials", not a lecture about its address.
-    email: z.string('Email is required').trim().min(1, 'Email is required'),
+    // "invalid credentials", not a lecture about its address. Lower-cased all
+    // the same, or an address stored by the rule above would not be found by
+    // someone typing it with a capital.
+    email: z.string('Email is required').trim().toLowerCase().min(1, 'Email is required'),
     password: z.string('Password is required').min(1, 'Password is required'),
 });
 export type LoginDto = z.infer<typeof loginSchema>;
+
+/**
+ * What the request may actually change. `currentPassword` travels alongside them
+ * but is not one of them, so it is listed apart: it must not be the sole content
+ * of an update, and the service strips it rather than writing it to the document.
+ */
+const PROFILE_FIELDS = ['name', 'surname', 'birthday', 'gender', 'email', 'avatar'] as const;
 
 export const updateProfileSchema = z
     .object({
@@ -58,9 +78,14 @@ export const updateProfileSchema = z
         gender: z.enum(['male', 'female']).optional(),
         email: email.optional(),
         avatar: avatar.optional(),
+        /**
+         * Required only to move the address, and only the service can tell
+         * whether it is moving — it needs the stored one to compare against.
+         */
+        currentPassword: z.string().min(1, 'Current password is required').optional(),
     })
     .refine(
-        body => Object.values(body).some(value => value !== undefined),
+        body => PROFILE_FIELDS.some(field => body[field] !== undefined),
         'Provide at least one field to update',
     );
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;

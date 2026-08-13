@@ -94,6 +94,8 @@ export const updateProfile = createAsyncThunk(
             gender: "male" | "female";
             email: string;
             avatar?: string;
+            /** Required by the server only when `email` differs from the stored one. */
+            currentPassword?: string;
         },
         { rejectWithValue },
     ) => {

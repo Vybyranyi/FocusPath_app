@@ -1,6 +1,12 @@
 import { timingSafeEqual } from 'crypto';
 import type { RequestHandler } from 'express';
-import { ACCESS_COOKIE, CSRF_COOKIE, CSRF_HEADER, REFRESH_COOKIE } from '@config/auth';
+import {
+    ACCESS_COOKIE,
+    CSRF_COOKIE,
+    CSRF_HEADER,
+    LEGACY_CSRF_COOKIE,
+    REFRESH_COOKIE,
+} from '@config/auth';
 import { ForbiddenError } from '@errors/AppError';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -33,7 +39,11 @@ export const csrfProtection: RequestHandler = (req, _res, next) => {
         return next();
     }
 
-    const cookieToken = req.cookies?.[CSRF_COOKIE];
+    // The unprefixed name is a fallback, not an alternative: a session issued
+    // before the `__Host-` prefix carries only that one, and it is accepted
+    // until that session next refreshes. Outside production both names are the
+    // same string and this reads one cookie.
+    const cookieToken = req.cookies?.[CSRF_COOKIE] ?? req.cookies?.[LEGACY_CSRF_COOKIE];
     const headerToken = req.header(CSRF_HEADER);
 
     if (!cookieToken || !headerToken || !matches(cookieToken, headerToken)) {

@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import bcrypt from 'bcrypt';
 
 export const MIN_PASSWORD_LENGTH = 8;
@@ -31,6 +32,26 @@ export const validatePassword = (password: unknown): string | null => {
 
 export const hashPassword = (password: string): Promise<string> =>
     bcrypt.hash(password, rounds);
+
+let placeholder: Promise<string> | null = null;
+
+/**
+ * A hash nothing can match, for spending the same time on a sign-in attempt for
+ * an address that has no account as on one that does.
+ *
+ * Without it the miss returns before bcrypt ever runs, and the gap — single
+ * milliseconds against hundreds of them at cost 12 — answers "does this address
+ * have an account here?" just as plainly as a distinct status code would, and
+ * survives making the two replies identical.
+ *
+ * Derived from random bytes, so no input verifies against it, and at the
+ * configured cost, so the comparison takes exactly as long as a real one. Built
+ * on first use rather than at import: a process that never sees a miss should
+ * not pay for it, and the promise is cached rather than the string so two
+ * concurrent misses derive it once.
+ */
+export const placeholderHash = (): Promise<string> =>
+    (placeholder ??= bcrypt.hash(randomBytes(32).toString('hex'), rounds));
 
 export const verifyPassword = (password: string, hash: string): Promise<boolean> =>
     bcrypt.compare(password, hash);

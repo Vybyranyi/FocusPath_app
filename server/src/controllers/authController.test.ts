@@ -110,6 +110,31 @@ describe('Auth Controller', () => {
             expect(response.body.error.code).toBe('CONFLICT');
         });
 
+        it('stores the address folded to lower case', async () => {
+            const response = await request(app)
+                .post('/auth/register')
+                .send({ ...validUser, email: 'Owner@Example.COM' })
+                .expect(201);
+
+            expect(response.body.data.user.email).toBe('owner@example.com');
+        });
+
+        /**
+         * The unique index sees strings, so without folding these were two
+         * accounts for one mailbox — which let anyone claim a case variant of an
+         * address already in use.
+         */
+        it('refuses a case variant of an address already registered', async () => {
+            await request(app).post('/auth/register').send(validUser).expect(201);
+
+            const response = await request(app)
+                .post('/auth/register')
+                .send({ ...validUser, email: 'OWNER@example.com' })
+                .expect(409);
+
+            expect(response.body.error.code).toBe('CONFLICT');
+        });
+
         it('reports a Mongoose validation error field by field', async () => {
             const validationError = new mongoose.Error.ValidationError();
             validationError.errors = {
@@ -171,17 +196,38 @@ describe('Auth Controller', () => {
             const response = await request(app)
                 .post('/auth/login')
                 .send({ email: validUser.email, password: 'wrongpassword' })
-                .expect(400);
+                .expect(401);
 
-            expect(response.body.error.message).toBe('Invalid credentials');
+            expect(response.body.error.message).toBe('Invalid email or password');
             expect(cookieValue(response, 'access_token')).toBe('');
         });
 
-        it('reports an unknown address as not found', async () => {
-            await request(app)
+        /**
+         * The point is that the two are indistinguishable. Telling them apart —
+         * which a 404 against a 400 did — answers "does this address have an
+         * account here?" for any address at all.
+         */
+        it('answers an unknown address exactly as it answers a wrong password', async () => {
+            const unknown = await request(app)
                 .post('/auth/login')
                 .send({ email: 'nobody@example.com', password: 'password123' })
-                .expect(404);
+                .expect(401);
+
+            const wrongPassword = await request(app)
+                .post('/auth/login')
+                .send({ email: validUser.email, password: 'wrongpassword' })
+                .expect(401);
+
+            expect(unknown.body).toEqual(wrongPassword.body);
+        });
+
+        it('signs in whatever case the address is typed in', async () => {
+            const response = await request(app)
+                .post('/auth/login')
+                .send({ email: 'OWNER@Example.COM', password: validUser.password })
+                .expect(200);
+
+            expect(response.body.data.user.email).toBe(validUser.email);
         });
 
         it('requires both fields', async () => {
@@ -347,6 +393,131 @@ describe('Auth Controller', () => {
                 .set('Cookie', [`refresh_token=${refreshToken}`, 'csrf_token=echo'])
                 .set('X-CSRF-Token', 'echo')
                 .expect(401);
+        });
+    });
+
+    describe('PATCH /auth/profile', () => {
+        it('changes an ordinary field without asking for a password', async () => {
+            const { agent, csrf } = await signUp();
+
+            const response = await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({ name: 'Renamed' })
+                .expect(200);
+
+            expect(response.body.data.user.name).toBe('Renamed');
+        });
+
+        /**
+         * The form posts every field it knows, so this is what an ordinary save
+         * actually looks like — and it used to answer 400 `Invalid value for
+         * '_id'`, because the uniqueness check asked for `_id: { $ne: userId }`
+         * and `sanitizeFilter` rewrote the operator into a value to cast. There
+         * was no test on this endpoint at all, so nothing caught it.
+         */
+        it('saves the whole form, address included, as the client sends it', async () => {
+            const { agent, csrf } = await signUp();
+
+            const response = await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({
+                    name: 'Renamed',
+                    surname: validUser.surname,
+                    birthday: validUser.birthday,
+                    gender: validUser.gender,
+                    email: validUser.email,
+                })
+                .expect(200);
+
+            expect(response.body.data.user.name).toBe('Renamed');
+        });
+
+        /**
+         * The same rule /auth/password and /auth/account already follow: a
+         * session on its own is not enough for the things an intruder would want.
+         * The address is one of them — every recovery path there will ever be
+         * runs through it.
+         */
+        it('refuses to move the address without the current password', async () => {
+            const { agent, csrf } = await signUp();
+
+            const response = await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({ email: 'elsewhere@example.com' })
+                .expect(400);
+
+            expect(response.body.error.details.currentPassword).toEqual([
+                'Current password is required to change your email address',
+            ]);
+
+            const user = await User.findOne({ email: validUser.email });
+            expect(user).not.toBeNull();
+        });
+
+        it('refuses to move the address with the wrong password', async () => {
+            const { agent, csrf } = await signUp();
+
+            const response = await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({ email: 'elsewhere@example.com', currentPassword: 'not-it' })
+                .expect(400);
+
+            expect(response.body.error.message).toBe('Current password is incorrect');
+            expect(await User.findOne({ email: 'elsewhere@example.com' })).toBeNull();
+        });
+
+        it('moves the address once the password checks out', async () => {
+            const { agent, csrf } = await signUp();
+
+            const response = await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({ email: 'Elsewhere@Example.com', currentPassword: validUser.password })
+                .expect(200);
+
+            expect(response.body.data.user.email).toBe('elsewhere@example.com');
+        });
+
+        /**
+         * The profile form posts every field it knows, so the address arrives on
+         * a rename and on an avatar upload too. Demanding a password for those
+         * would be demanding one for every edit.
+         */
+        it('does not count the address being re-sent unchanged as a change', async () => {
+            const { agent, csrf } = await signUp();
+
+            await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({ name: 'Renamed', email: 'OWNER@example.com' })
+                .expect(200);
+        });
+
+        it('refuses an address another account already holds', async () => {
+            await signUp({ email: 'taken@example.com' });
+            const { agent, csrf } = await signUp();
+
+            const response = await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({ email: 'taken@example.com', currentPassword: validUser.password })
+                .expect(409);
+
+            expect(response.body.error.message).toBe('Email already in use');
+        });
+
+        it('refuses a body that carries nothing but the password', async () => {
+            const { agent, csrf } = await signUp();
+
+            await agent
+                .patch('/auth/profile')
+                .set('X-CSRF-Token', csrf)
+                .send({ currentPassword: validUser.password })
+                .expect(400);
         });
     });
 

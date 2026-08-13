@@ -22,6 +22,7 @@ Run from the repo root unless noted.
 | Single server test file | `npm --prefix server exec jest -- src/services/habitSchedule.test.ts` |
 | Seed an admin account | `npm --prefix server run seed:admin` |
 | Migrate day flags to statuses | `npm --prefix server run migrate:day-status` |
+| Fold stored emails to lower case | `npm --prefix server run migrate:email-lowercase` |
 
 `npm test` in the frontend is `vitest run` — non-watching, safe in CI. Use
 `test:watch` for the interactive runner.
@@ -153,8 +154,23 @@ The server also needs `tsc-alias` at build time (`npm run build` is
   import time and would hold `undefined` if it were set later.
 - **CSRF exempts requests with no session cookie.** That is what lets login and
   registration through without maintaining a path allowlist. State-changing
-  calls from an authenticated client must echo the readable `csrf_token` cookie
-  in the `X-CSRF-Token` header; `frontend/src/api/client.ts` does this already.
+  calls from an authenticated client must echo the readable CSRF cookie in the
+  `X-CSRF-Token` header; `frontend/src/api/client.ts` does this already.
+- **The CSRF cookie has two names.** `__Host-csrf_token` in production, where the
+  prefix stops a subdomain from overwriting the value the check compares against;
+  plain `csrf_token` on HTTP, where the prefix is illegal, and with
+  `COOKIE_DOMAIN`, which it forbids. `csrf.ts` accepts either — dropping the bare
+  name would strand live sessions, since a browser holding only that one fails
+  the check on `/auth/refresh` and `/auth/logout` too. Read the name from
+  `CSRF_COOKIE`; never hard-code it.
+- **`sanitizeFilter` breaks operators you wrote yourself.** It is set
+  mongoose-wide in `config/mongoose.ts`, and it wraps any value whose keys all
+  begin with `$` in `$eq` — it cannot tell your `{ $ne: id }` from one that
+  arrived in a request body. `authService.updateProfile` asked for
+  `_id: { $ne: userId }`, got `_id: { $eq: { $ne: userId } }`, and answered
+  `400 Invalid value for '_id'` to every profile save for a release. Express the
+  query without an operator, or opt that one query out with `mongoose.trusted()`
+  — but prefer the former.
 - **Refreshes are deduplicated on the client.** The server rotates the refresh
   token on every use, so two concurrent refreshes would leave the loser holding
   a spent token. `refreshInFlight` in the API client makes everyone wait on one

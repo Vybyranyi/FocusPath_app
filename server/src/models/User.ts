@@ -33,7 +33,10 @@ const UserSchema: Schema = new Schema({
     surname: { type: String, required: true },
     birthday: { type: Date, required: true },
     gender: { type: String, enum: ["male", "female"], required: true },
-    email: { type: String, required: true, unique: true },
+    // Normalised here as well as in the schemas, because the unique index is what
+    // ultimately decides whether two rows are the same address, and not every
+    // write goes through a Zod schema — seedAdmin does not.
+    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     // Excluded from every query by default. The two places that genuinely need
     // it — signing in and changing a password — ask for it with .select('+password').
     password: { type: String, required: true, minlength: 8, select: false },
