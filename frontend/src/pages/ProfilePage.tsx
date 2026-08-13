@@ -3,6 +3,7 @@ import AccountActions from "@components/profile/AccountActions";
 import AppearanceCard from "@components/profile/AppearanceCard";
 import ChangePasswordDialog from "@components/profile/ChangePasswordDialog";
 import DeleteAccountDialog from "@components/profile/DeleteAccountDialog";
+import MyPublishedPlans from "@components/profile/MyPublishedPlans";
 import ProfileAvatar from "@components/profile/ProfileAvatar";
 import ProfileInfoCard from "@components/profile/ProfileInfoCard";
 
@@ -41,6 +42,7 @@ export default function ProfilePage() {
 
         <div className="flex flex-col gap-6 min-w-0">
           <ProfileInfoCard />
+          <MyPublishedPlans />
           <AppearanceCard />
           <AccountActions
             onChangePassword={() => setChangingPassword(true)}

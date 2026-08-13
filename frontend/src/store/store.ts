@@ -2,11 +2,13 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import authReducer from '@store/authSlice';
 import habitReducer from '@store/habitSlice';
 import calendarReducer from '@store/calendarSlice';
+import plansReducer from '@store/plansSlice';
 
 const rootReducer = combineReducers({
     auth: authReducer,
     habit: habitReducer,
     calendar: calendarReducer,
+    plans: plansReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

@@ -19,6 +19,37 @@ export const selectQuitHabits = createSelector([selectAllHabits], habits =>
     habits.filter(habit => habit.type === "quit"),
 );
 
+export const selectPlanSections = (state: RootState) => state.plans.sections;
+export const selectMyPlans = (state: RootState) => state.plans.myPlans;
+const selectPlansLoadedOnce = (state: RootState) => state.plans.loadedOnce;
+
+/**
+ * Whether the library has anything at all to show under the current filters.
+ *
+ * Derived from all three shelves at once, because "no plans" is a page-level
+ * state — an empty shelf on its own is normal and says nothing.
+ *
+ * Gated on something having been fetched: an untouched store is also "every
+ * shelf empty, none loading", which made the empty state flash for a frame
+ * before the first request had even left.
+ */
+export const selectExploreIsEmpty = createSelector(
+    [selectPlanSections, selectPlansLoadedOnce],
+    (sections, loadedOnce) => {
+        const shelves = Object.values(sections);
+        return (
+            loadedOnce &&
+            shelves.every((shelf) => shelf.plans.length === 0) &&
+            shelves.every((shelf) => !shelf.loading)
+        );
+    },
+);
+
+/** Plans the author has withdrawn are kept, but counted apart from live ones. */
+export const selectPublishedPlanCount = createSelector([selectMyPlans], (plans) =>
+    plans.filter((plan) => plan.status === "published").length,
+);
+
 export interface DailyProgress {
     total: number;
     completed: number;

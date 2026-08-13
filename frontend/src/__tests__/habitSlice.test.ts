@@ -35,6 +35,7 @@ const formValues = (overrides: Partial<CreateHabitFormValues> = {}): CreateHabit
   emoji: "books",
   habitName: "Read daily",
   habitDescription: "Ten pages before bed",
+  category: "learning",
   // Local midnight, which is what the date pickers hand back.
   startDate: new Date(2026, 7, 7),
   aiEnabled: false,

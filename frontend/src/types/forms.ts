@@ -13,6 +13,12 @@ export interface CreateHabitFormValues {
   emoji: string;
   habitName: string;
   habitDescription: string;
+  /**
+   * A `PlanCategory`, or empty while nothing is chosen. Optional on a habit —
+   * it only becomes required when one is published as a plan, and the publish
+   * sheet asks for it then.
+   */
+  category: string;
   startDate: Date | undefined;
   aiEnabled: boolean;
   duration: string;

@@ -1,9 +1,6 @@
-import mongoose from 'mongoose';
 import { z } from 'zod';
 import { DAY_STATUSES } from '@models/Habit';
-
-const objectId = (label: string) =>
-    z.string().refine(value => mongoose.Types.ObjectId.isValid(value), `Invalid ${label}`);
+import { objectId } from '@validation/common';
 
 export const habitParamsSchema = z.object({ id: objectId('habit ID') });
 export type HabitParams = z.infer<typeof habitParamsSchema>;
@@ -65,8 +62,38 @@ export const createHabitSchema = z.object({
 });
 export type CreateHabitDto = z.infer<typeof createHabitSchema>;
 
+/**
+ * Taking a plan from the library.
+ *
+ * Its own schema and its own endpoint rather than an optional `planId` on
+ * `createHabitSchema`: that would turn the create schema into a union where
+ * half the fields are conditionally required, and the type `z.infer` produces
+ * from such a union is unusable — which defeats the whole point of the schema
+ * being the single source of truth. `POST /habits/ai` is the same shape of
+ * precedent, with its own schema and its own controller.
+ *
+ * The content is not in the body. Only the start date and the presentation may
+ * be chosen; the title, the days and the length are read from the plan.
+ */
+export const createHabitFromPlanSchema = z.object({
+    planId: objectId('plan ID'),
+    startDate,
+    // Allowed, but a clone whose length differs no longer matches the plan's
+    // content hash and so drops out of its completion statistics. Someone who
+    // did 30 days of a 90-day plan did not walk that plan.
+    duration: duration.optional(),
+    color: z.string().trim().min(1).optional(),
+    icon: z.string().trim().min(1).optional(),
+});
+export type CreateHabitFromPlanDto = z.infer<typeof createHabitFromPlanSchema>;
+
 export const createAIHabitSchema = z.object({
     title,
+    // Accepted here as well as on the manual route: the create form collects
+    // both for either button, and a habit that arrives without a category has
+    // nothing to offer the publish sheet later.
+    description: z.string().trim().max(500, 'Must be 500 characters or fewer').optional(),
+    category: z.string().trim().max(50, 'Must be 50 characters or fewer').optional(),
     startDate,
     // Absent, null or zero all mean "let the model choose the length".
     duration: duration.nullish(),

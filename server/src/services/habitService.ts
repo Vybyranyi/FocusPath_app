@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Habit, { type IHabit } from '@models/Habit';
+import Plan from '@models/Plan';
 import { BadRequestError, NotFoundError, ServiceUnavailableError } from '@errors/AppError';
 import { logger } from '@config/logger';
 import { generateHabitPlan } from '@services/openAiService';
@@ -9,10 +10,17 @@ import {
     endOfSchedule,
     isPlanComplete,
 } from '@services/habitSchedule';
+import {
+    matureProvenBadge,
+    registerClone,
+    snapshotClone,
+    syncCloneStats,
+} from '@services/planStats';
 import { startOfUtcDay } from '@utils/dates';
 import type {
     CreateAIHabitDto,
     CreateHabitDto,
+    CreateHabitFromPlanDto,
     MarkCompletionDto,
     UpdateDayTitleDto,
     UpdateHabitDto,
@@ -23,7 +31,7 @@ import type {
  * what makes "user A cannot touch user B's habit" a property of the layer
  * instead of something each endpoint has to remember.
  */
-const requireOwnedHabit = async (userId: string, habitId: string): Promise<IHabit> => {
+export const requireOwnedHabit = async (userId: string, habitId: string): Promise<IHabit> => {
     const habit = await Habit.findOne({ _id: habitId, userId });
     if (!habit) {
         throw new NotFoundError('Habit not found');
@@ -98,6 +106,8 @@ export const createAIHabit = async (
 
     return Habit.create({
         title: dto.title,
+        description: dto.description ?? '',
+        category: dto.category ?? '',
         startDate,
         duration: plan.duration,
         type: dto.type,
@@ -108,6 +118,59 @@ export const createAIHabit = async (
         isCompleted: false,
         dailyCompletions: schedule,
     });
+};
+
+/**
+ * Takes a plan from the library as a habit of one's own.
+ *
+ * Deliberately routed through this service rather than living in the plan
+ * router: ownership scoping and every rule about schedules are here, and a
+ * clone has to travel the same road as any other habit rather than around it.
+ *
+ * The content comes from the plan, not from the request — only the start date
+ * and, optionally, the length and the two presentation fields are the taker's
+ * to choose. A different length is allowed but stops the clone matching the
+ * plan's content hash, which is what keeps it out of the plan's statistics.
+ */
+export const createHabitFromPlan = async (
+    userId: string,
+    dto: CreateHabitFromPlanDto,
+): Promise<IHabit> => {
+    const plan = await Plan.findOne({ _id: dto.planId, status: 'published' });
+    if (!plan) {
+        throw new NotFoundError('Plan not found');
+    }
+
+    const startDate = startOfUtcDay(dto.startDate);
+    const duration = dto.duration ?? plan.duration;
+
+    // Day titles carry over by position, the same rule rescheduling follows.
+    // Days past the plan's own length fall back to its title.
+    const schedule = buildSchedule(startDate, duration, plan.title).map((day, index) => ({
+        ...day,
+        dayTitle: plan.days[index]?.dayTitle ?? plan.title,
+    }));
+
+    const habit = await Habit.create({
+        title: plan.title,
+        description: plan.description,
+        category: plan.category,
+        steps: [],
+        startDate,
+        duration,
+        type: plan.type,
+        color: dto.color ?? plan.color,
+        icon: dto.icon ?? plan.icon,
+        userId,
+        currentStreak: 0,
+        isCompleted: false,
+        dailyCompletions: schedule,
+        fromPlanId: plan._id,
+    });
+
+    await registerClone(habit);
+
+    return habit;
 };
 
 export const listHabits = (userId: string) =>
@@ -195,6 +258,7 @@ export const updateHabit = async (
     changes: UpdateHabitDto,
 ): Promise<IHabit> => {
     const habit = await requireOwnedHabit(userId, habitId);
+    const before = snapshotClone(habit);
 
     const { title, description, category, steps, startDate, duration, type, color, icon } = changes;
 
@@ -226,6 +290,10 @@ export const updateHabit = async (
     refreshProgress(habit);
     await habit.save();
 
+    // Rescheduling can take a clone out of its plan's statistics — a different
+    // length is a different route — so the counters are reconciled here too.
+    await syncCloneStats(habit, before);
+
     return habit;
 };
 
@@ -243,10 +311,15 @@ export const setDayTitle = async (
 ): Promise<IHabit> => {
     const habit = await requireOwnedHabit(userId, habitId);
     const index = requireScheduledDay(habit, startOfUtcDay(date));
+    const before = snapshotClone(habit);
 
     habit.dailyCompletions[index].dayTitle = dayTitle;
     habit.updatedAt = new Date();
     await habit.save();
+
+    // Rewriting a day makes this a different route from the one published, so
+    // a finished clone stops counting towards its plan.
+    await syncCloneStats(habit, before);
 
     return habit;
 };
@@ -258,10 +331,16 @@ export const markCompletion = async (
 ): Promise<IHabit> => {
     const habit = await requireOwnedHabit(userId, habitId);
     const index = requireScheduledDay(habit, startOfUtcDay(date ?? new Date()));
+    const before = snapshotClone(habit);
 
     habit.dailyCompletions[index].status = status;
     refreshProgress(habit);
     await habit.save();
+
+    // The two places a plan hears about progress, and the only ones: no job
+    // runs at midnight to do either of these.
+    await syncCloneStats(habit, before);
+    await matureProvenBadge(habit);
 
     return habit;
 };

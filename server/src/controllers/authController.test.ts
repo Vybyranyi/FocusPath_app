@@ -96,7 +96,10 @@ describe('Auth Controller', () => {
                 .expect(201);
 
             expect(response.body.data.user.avatar).toBeUndefined();
-            expect(response.body.data.user.role).toBeUndefined();
+            // `role` is a real field now, and not a secret — but it is not one
+            // the register schema accepts, so a caller asking for `admin` gets
+            // the default like everyone else.
+            expect(response.body.data.user.role).toBe('user');
         });
 
         it('refuses a duplicate address', async () => {

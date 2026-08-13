@@ -1,5 +1,6 @@
 import AILoadingAnimation from "@animation/AILoadingAnimation";
 import Button from "@components/ui/Button";
+import CategoryPicker from "@components/pickers/CategoryPicker";
 import ColorPicker from "@components/pickers/ColorPicker";
 import DurationPicker from "@components/pickers/DurationPicker";
 import EmojiPicker from "@components/pickers/EmojiPicker";
@@ -55,6 +56,7 @@ const initialValues: CreateHabitFormValues = {
   emoji: "",
   habitName: "",
   habitDescription: "",
+  category: "",
   startDate: new Date(),
   aiEnabled: false,
   duration: "",
@@ -144,6 +146,13 @@ export default function CreateHabit() {
                   <p className="alternative text-ink-muted">
                     Provide more details about your habit to help the AI generate a better personalized plan.
                   </p>
+                  {/* Optional here, required only if this habit is ever
+                      published as a plan — but asked for now, because a habit
+                      with no category has nothing to offer the library later. */}
+                  <CategoryPicker
+                    value={values.category}
+                    onChange={(value) => setFieldValue("category", value)}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-4">

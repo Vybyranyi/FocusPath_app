@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router";
 import { makeStore, type RootState } from "@store/store";
 import { ToastProvider } from "@components/ui/Toast";
-import type { HabitSummary } from "@shared/index";
+import type { HabitSummary, Plan, PlanSummary } from "@shared/index";
 
 interface RenderWithProvidersOptions extends Omit<RenderOptions, "wrapper"> {
   /** Slice state to start from. Anything omitted falls back to the slice's own initial state. */
@@ -69,6 +69,60 @@ export const makeHabitSummary = (
     status: "pending",
   },
   ...overrides,
+});
+
+/** A plan as a list returns it — no days, since a card shows none. */
+export const makePlanSummary = (
+  overrides: Partial<PlanSummary> = {},
+): PlanSummary => ({
+  _id: "plan-1",
+  title: "Read every day",
+  description: "Twenty pages a day, whatever the book.",
+  category: "learning",
+  language: "en",
+  type: "build",
+  duration: 30,
+  color: "blue",
+  icon: "books",
+  author: {},
+  proven: false,
+  official: false,
+  status: "published",
+  cloneCount: 0,
+  createdAt: "2026-01-06T00:00:00.000Z",
+  updatedAt: "2026-01-06T00:00:00.000Z",
+  ...overrides,
+});
+
+/** A plan as the detail endpoint returns it, content included. */
+export const makePlan = (overrides: Partial<Plan> = {}): Plan => ({
+  ...makePlanSummary(),
+  days: Array.from({ length: 30 }, (_unused, index) => ({
+    dayTitle: `Day ${index + 1} task`,
+  })),
+  ...overrides,
+});
+
+/** Preloaded plans-slice state, so a test only spells out what it cares about. */
+export const plansState = (
+  overrides: Partial<RootState["plans"]> = {},
+): Pick<RootState, "plans"> => ({
+  plans: {
+    sections: {
+      official: { plans: [], loading: false },
+      proven: { plans: [], loading: false },
+      new: { plans: [], loading: false },
+    },
+    loadedOnce: false,
+    plan: null,
+    planLoading: false,
+    myPlans: [],
+    myPlansLoading: false,
+    publishing: false,
+    taking: false,
+    error: null,
+    ...overrides,
+  },
 });
 
 /** Preloaded habit-slice state, so a test only spells out what it cares about. */

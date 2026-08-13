@@ -47,6 +47,19 @@ export class NotFoundError extends AppError {
     }
 }
 
+/**
+ * Content a moderator — here, the model — refused.
+ *
+ * Its own code rather than a plain `BAD_REQUEST`, because the client shows it
+ * differently: this is not a malformed field to correct but a verdict on the
+ * plan, and the message travels from the reviewer to the author verbatim.
+ */
+export class ContentRejectedError extends AppError {
+    constructor(message: string) {
+        super(400, 'CONTENT_REJECTED', message);
+    }
+}
+
 /** State that clashes with what already exists — a taken email, say. */
 export class ConflictError extends AppError {
     constructor(message: string) {

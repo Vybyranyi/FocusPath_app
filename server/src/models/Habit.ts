@@ -11,9 +11,21 @@ export const DAY_STATUSES: readonly DayStatus[] = ['pending', 'done', 'failed'];
  */
 export interface IHabit
     extends Document,
-    Omit<Habit, '_id' | 'startDate' | 'steps' | 'dailyCompletions' | 'createdAt' | 'updatedAt'> {
+    Omit<
+        Habit,
+        | '_id'
+        | 'startDate'
+        | 'steps'
+        | 'dailyCompletions'
+        | 'fromPlanId'
+        | 'publishedPlanId'
+        | 'createdAt'
+        | 'updatedAt'
+    > {
     startDate: Date;
     userId: mongoose.Types.ObjectId;
+    fromPlanId?: mongoose.Types.ObjectId;
+    publishedPlanId?: mongoose.Types.ObjectId;
     dailyCompletions: Array<{
         dayTitle: string;
         date: Date;
@@ -45,6 +57,11 @@ const HabitSchema: Schema = new Schema({
     }],
     description: { type: String, default: '' },
     category: { type: String, default: '' },
+    // Both links travel to the client: one says "you took this from the
+    // library", the other is what stops the same habit being published twice
+    // and what lets the proven badge find its plan without a scan.
+    fromPlanId: { type: mongoose.Types.ObjectId, ref: 'Plan', required: false },
+    publishedPlanId: { type: mongoose.Types.ObjectId, ref: 'Plan', required: false },
     steps: [{
         title: { type: String, required: true },
         completed: { type: Boolean, default: false }
@@ -56,6 +73,9 @@ const HabitSchema: Schema = new Schema({
 // Індекси для швидкого пошуку
 HabitSchema.index({ userId: 1, startDate: 1 });
 HabitSchema.index({ userId: 1, isCompleted: 1 });
+// Whether this clone is the one that counts towards a plan's statistics is
+// "is it the oldest of this user's clones of it", which this answers directly.
+HabitSchema.index({ userId: 1, fromPlanId: 1, createdAt: 1 });
 
 // Метод для перевірки чи потрібно виконати звичку сьогодні
 HabitSchema.methods.shouldCompleteToday = function() {

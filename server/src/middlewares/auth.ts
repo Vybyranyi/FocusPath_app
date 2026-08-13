@@ -21,3 +21,27 @@ export const verifyTokenMiddleware = (req: Request, _res: Response, next: NextFu
     req.userId = verifyAccessToken(token).userId;
     next();
 };
+
+/**
+ * Recognises the caller if there is one, and lets everyone else through.
+ *
+ * The library is readable without an account, but what it shows depends on
+ * whether someone is signed in — so these routes need to know about a session
+ * without requiring one. A missing, forged or expired token is not an error
+ * here; it simply means the reader is a guest, and the response narrows itself
+ * accordingly.
+ */
+export const optionalAuthMiddleware = (req: Request, _res: Response, next: NextFunction) => {
+    const token = req.cookies?.[ACCESS_COOKIE];
+
+    if (token) {
+        try {
+            req.userId = verifyAccessToken(token).userId;
+        } catch {
+            // Deliberately swallowed. Throwing would turn a stale cookie into a
+            // 401 on a page that is meant to work with no cookie at all.
+        }
+    }
+
+    next();
+};
