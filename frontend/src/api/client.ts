@@ -8,11 +8,30 @@ import type { ApiResponse } from "@shared/index";
  */
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
-/** Readable on purpose so it can be echoed back in a header the server checks. */
-const CSRF_COOKIE = "csrf_token";
+/**
+ * Readable on purpose so it can be echoed back in a header the server checks.
+ *
+ * Two names, in this order. In production the server issues the cookie with the
+ * `__Host-` prefix, which is what stops a neighbouring subdomain from
+ * overwriting it; it cannot do that over plain HTTP, so locally the name stays
+ * bare, and a session issued before the prefix existed still carries the bare
+ * one until it refreshes.
+ */
+const CSRF_COOKIES = ["__Host-csrf_token", "csrf_token"] as const;
 const CSRF_HEADER = "X-CSRF-Token";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/**
+ * Paths a 401 must never be retried on.
+ *
+ * Refreshing cannot rescue either of them: `/auth/refresh` failing *is* the
+ * session being gone, and a sign-in refused for the wrong password is refused
+ * just as firmly the second time — it would only spend a round trip, and now
+ * that a bad sign-in answers 401 rather than 400 the retry would otherwise fire
+ * for anyone attempting one while still holding an older session.
+ */
+const NEVER_RETRIED = ["/auth/refresh", "/auth/login"];
 
 /**
  * A failure the server described, or one this client could not get past.
@@ -52,6 +71,15 @@ const readCookie = (name: string): string | null => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
+/** The CSRF value under whichever of the two names this browser is holding. */
+const readCsrfToken = (): string | null => {
+  for (const name of CSRF_COOKIES) {
+    const value = readCookie(name);
+    if (value !== null) return value;
+  }
+  return null;
+};
+
 const isEnvelope = <T>(value: unknown): value is ApiResponse<T> =>
   typeof value === "object" && value !== null && "success" in value;
 
@@ -69,7 +97,7 @@ const isEnvelope = <T>(value: unknown): value is ApiResponse<T> =>
  * ignored. This mirrors the server's own rule in `csrf.ts` — a request with no
  * session cookie has no session to ride.
  */
-export const hasSessionCookie = (): boolean => readCookie(CSRF_COOKIE) !== null;
+export const hasSessionCookie = (): boolean => readCsrfToken() !== null;
 
 let refreshInFlight: Promise<void> | null = null;
 
@@ -100,7 +128,7 @@ const refreshSession = (): Promise<void> => {
 
 const csrfHeaders = (method: string): Record<string, string> => {
   if (SAFE_METHODS.has(method)) return {};
-  const token = readCookie(CSRF_COOKIE);
+  const token = readCsrfToken();
   return token ? { [CSRF_HEADER]: token } : {};
 };
 
@@ -168,7 +196,7 @@ async function send<T>(
     if (
       response.status === 401 &&
       mayRetry &&
-      !path.startsWith("/auth/refresh") &&
+      !NEVER_RETRIED.some((exempt) => path.startsWith(exempt)) &&
       hasSessionCookie()
     ) {
       try {

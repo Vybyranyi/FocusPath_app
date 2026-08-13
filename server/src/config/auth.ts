@@ -5,9 +5,36 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export const ACCESS_COOKIE = 'access_token';
 export const REFRESH_COOKIE = 'refresh_token';
-/** Readable by scripts on purpose — the client has to echo it back in a header. */
-export const CSRF_COOKIE = 'csrf_token';
 export const CSRF_HEADER = 'x-csrf-token';
+
+/**
+ * `__Host-` wherever the browser will take it.
+ *
+ * The check in `csrf.ts` compares a cookie against a header and nothing else, so
+ * anyone who can plant that cookie can also choose the header and pass it — and
+ * a neighbouring subdomain can plant cookies on the parent domain. The prefix is
+ * what removes the planting: a `__Host-` cookie is settable only by this exact
+ * host, only over HTTPS, only at path `/`, and only without a `Domain`, and the
+ * browser refuses any `Set-Cookie` that breaks one of those.
+ *
+ * Which is also why it is conditional. It requires `Secure`, so it cannot apply
+ * to plain-HTTP development, and it forbids `Domain`, so it cannot apply to a
+ * deployment that splits the client and the API across two hosts and needs the
+ * cookie shared between them.
+ */
+const hostPrefixed = isProduction && !process.env.COOKIE_DOMAIN;
+
+/** Readable by scripts on purpose — the client has to echo it back in a header. */
+export const CSRF_COOKIE = hostPrefixed ? '__Host-csrf_token' : 'csrf_token';
+
+/**
+ * What the cookie was called before the prefix existed. Still accepted, because
+ * refusing it outright would strand every live session: a browser holding only
+ * the old name would fail the CSRF check on `/auth/refresh` and `/auth/logout`
+ * too, leaving no way back other than clearing cookies by hand. Sessions move
+ * over as they refresh, and `clearSession` removes both names.
+ */
+export const LEGACY_CSRF_COOKIE = 'csrf_token';
 
 /** Short enough that a revoked session dies quickly, long enough to avoid churn. */
 export const ACCESS_TOKEN_TTL_MS = 15 * 60 * 1000;

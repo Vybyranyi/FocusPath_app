@@ -1,8 +1,14 @@
 import User, { type IUser } from '@models/User';
 import Habit from '@models/Habit';
-import { hashPassword, verifyPassword } from '@utils/password';
+import { hashPassword, placeholderHash, verifyPassword } from '@utils/password';
 import { createSessionId, verifyRefreshToken } from '@utils/tokens';
-import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from '@errors/AppError';
+import {
+    BadRequestError,
+    ConflictError,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError,
+} from '@errors/AppError';
 import type {
     ChangePasswordDto,
     DeleteAccountDto,
@@ -58,14 +64,22 @@ export const register = async (dto: RegisterDto): Promise<Session> => {
     return startSession(user);
 };
 
+/**
+ * One answer for "no account here" and "wrong password", and the same work done
+ * either way.
+ *
+ * Telling the two apart is a membership oracle for any address someone cares to
+ * type in: it used to be a 404 against a 400, and it would have remained a
+ * timing difference even once the replies matched, because the miss returned
+ * before bcrypt ran. So the comparison always happens — against the placeholder
+ * hash when there is no user to compare with.
+ */
 export const login = async ({ email, password }: LoginDto): Promise<Session> => {
     const user = await User.findOne({ email }).select('+password +refreshSessions');
-    if (!user) {
-        throw new NotFoundError('User not found');
-    }
 
-    if (!(await verifyPassword(password, user.password))) {
-        throw new BadRequestError('Invalid credentials');
+    const correct = await verifyPassword(password, user?.password ?? (await placeholderHash()));
+    if (!user || !correct) {
+        throw new UnauthorizedError('Invalid email or password');
     }
 
     return startSession(user);
@@ -131,17 +145,62 @@ export const getProfile = (userId: string | undefined): Promise<IUser> => requir
 
 export const updateProfile = async (
     userId: string | undefined,
-    changes: UpdateProfileDto,
+    { currentPassword, ...changes }: UpdateProfileDto,
 ): Promise<IUser> => {
-    if (changes.email) {
-        const taken = await User.findOne({ email: changes.email, _id: { $ne: userId } });
-        if (taken) {
+    const user = await requireUser(userId, ['password']);
+
+    /**
+     * Only a real move counts. The profile form posts every field it knows, so
+     * the address also arrives on a rename and on an avatar upload, and keying
+     * off its mere presence would ask for a password on every edit.
+     *
+     * Compared against the stored address folded to lower case: schemas
+     * normalise what arrives, but a row written before they did may still hold
+     * mixed case, and that is not the user changing anything.
+     */
+    const movesEmail =
+        changes.email !== undefined && changes.email !== user.email.toLowerCase();
+
+    if (movesEmail) {
+        // The rule changing a password and deleting the account already follow:
+        // a session on its own must not be enough. The address is what the
+        // account is known by, and every future recovery path will run through
+        // it, so taking it over cannot be cheaper than either of those.
+        if (!currentPassword) {
+            const message = 'Current password is required to change your email address';
+            throw new ValidationError(message, { currentPassword: [message] });
+        }
+
+        if (!(await verifyPassword(currentPassword, user.password))) {
+            throw new BadRequestError('Current password is incorrect', {
+                currentPassword: ['Current password is incorrect'],
+            });
+        }
+
+        /**
+         * Fetched by address and compared here rather than asked for with
+         * `_id: { $ne: userId }`.
+         *
+         * `sanitizeFilter` is on mongoose-wide, and it wraps any value whose keys
+         * all begin with `$` in `$eq` — it cannot tell an operator this code
+         * meant from one that arrived in a request body. So that filter became
+         * `_id: { $eq: { $ne: userId } }`, which cannot cast to an ObjectId, and
+         * every profile save carrying an address answered 400 `Invalid value for
+         * '_id'`. The client sends the whole form, address included, so that was
+         * every save and every avatar upload.
+         *
+         * `mongoose.trusted()` would also work, at the cost of opting a query out
+         * of the protection. Not needing an operator at all is better.
+         */
+        const holder = await User.findOne({ email: changes.email });
+        if (holder && holder.id !== userId) {
             throw new ConflictError('Email already in use');
         }
     }
 
     // Safe to apply wholesale: the schema allows only profile fields and has
-    // already dropped anything else the request carried.
+    // already dropped anything else the request carried, and `currentPassword`
+    // — the one field that is not a profile field — is destructured away above.
     const updated = await User.findByIdAndUpdate(userId, changes, {
         new: true,
         runValidators: true,

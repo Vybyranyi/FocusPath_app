@@ -8,6 +8,19 @@ import {
 } from '@config/auth';
 import { UnauthorizedError } from '@errors/AppError';
 
+/**
+ * Stated on both halves rather than left to the token.
+ *
+ * `verify` without this trusts the `alg` header to say how to check the
+ * signature, which is the shape every JWT confusion attack is built on. It is
+ * not exploitable as things stand — the secrets are symmetric, so there is no
+ * public key to hand back as an HMAC key, and jsonwebtoken already refuses
+ * `alg: none` when a secret is given — but the invariant is one line, and the
+ * day these become a key pair it is the difference between a rotation and a
+ * total authentication bypass.
+ */
+const ALGORITHM = 'HS256' as const;
+
 interface BasePayload extends JwtPayload {
     sub: string;
     /** Checked on verification, so a refresh token can never stand in for an access token. */
@@ -24,6 +37,7 @@ interface RefreshPayload extends BasePayload {
 
 export const signAccessToken = (userId: string): string =>
     jwt.sign({ sub: userId, type: 'access' }, accessSecret(), {
+        algorithm: ALGORITHM,
         expiresIn: ACCESS_TOKEN_TTL_MS / 1000,
     });
 
@@ -32,11 +46,12 @@ export const createSessionId = (): string => randomBytes(16).toString('hex');
 
 export const signRefreshToken = (userId: string, version: number, sessionId: string): string =>
     jwt.sign({ sub: userId, type: 'refresh', version, jti: sessionId }, refreshSecret(), {
+        algorithm: ALGORITHM,
         expiresIn: REFRESH_TOKEN_TTL_MS / 1000,
     });
 
 const decode = (token: string, secret: string): JwtPayload => {
-    const payload = jwt.verify(token, secret);
+    const payload = jwt.verify(token, secret, { algorithms: [ALGORITHM] });
     if (typeof payload === 'string') {
         throw new UnauthorizedError('Invalid token');
     }

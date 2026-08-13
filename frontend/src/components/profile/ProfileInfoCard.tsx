@@ -9,13 +9,30 @@ import { useState } from "react";
 import { useToast } from "@hooks/useToast";
 import * as Yup from "yup";
 
-const profileSchema = Yup.object({
-  name: Yup.string().min(2).max(20).required("Required"),
-  surname: Yup.string().min(2).max(20).required("Required"),
-  email: Yup.string().email("Invalid email").required("Required"),
-  birthdate: Yup.string().required("Required"),
-  gender: Yup.string().required("Required"),
-});
+/** Addresses are case-insensitive, and the server stores them folded. */
+const sameAddress = (a: string, b: string) =>
+  a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * Built per user rather than shared, because whether the password is required
+ * depends on the address currently on the account — which the form itself does
+ * not know.
+ */
+const buildProfileSchema = (storedEmail: string) =>
+  Yup.object({
+    name: Yup.string().min(2).max(20).required("Required"),
+    surname: Yup.string().min(2).max(20).required("Required"),
+    email: Yup.string().email("Invalid email").required("Required"),
+    birthdate: Yup.string().required("Required"),
+    gender: Yup.string().required("Required"),
+    // The server refuses an address change without it. Asked for here so the
+    // refusal never reaches the user as a failed save.
+    currentPassword: Yup.string().when("email", {
+      is: (email: string) => Boolean(email) && !sameAddress(email, storedEmail),
+      then: (schema) => schema.required("Required to change your email"),
+      otherwise: (schema) => schema,
+    }),
+  });
 
 function formatBirthday(iso: string) {
   try {
@@ -47,6 +64,7 @@ export default function ProfileInfoCard() {
     email: string;
     birthdate: string;
     gender: string;
+    currentPassword: string;
   }) => {
     const result = await dispatch(
       updateProfile({
@@ -56,13 +74,25 @@ export default function ProfileInfoCard() {
         birthday: values.birthdate,
         gender: values.gender as "male" | "female",
         avatar: user.avatar,
+        // Sent only when it is actually needed, so an ordinary edit does not
+        // carry a password it has no use for.
+        ...(sameAddress(values.email, user.email)
+          ? {}
+          : { currentPassword: values.currentPassword }),
       }),
     );
     if (updateProfile.fulfilled.match(result)) {
       setIsEditing(false);
       notify("Profile saved");
     } else {
-      notify("Could not save your profile", "danger");
+      // The server's own words when it has any: "current password is incorrect"
+      // is the difference between trying again and not knowing what went wrong.
+      notify(
+        typeof result.payload === "string"
+          ? result.payload
+          : "Could not save your profile",
+        "danger",
+      );
     }
   };
 
@@ -124,8 +154,9 @@ export default function ProfileInfoCard() {
             email: user.email,
             birthdate: toBirthdateInput(user.birthday),
             gender: user.gender,
+            currentPassword: "",
           }}
-          validationSchema={profileSchema}
+          validationSchema={buildProfileSchema(user.email)}
           onSubmit={handleSubmit}
         >
           {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
@@ -170,6 +201,24 @@ export default function ProfileInfoCard() {
                 onBlur={handleBlur("birthdate")}
                 error={touched.birthdate ? errors.birthdate : ""}
               />
+              {/*
+                Appears only once the address has actually been edited: the
+                server asks for a password to move it, and nothing else on this
+                form needs one.
+              */}
+              {!sameAddress(values.email, user.email) && (
+                <Input
+                  label="Current password"
+                  placeholder="Confirm with your password"
+                  type="password"
+                  value={values.currentPassword}
+                  onChange={handleChange("currentPassword")}
+                  onClear={() => handleChange("currentPassword")("")}
+                  onBlur={handleBlur("currentPassword")}
+                  error={touched.currentPassword ? errors.currentPassword : ""}
+                />
+              )}
+
               <Select
                 label="Gender"
                 placeholder="Choose your gender"

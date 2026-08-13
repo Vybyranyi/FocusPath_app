@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import {
     ACCESS_COOKIE,
     CSRF_COOKIE,
+    LEGACY_CSRF_COOKIE,
     REFRESH_COOKIE,
     accessCookieOptions,
     csrfCookieOptions,
@@ -41,4 +42,11 @@ export const clearSession = (res: Response): void => {
     res.clearCookie(ACCESS_COOKIE, { ...accessCookieOptions, maxAge: undefined });
     res.clearCookie(REFRESH_COOKIE, { ...refreshCookieOptions, maxAge: undefined });
     res.clearCookie(CSRF_COOKIE, { ...csrfCookieOptions, maxAge: undefined });
+
+    // A session predating the `__Host-` prefix carries the unprefixed name, which
+    // csrf.ts still accepts. Signing out has to take it with it, or the weaker
+    // cookie outlives the session it belonged to by the best part of a week.
+    if (LEGACY_CSRF_COOKIE !== CSRF_COOKIE) {
+        res.clearCookie(LEGACY_CSRF_COOKIE, { ...csrfCookieOptions, maxAge: undefined });
+    }
 };
