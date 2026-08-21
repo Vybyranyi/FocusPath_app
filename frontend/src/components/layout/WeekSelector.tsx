@@ -3,7 +3,7 @@ import IconButton from '@components/ui/IconButton';
 import arrow_left  from '@assets/images/icons/arrow-left.svg';
 import arrow_right from '@assets/images/icons/arrow-right.svg';
 import { useAppDispatch, useAppSelector } from '@store/hooks';
-import { nextWeek, prevWeek } from '@store/calendarSlice';
+import { nextWeek, prevWeek, thisWeek } from '@store/calendarSlice';
 
 export default function WeekSelector() {
   const dispatch = useAppDispatch();
@@ -22,12 +22,28 @@ export default function WeekSelector() {
   if (diff > 1)   label = `In ${diff} weeks`;
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-2">
       <div>
         <p className="body-bold">{label}</p>
         <p className="alternative text-ink-2">{formattedRange}</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        {/* The way back. Stepping a week at a time is fine for one hop and
+            tedious for five, and nothing else on this screen says where today
+            is once you have wandered off it. Absent on the current week, where
+            it would do nothing. */}
+        {diff !== 0 && (
+          <button
+            type="button"
+            onClick={() => dispatch(thisWeek())}
+            className={[
+              'min-h-11 px-3 rounded-full body-bold text-accent cursor-pointer whitespace-nowrap',
+              'hover:bg-accent-soft transition-colors duration-(--duration-fast)',
+            ].join(' ')}
+          >
+            This week
+          </button>
+        )}
         <IconButton size="medium" label="Previous week" icon={arrow_left}  onClick={() => dispatch(prevWeek())} />
         <IconButton size="medium" label="Next week" icon={arrow_right} onClick={() => dispatch(nextWeek())} />
       </div>

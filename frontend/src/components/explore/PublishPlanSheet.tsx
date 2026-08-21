@@ -14,6 +14,8 @@ export interface IPublishPlanSheetProps {
   habit: Pick<HabitSummary, "_id" | "title" | "duration" | "category">;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called once the plan exists, so whatever opened this can close itself. */
+  onPublished?: () => void;
 }
 
 /**
@@ -25,7 +27,12 @@ export interface IPublishPlanSheetProps {
  * is frozen at this moment, and the author is anonymous unless they choose not
  * to be.
  */
-export default function PublishPlanSheet({ habit, open, onOpenChange }: IPublishPlanSheetProps) {
+export default function PublishPlanSheet({
+  habit,
+  open,
+  onOpenChange,
+  onPublished,
+}: IPublishPlanSheetProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { notify } = useToast();
@@ -38,8 +45,12 @@ export default function PublishPlanSheet({ habit, open, onOpenChange }: IPublish
   );
   const [displayName, setDisplayName] = useState(storedName);
   const [signed, setSigned] = useState(Boolean(storedName));
+  // The category is required, but saying so before anyone has tried to publish
+  // is scolding someone for not having filled in a form they just opened.
+  const [attempted, setAttempted] = useState(false);
 
   const handlePublish = async () => {
+    setAttempted(true);
     if (!category) return;
 
     try {
@@ -53,6 +64,7 @@ export default function PublishPlanSheet({ habit, open, onOpenChange }: IPublish
 
       notify(`“${habit.title}” is in the library`);
       onOpenChange(false);
+      onPublished?.();
       navigate(`/explore/${plan._id}`);
     } catch {
       // The reason — including a moderator's verdict — is in the store below.
@@ -69,7 +81,7 @@ export default function PublishPlanSheet({ habit, open, onOpenChange }: IPublish
       <CategoryPicker
         value={category}
         onChange={setCategory}
-        error={category ? "" : "Pick a category so people can find it"}
+        error={attempted && !category ? "Pick a category so people can find it" : ""}
       />
 
       <div className="flex flex-col gap-3">
@@ -117,7 +129,7 @@ export default function PublishPlanSheet({ habit, open, onOpenChange }: IPublish
         <Button
           type="primary"
           size="medium"
-          disabled={publishing || !category}
+          disabled={publishing}
           onClick={handlePublish}
         >
           {publishing ? "Checking…" : "Publish"}

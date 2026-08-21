@@ -37,7 +37,11 @@ const buttonVariants = cva(
           "disabled:[&>span]:text-ink-muted",
         ],
         outline: [
-          "bg-transparent ring-card",
+          // A surface, not transparent. Everywhere this button sits on the
+          // canvas — Explore, the day view's empty state, the profile form —
+          // transparency left an outline around the page background, which
+          // reads as a disabled control rather than a secondary one.
+          "bg-surface ring-card",
           "before:bg-accent-soft",
           "active:before:bg-brand-blue-20",
           "disabled:shadow-[inset_0_0_0_1px_var(--line-strong)]",

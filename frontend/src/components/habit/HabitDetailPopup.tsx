@@ -110,7 +110,12 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
   const deadline = calculateDeadline();
 
   return (
-    <Dialog.Root open onOpenChange={(next) => { if (!next) onClose(); }}>
+    /*
+     * Closed while the publish sheet is up, rather than left open underneath
+     * it. Two stacked sheets meant two overlays, two blurs and a card the user
+     * could see but not reach; cancelling brings this one straight back.
+     */
+    <Dialog.Root open={!publishing} onOpenChange={(next) => { if (!next) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay asChild>
           <motion.div
@@ -362,6 +367,10 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
         habit={habit}
         open={publishing}
         onOpenChange={setPublishing}
+        // Once it is published there is nothing left to come back to: the sheet
+        // navigates to the new plan, and this card would otherwise reappear for
+        // a frame on the way out.
+        onPublished={onClose}
       />
     </Dialog.Root>
   );
