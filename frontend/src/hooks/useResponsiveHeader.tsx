@@ -106,14 +106,6 @@ export const useResponsiveHeader = () => {
         mobile: {
           visible: true,
           title: "Profile",
-          leftButtonIcon: (
-            <IconButton
-              size="large"
-              label="Go back"
-              icon={arrow_left}
-              onClick={() => navigate(-1)}
-            />
-          ),
         },
         // No header at all on desktop: the page opens with its own identity
         // block, and the header would repeat the same avatar and name a
@@ -137,14 +129,6 @@ export const useResponsiveHeader = () => {
         mobile: {
           visible: true,
           title: "Activity",
-          leftButtonIcon: (
-            <IconButton
-              size="large"
-              label="Go back"
-              icon={arrow_left}
-              onClick={() => navigate(-1)}
-            />
-          ),
         },
         desktop: {
           visible: true,

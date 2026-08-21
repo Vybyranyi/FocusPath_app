@@ -30,6 +30,8 @@ const initialState: IHabitSlice = {
 /** The form's shape, translated into what the API expects. */
 const toHabitBody = (values: CreateHabitFormValues, allowAutoDuration = false) => ({
   title: values.habitName.trim(),
+  description: values.habitDescription.trim() || undefined,
+  category: values.category || undefined,
   // The picker hands back local midnight. As a full instant that arrives as the
   // previous day east of Greenwich, which either shifted the whole schedule or
   // got the habit refused for starting "in the past".

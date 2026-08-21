@@ -6,6 +6,7 @@ import { startOfUtcDay } from '@utils/dates';
 import type { TypedRequest } from '@middlewares/validate';
 import type {
     CreateHabitDto,
+    CreateHabitFromPlanDto,
     HabitParams,
     MarkCompletionDto,
     StepParams,
@@ -26,6 +27,15 @@ const requireUserId = (req: Request): string => {
 
 export const createHabit = async (req: TypedRequest<CreateHabitDto>, res: Response) =>
     created(res, { habit: await habitService.createHabit(requireUserId(req), req.body) });
+
+export const createHabitFromPlan = async (
+    req: TypedRequest<CreateHabitFromPlanDto>,
+    res: Response,
+) =>
+    created(res, {
+        habit: await habitService.createHabitFromPlan(requireUserId(req), req.body),
+        fromPlan: true,
+    });
 
 export const getHabitsForDate = async (req: Request, res: Response) => {
     // Read from req.query rather than a validated copy: Express 5 silently

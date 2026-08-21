@@ -19,9 +19,20 @@ const run = async () => {
 
     await connectDB();
 
+    // Promotes rather than skips. This used to log "already exists" and exit,
+    // which meant the only way to get an admin out of an account that already
+    // existed was to delete it and sign up again — and before roles existed at
+    // all, the account it created was an ordinary user named "Admin".
     const existing = await User.findOne({ email });
     if (existing) {
-        logger.info(`Admin user already exists: ${email}`);
+        if (existing.role === 'admin') {
+            logger.info(`Already an admin: ${email}`);
+        } else {
+            existing.role = 'admin';
+            await existing.save();
+            logger.info(`Promoted to admin: ${email}`);
+        }
+
         await mongoose.disconnect();
         return;
     }
@@ -35,6 +46,7 @@ const run = async () => {
         gender: 'male',
         email,
         password: hashedPassword,
+        role: 'admin',
     });
 
     logger.info(`Admin user created: ${email}`);

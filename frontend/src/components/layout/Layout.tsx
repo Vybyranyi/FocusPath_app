@@ -1,13 +1,18 @@
 import AppBar from "@components/layout/AppBar";
+import GuestBar from "@components/layout/GuestBar";
 import ResponsiveHeader from "@components/layout/ResponsiveHeader";
 import type { ReactNode } from "react";
 import { useLocation } from "react-router";
 import { cn } from "@/lib/utils";
 import { useIsDesktop } from "@hooks/useIsDesktop";
+import { useAppSelector } from "@store/hooks";
 
 export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const isDesktop = useIsDesktop();
+  // A loaded user is the only signal available: the session lives in httpOnly
+  // cookies no script here can read.
+  const user = useAppSelector((state) => state.auth.user);
 
   // Creating a habit hides the bar on mobile — the form needs the room — but
   // keeps it on desktop, where it sits beside the content.
@@ -19,11 +24,22 @@ export default function Layout({ children }: { children: ReactNode }) {
   );
   const hidden = isDesktop ? hideOnDesktop : hideOnMobile;
 
+  /**
+   * Explore is readable with no account, and this layout was written for
+   * someone who has one. A signed-out visitor gets neither the navigation —
+   * every destination in it is behind `ProtectedRoute` — nor the header, which
+   * draws their avatar and their day.
+   */
+  const signedIn = Boolean(user);
+  const showAppBar = signedIn && !hidden;
+  const showGuestBar = !signedIn && !hideOnDesktop;
+
   return (
     <div
       className={cn(
         "min-h-screen w-full bg-canvas",
-        !(hideOnMobile && hideOnDesktop) &&
+        signedIn &&
+          !(hideOnMobile && hideOnDesktop) &&
           "md:grid md:grid-cols-[minmax(160px,240px)_1fr]",
       )}
     >
@@ -39,10 +55,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         Skip to content
       </a>
 
-      {!hidden && <AppBar />}
+      {showAppBar && <AppBar />}
 
       <div className="w-full max-w-full box-border">
-        <ResponsiveHeader />
+        {signedIn ? <ResponsiveHeader /> : showGuestBar && <GuestBar />}
         <main id="main" tabIndex={-1} className="outline-none">
           {children}
         </main>

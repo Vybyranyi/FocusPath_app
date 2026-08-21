@@ -50,3 +50,19 @@ export const aiLimiter = rateLimit({
     skip,
     message: refusal('AI habit generation is limited to 5 requests per hour'),
 });
+
+/**
+ * Publishing to the public library. Keyed by user for the same reason as AI
+ * generation — every publication spends a moderation call — but the real reason
+ * for a cap is that nothing else limits it: anyone may publish, immediately and
+ * without having walked the plan, so one person could otherwise pour fifty
+ * near-identical plans into the library in an afternoon.
+ */
+export const publishLimiter = rateLimit({
+    windowMs: 24 * 60 * 60 * 1000,
+    limit: 5,
+    keyGenerator: req => req.userId ?? ipKeyGenerator(req.ip ?? ''),
+    ...headers,
+    skip,
+    message: refusal('Publishing is limited to 5 plans per day'),
+});

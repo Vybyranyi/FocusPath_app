@@ -11,6 +11,7 @@ import CreateHabit from "@pages/CreateHabit";
 import ProfilePage from "@pages/ProfilePage";
 import StatsPage from "@pages/StatsPage";
 import ExplorePage from "@pages/ExplorePage";
+import PlanDetailPage from "@pages/PlanDetailPage";
 import AppLoading from "@components/habit/AppLoading";
 import ProtectedRoute from "@components/layout/ProtectedRoute";
 
@@ -52,14 +53,11 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/explore"
-            element={
-              <ProtectedRoute>
-                <ExplorePage />
-              </ProtectedRoute>
-            }
-          />
+          {/* The only pair of routes outside ProtectedRoute. Reading the
+              library needs no account — it is the one way a stranger can see
+              what this app is at all; taking or publishing still does. */}
+          <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/explore/:id" element={<PlanDetailPage />} />
           <Route
             path="/profile"
             element={

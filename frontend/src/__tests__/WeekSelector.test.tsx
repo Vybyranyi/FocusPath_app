@@ -63,6 +63,38 @@ describe("WeekSelector", () => {
     );
   });
 
+  describe("the way back", () => {
+    it("is absent on the current week, where it would do nothing", () => {
+      renderWithProviders(<WeekSelector />, {
+        preloadedState: weekStarting(2025, 0, 6),
+      });
+
+      expect(
+        screen.queryByRole("button", { name: "This week" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("appears once the week has been shifted", () => {
+      renderWithProviders(<WeekSelector />, {
+        preloadedState: weekStarting(2024, 11, 16),
+      });
+
+      expect(screen.getByRole("button", { name: "This week" })).toBeInTheDocument();
+    });
+
+    it("returns to the current week in one press, however far away it is", () => {
+      const { store } = renderWithProviders(<WeekSelector />, {
+        preloadedState: weekStarting(2024, 10, 4),
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "This week" }));
+
+      expect(new Date(store.getState().calendar.currentWeekStart)).toEqual(
+        new Date(2025, 0, 6),
+      );
+    });
+  });
+
   it("moves the stored week back a week on the left control", () => {
     const { store } = renderWithProviders(<WeekSelector />, {
       preloadedState: weekStarting(2025, 0, 6),

@@ -46,6 +46,14 @@ export interface Habit {
     currentStreak: number;
     isCompleted: boolean;
     dailyCompletions: DailyCompletion[];
+    /** The plan this habit was taken from, when it came out of the library. */
+    fromPlanId?: string;
+    /**
+     * The plan published from this habit. Kept so the same habit cannot be
+     * published twice, and so the badge can find its plan cheaply when the
+     * habit finishes.
+     */
+    publishedPlanId?: string;
     createdAt: string;
     updatedAt: string;
 }

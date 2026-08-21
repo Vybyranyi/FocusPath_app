@@ -69,8 +69,22 @@ export default function OptionPicker<TValue extends string>({
           <Popover.Content
             sideOffset={6}
             align="start"
+            /*
+             * A dialog switches the body to `pointer-events: none` and hands
+             * `auto` back only to itself. This list is portalled to the body,
+             * and Radix grants it nothing of its own, so inside a sheet every
+             * option was visible, hoverable — and inert: the click fell
+             * straight through to the sheet behind it. Outside a dialog this
+             * is what the value already is.
+             */
+            style={{ pointerEvents: "auto" }}
             className={cn(
-              "bg-surface rounded-2xl ring-card p-2 z-50",
+              // Above the sheets (z-201), below the toast (z-300). This
+              // dropdown is portalled to the body, so when it is opened from
+              // inside a dialog the two are siblings and z-index alone decides
+              // which wins — at z-50 the list opened *behind* the sheet that
+              // asked for it, which reads as the picker simply not working.
+              "bg-surface rounded-2xl ring-card p-2 z-[250]",
               maxHeightClassName,
               "overflow-y-auto w-(--radix-popover-trigger-width)",
               "shadow-lifted",

@@ -10,6 +10,7 @@ import { isDone } from '@/lib/habitStatus';
 import type { HabitSummary } from '@shared/index';
 import { format, addDays } from 'date-fns';
 import Button from '@components/ui/Button';
+import PublishPlanSheet from '@components/explore/PublishPlanSheet';
 import { cn } from '@/lib/utils';
 import { useToast } from '@hooks/useToast';
 
@@ -23,6 +24,14 @@ const DotsIcon = () => (
     <circle cx="12" cy="7" r="1.5" />
     <circle cx="12" cy="12" r="1.5" />
     <circle cx="12" cy="17" r="1.5" />
+  </svg>
+);
+
+const ShareIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+    <polyline points="16 6 12 2 8 6" />
+    <line x1="12" y1="2" x2="12" y2="15" />
   </svg>
 );
 
@@ -54,6 +63,7 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
   const { notify } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   /**
    * Radix hands focus back to its own `Dialog.Trigger`. This sheet is mounted
@@ -100,7 +110,12 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
   const deadline = calculateDeadline();
 
   return (
-    <Dialog.Root open onOpenChange={(next) => { if (!next) onClose(); }}>
+    /*
+     * Closed while the publish sheet is up, rather than left open underneath
+     * it. Two stacked sheets meant two overlays, two blurs and a card the user
+     * could see but not reach; cancelling brings this one straight back.
+     */
+    <Dialog.Root open={!publishing} onOpenChange={(next) => { if (!next) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay asChild>
           <motion.div
@@ -188,6 +203,17 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
                          transition={{ duration: 0.15 }}
                          className="absolute right-0 top-full mt-2 w-48 bg-surface rounded-xl shadow-lifted border border-line overflow-hidden z-10"
                        >
+                         {/* Publishing lives beside deleting because this menu
+                             is where things you do *to* a habit already are —
+                             and it is the only place a habit is fully in view. */}
+                         <button
+                           type="button"
+                           onClick={() => { setMenuOpen(false); setPublishing(true); }}
+                           className="w-full text-left px-4 py-3 body-bold text-ink hover:bg-canvas transition-colors flex items-center gap-2 cursor-pointer"
+                         >
+                            <ShareIcon />
+                            Publish as a plan
+                         </button>
                          <button
                            type="button"
                            onClick={() => { setMenuOpen(false); setConfirmingDelete(true); }}
@@ -336,6 +362,16 @@ export default function HabitDetailPopup({ habit, onClose }: IHabitDetailPopupPr
           </motion.div>
         </Dialog.Content>
       </Dialog.Portal>
+
+      <PublishPlanSheet
+        habit={habit}
+        open={publishing}
+        onOpenChange={setPublishing}
+        // Once it is published there is nothing left to come back to: the sheet
+        // navigates to the new plan, and this card would otherwise reappear for
+        // a frame on the way out.
+        onPublished={onClose}
+      />
     </Dialog.Root>
   );
 }

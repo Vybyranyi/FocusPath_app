@@ -1,12 +1,11 @@
+import { useId, useState, type ReactNode } from "react";
 import Button from "@components/ui/Button";
-import Input from "@components/ui/Input";
-import Select from "@components/ui/Select";
 import { updateProfile } from "@store/authSlice";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { format } from "date-fns";
 import { Form, Formik } from "formik";
-import { useState } from "react";
 import { useToast } from "@hooks/useToast";
+import { cn } from "@/lib/utils";
 import * as Yup from "yup";
 
 /** Addresses are case-insensitive, and the server stores them folded. */
@@ -50,11 +49,61 @@ function toBirthdateInput(iso: string) {
   }
 }
 
+/**
+ * One line of the card, in whichever of its two states.
+ *
+ * The row owns the layout so that reading and editing produce the *same* rows
+ * at the same heights: editing used to swap the whole list for a stack of
+ * labelled fields, which changed every measurement on the card and made the
+ * page jump under the pointer. Now the value turns into a control in place and
+ * only the buttons at the bottom appear.
+ */
+function Row({
+  label,
+  children,
+  error,
+  htmlFor,
+}: {
+  label: string;
+  children: ReactNode;
+  error?: string;
+  /** Present while editing, when the row's value is a real form control. */
+  htmlFor?: string;
+}) {
+  return (
+    <div className="border-b border-line pb-3 last:border-0 last:pb-0">
+      <div className="flex items-center justify-between gap-4 min-h-11">
+        {htmlFor ? (
+          <label htmlFor={htmlFor} className="chip text-ink-muted shrink-0">
+            {label}
+          </label>
+        ) : (
+          <p className="chip text-ink-muted shrink-0">{label}</p>
+        )}
+        {children}
+      </div>
+      {error && (
+        <p role="alert" className="alternative text-danger text-right">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The look every editable value takes, so a row's height never depends on its type. */
+const controlClass = cn(
+  "w-full max-w-56 h-9 px-3 rounded-lg text-right",
+  "bg-canvas border border-line body-bold text-ink",
+  "transition-colors duration-(--duration-fast) focus:border-accent",
+);
+
 export default function ProfileInfoCard() {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((s) => s.auth);
   const [isEditing, setIsEditing] = useState(false);
   const { notify } = useToast();
+  const fieldId = useId();
 
   if (!user) return null;
 
@@ -96,17 +145,9 @@ export default function ProfileInfoCard() {
     }
   };
 
-  const fields = [
-    { label: "Name", value: user.name },
-    { label: "Surname", value: user.surname },
-    { label: "Email", value: user.email },
-    { label: "Birthday", value: formatBirthday(user.birthday) },
-    { label: "Gender", value: user.gender === "male" ? "Male" : "Female" },
-  ];
-
   return (
     <div className="bg-surface rounded-2xl shadow-lifted p-6 flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between min-h-11">
         <h2 className="title font-bold">Personal information</h2>
         {!isEditing && (
           <button
@@ -133,19 +174,25 @@ export default function ProfileInfoCard() {
       </div>
 
       {!isEditing ? (
-        <>
-          <div className="flex flex-col gap-4">
-            {fields.map(({ label, value }) => (
-              <div
-                key={label}
-                className="flex items-center justify-between border-b border-line pb-3 last:border-0 last:pb-0"
-              >
-                <p className="chip text-ink-muted">{label}</p>
-                <p className="body-bold">{value}</p>
-              </div>
-            ))}
-          </div>
-        </>
+        <div className="flex flex-col gap-4">
+          <Row label="Name">
+            <p className="body-bold truncate">{user.name}</p>
+          </Row>
+          <Row label="Surname">
+            <p className="body-bold truncate">{user.surname}</p>
+          </Row>
+          <Row label="Email">
+            <p className="body-bold truncate">{user.email}</p>
+          </Row>
+          <Row label="Birthday">
+            <p className="body-bold truncate">{formatBirthday(user.birthday)}</p>
+          </Row>
+          <Row label="Gender">
+            <p className="body-bold truncate">
+              {user.gender === "male" ? "Male" : "Female"}
+            </p>
+          </Row>
+        </div>
       ) : (
         <Formik
           initialValues={{
@@ -160,79 +207,111 @@ export default function ProfileInfoCard() {
           onSubmit={handleSubmit}
         >
           {({ values, errors, touched, handleChange, handleBlur, isValid, dirty }) => (
-            <Form className="flex flex-col gap-4">
-              <Input
-                label="Name"
-                placeholder="Enter your name"
-                type="text"
-                value={values.name}
-                onChange={handleChange("name")}
-                onClear={() => handleChange("name")("")}
-                onBlur={handleBlur("name")}
-                error={touched.name ? errors.name : ""}
-              />
-              <Input
-                label="Surname"
-                placeholder="Enter your surname"
-                type="text"
-                value={values.surname}
-                onChange={handleChange("surname")}
-                onClear={() => handleChange("surname")("")}
-                onBlur={handleBlur("surname")}
-                error={touched.surname ? errors.surname : ""}
-              />
-              <Input
-                label="Email"
-                placeholder="Enter your email"
-                type="email"
-                value={values.email}
-                onChange={handleChange("email")}
-                onClear={() => handleChange("email")("")}
-                onBlur={handleBlur("email")}
-                error={touched.email ? errors.email : ""}
-              />
-              <Input
-                label="Date of birth"
-                placeholder="dd.mm.yyyy"
-                type="date"
-                value={values.birthdate}
-                onChange={handleChange("birthdate")}
-                onClear={() => handleChange("birthdate")("")}
-                onBlur={handleBlur("birthdate")}
-                error={touched.birthdate ? errors.birthdate : ""}
-              />
-              {/*
-                Appears only once the address has actually been edited: the
-                server asks for a password to move it, and nothing else on this
-                form needs one.
-              */}
-              {!sameAddress(values.email, user.email) && (
-                <Input
-                  label="Current password"
-                  placeholder="Confirm with your password"
-                  type="password"
-                  value={values.currentPassword}
-                  onChange={handleChange("currentPassword")}
-                  onClear={() => handleChange("currentPassword")("")}
-                  onBlur={handleBlur("currentPassword")}
-                  error={touched.currentPassword ? errors.currentPassword : ""}
-                />
-              )}
+            <Form className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4">
+                <Row
+                  label="Name"
+                  htmlFor={`${fieldId}-name`}
+                  error={touched.name ? errors.name : ""}
+                >
+                  <input
+                    id={`${fieldId}-name`}
+                    type="text"
+                    className={controlClass}
+                    value={values.name}
+                    onChange={handleChange("name")}
+                    onBlur={handleBlur("name")}
+                  />
+                </Row>
 
-              <Select
-                label="Gender"
-                placeholder="Choose your gender"
-                options={[
-                  { label: "Male", value: "male" },
-                  { label: "Female", value: "female" },
-                ]}
-                value={values.gender}
-                onChange={handleChange("gender")}
-                onBlur={handleBlur("gender")}
-                error={touched.gender ? errors.gender : ""}
-              />
+                <Row
+                  label="Surname"
+                  htmlFor={`${fieldId}-surname`}
+                  error={touched.surname ? errors.surname : ""}
+                >
+                  <input
+                    id={`${fieldId}-surname`}
+                    type="text"
+                    className={controlClass}
+                    value={values.surname}
+                    onChange={handleChange("surname")}
+                    onBlur={handleBlur("surname")}
+                  />
+                </Row>
 
-              <div className="flex gap-3 pt-2">
+                <Row
+                  label="Email"
+                  htmlFor={`${fieldId}-email`}
+                  error={touched.email ? errors.email : ""}
+                >
+                  <input
+                    id={`${fieldId}-email`}
+                    type="email"
+                    className={controlClass}
+                    value={values.email}
+                    onChange={handleChange("email")}
+                    onBlur={handleBlur("email")}
+                  />
+                </Row>
+
+                {/*
+                  Appears only once the address has actually been edited: the
+                  server asks for a password to move it, and nothing else on
+                  this form needs one.
+                */}
+                {!sameAddress(values.email, user.email) && (
+                  <Row
+                    label="Current password"
+                    htmlFor={`${fieldId}-password`}
+                    error={touched.currentPassword ? errors.currentPassword : ""}
+                  >
+                    <input
+                      id={`${fieldId}-password`}
+                      type="password"
+                      placeholder="Confirm with your password"
+                      className={controlClass}
+                      value={values.currentPassword}
+                      onChange={handleChange("currentPassword")}
+                      onBlur={handleBlur("currentPassword")}
+                    />
+                  </Row>
+                )}
+
+                <Row
+                  label="Birthday"
+                  htmlFor={`${fieldId}-birthdate`}
+                  error={touched.birthdate ? errors.birthdate : ""}
+                >
+                  <input
+                    id={`${fieldId}-birthdate`}
+                    type="date"
+                    className={controlClass}
+                    value={values.birthdate}
+                    onChange={handleChange("birthdate")}
+                    onBlur={handleBlur("birthdate")}
+                  />
+                </Row>
+
+                <Row
+                  label="Gender"
+                  htmlFor={`${fieldId}-gender`}
+                  error={touched.gender ? errors.gender : ""}
+                >
+                  <select
+                    id={`${fieldId}-gender`}
+                    className={controlClass}
+                    value={values.gender}
+                    onChange={handleChange("gender")}
+                    onBlur={handleBlur("gender")}
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </Row>
+              </div>
+
+              {/* The only thing editing adds to the card. */}
+              <div className="flex gap-3">
                 <Button
                   type="outline"
                   size="medium"

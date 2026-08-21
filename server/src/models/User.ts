@@ -41,6 +41,13 @@ const UserSchema: Schema = new Schema({
     // it — signing in and changing a password — ask for it with .select('+password').
     password: { type: String, required: true, minlength: 8, select: false },
     avatar: { type: String, required: false },
+    // Not a secret, so it stays in the response. It is also not something a
+    // request may set: `updateProfileSchema` is a whitelist and does not list
+    // it, which makes the protection structural rather than a check to forget.
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    // Absent means anonymous, which is the default for everyone. Only shown on
+    // a published plan, and only because its author asked for it.
+    displayName: { type: String, required: false, trim: true, maxlength: 30 },
     tokenVersion: { type: Number, default: 0 },
     refreshSessions: { type: [String], default: [], select: false },
 }, { timestamps: true });

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
     createHabit,
+    createHabitFromPlan,
     getAllHabits,
     getHabitById,
     updateHabit,
@@ -16,6 +17,7 @@ import { aiLimiter } from '@middlewares/rateLimit';
 import { validate } from '@middlewares/validate';
 import {
     createAIHabitSchema,
+    createHabitFromPlanSchema,
     createHabitSchema,
     habitParamsSchema,
     habitsForDateQuerySchema,
@@ -29,6 +31,11 @@ const router = Router();
 
 // Створення звички вручну
 router.post('/', verifyTokenMiddleware, validate({ body: createHabitSchema }), createHabit);
+
+// Взяття плану з бібліотеки. Окремий маршрут, а не опційний planId у POST /:
+// інакше createHabitSchema стає union з умовно обов'язковими полями, і тип із
+// z.infer перестає бути придатним.
+router.post('/from-plan', verifyTokenMiddleware, validate({ body: createHabitFromPlanSchema }), createHabitFromPlan);
 
 // Створення звички через AI (ліміт після авторизації — ключ рахується по користувачу)
 router.post('/ai', verifyTokenMiddleware, aiLimiter, validate({ body: createAIHabitSchema }), createAIHabit);

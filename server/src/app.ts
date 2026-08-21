@@ -6,6 +6,7 @@ import pinoHttp from "pino-http";
 import authRoutes from "@routes/authRoutes";
 import habitRoutes from "@routes/habitRouter";
 import healthRoutes from "@routes/healthRouter";
+import planRoutes from "@routes/planRouter";
 import { corsOptions } from "@config/cors";
 import { logger } from "@config/logger";
 import { apiLimiter } from "@middlewares/rateLimit";
@@ -72,6 +73,7 @@ app.use(apiLimiter);
 //Routes
 app.use("/auth", authRoutes);
 app.use("/habits", habitRoutes);
+app.use("/plans", planRoutes);
 
 // After the routes, so a real endpoint always wins, and before notFoundHandler,
 // so an unmatched browser route still gets the app instead of a JSON 404.
