@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import type { Plan } from "@shared/index";
 import Button from "@components/ui/Button";
 import Input from "@components/ui/Input";
@@ -31,7 +30,6 @@ export interface ITakePlanSheetProps {
  */
 export default function TakePlanSheet({ plan, open, onOpenChange }: ITakePlanSheetProps) {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { notify } = useToast();
   const taking = useAppSelector((state) => state.plans.taking);
   const error = useAppSelector((state) => state.plans.error);
@@ -61,9 +59,10 @@ export default function TakePlanSheet({ plan, open, onOpenChange }: ITakePlanShe
         }),
       ).unwrap();
 
+      // Stays put, like publishing does: you were reading this plan, and the
+      // day view is not where you asked to be.
       notify(`“${plan.title}” is now one of your habits`);
       onOpenChange(false);
-      navigate("/main");
     } catch {
       // The reason is in the store and rendered below.
     }

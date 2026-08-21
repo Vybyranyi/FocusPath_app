@@ -115,13 +115,34 @@ describe('Taking a plan', () => {
         expect(habit.startDate.slice(0, 10)).toBe(dayKey(3));
     });
 
+    it('refuses a second copy while the first is still running', async () => {
+        const { plan } = await publishPlan(author);
+        await takePlan(taker, plan._id);
+
+        // Two copies of one plan put the same task on the same day twice, which
+        // is one commitment shown twice rather than two.
+        const response = await write(taker, 'post', '/habits/from-plan')
+            .send({ planId: plan._id, startDate: dayKey(0) })
+            .expect(409);
+
+        expect(response.body.error.code).toBe('CONFLICT');
+        expect((await counters(plan._id)).clones).toBe(1);
+    });
+
+    it('allows the plan again once the run is over', async () => {
+        const { plan } = await publishPlan(author);
+        const first = await takePlan(taker, plan._id);
+        await backdate(taker, first._id, -5);
+
+        await takePlan(taker, plan._id);
+
+        // Still one person, however many times they walk it.
+        expect((await counters(plan._id)).clones).toBe(1);
+    });
+
     it('counts one take per person, not per habit', async () => {
         const { plan } = await publishPlan(author);
 
-        await takePlan(taker, plan._id);
-        expect((await counters(plan._id)).clones).toBe(1);
-
-        // The same plan twice is one person's opinion, not two.
         await takePlan(taker, plan._id);
         expect((await counters(plan._id)).clones).toBe(1);
 
@@ -202,12 +223,14 @@ describe('Clone statistics', () => {
     it('counts only the first take of a person who took the plan twice', async () => {
         const { plan } = await publishPlan(author);
         const first = await takePlan(taker, plan._id);
+        // Out of the way, which is also the only way to take the plan again.
+        const moved = await backdate(taker, first._id, -5);
         const second = await takePlan(taker, plan._id);
 
         await markAll(taker, second, 'done');
         expect((await counters(plan._id)).completed).toBe(0);
 
-        await markAll(taker, first, 'done');
+        await markAll(taker, moved, 'done');
         expect((await counters(plan._id)).completed).toBe(1);
     });
 });

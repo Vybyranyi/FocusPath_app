@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import type { HabitSummary, PlanCategory } from "@shared/index";
 import Button from "@components/ui/Button";
 import Input from "@components/ui/Input";
@@ -34,7 +33,6 @@ export default function PublishPlanSheet({
   onPublished,
 }: IPublishPlanSheetProps) {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { notify } = useToast();
   const publishing = useAppSelector((state) => state.plans.publishing);
   const error = useAppSelector((state) => state.plans.error);
@@ -54,7 +52,7 @@ export default function PublishPlanSheet({
     if (!category) return;
 
     try {
-      const { plan } = await dispatch(
+      await dispatch(
         publishPlan({
           habitId: habit._id,
           category,
@@ -62,10 +60,13 @@ export default function PublishPlanSheet({
         }),
       ).unwrap();
 
-      notify(`“${habit.title}” is in the library`);
+      // Deliberately does not go to the new plan. Publishing is something you
+      // do *to* a habit while you are busy with something else; being thrown
+      // onto a library page afterwards loses your place to show you a page you
+      // did not ask for. The toast says it worked and names where it went.
+      notify(`“${habit.title}” is in Explore now`);
       onOpenChange(false);
       onPublished?.();
-      navigate(`/explore/${plan._id}`);
     } catch {
       // The reason — including a moderator's verdict — is in the store below.
     }

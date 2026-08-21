@@ -29,13 +29,11 @@ export const languageLabel = (tag: string): string =>
   PLAN_LANGUAGE_LABELS[tag] ?? tag.toUpperCase();
 
 /**
- * What the filter starts on: the language the interface is being read in.
+ * The filter starts on every language.
  *
- * Someone browsing a library of written plans wants the ones they can read, and
- * the browser already knows which those are. It is a starting point, not a
- * cage — the filter is right there.
+ * It used to open on the language of the interface, which was a good guess and
+ * a bad default: it silently hid most of a library that is small to begin with,
+ * and someone who reads two languages saw half of it without being told why.
+ * Narrowing is one click away; noticing that something was hidden is not.
  */
-export const interfaceLanguage = (): string => {
-  const tag = (typeof navigator !== "undefined" ? navigator.language : "en").slice(0, 2);
-  return tag in PLAN_LANGUAGE_LABELS ? tag : "en";
-};
+export const DEFAULT_LANGUAGE = ANY_LANGUAGE;

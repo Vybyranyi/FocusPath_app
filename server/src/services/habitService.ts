@@ -1,7 +1,12 @@
 import mongoose from 'mongoose';
 import Habit, { type IHabit } from '@models/Habit';
 import Plan from '@models/Plan';
-import { BadRequestError, NotFoundError, ServiceUnavailableError } from '@errors/AppError';
+import {
+    BadRequestError,
+    ConflictError,
+    NotFoundError,
+    ServiceUnavailableError,
+} from '@errors/AppError';
 import { logger } from '@config/logger';
 import { generateHabitPlan } from '@services/openAiService';
 import {
@@ -139,6 +144,17 @@ export const createHabitFromPlan = async (
     const plan = await Plan.findOne({ _id: dto.planId, status: 'published' });
     if (!plan) {
         throw new NotFoundError('Plan not found');
+    }
+
+    // One copy of a plan at a time. Taking the same plan twice put two
+    // identical habits on the same day, each with the same task — which is not
+    // two commitments, it is one shown twice, and ticking either leaves the
+    // other staring back. Once a run is over the plan can be walked again.
+    const existing = await Habit.find({ userId, fromPlanId: plan._id }).select('startDate duration');
+    const today = startOfUtcDay(new Date());
+
+    if (existing.some(habit => endOfSchedule(startOfUtcDay(habit.startDate), habit.duration) >= today)) {
+        throw new ConflictError('You are already following this plan — finish it before taking it again');
     }
 
     const startDate = startOfUtcDay(dto.startDate);

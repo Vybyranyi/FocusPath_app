@@ -47,12 +47,14 @@ describe("ExplorePage", () => {
     expect(sections.sort()).toEqual(["new", "official", "proven"]);
   });
 
-  it("starts on the language the interface is being read in", async () => {
+  it("starts on every language", async () => {
     shelves({});
     renderWithProviders(<ExplorePage />, { route: "/explore" });
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    expect(requested()[0]).toContain("language=en");
+    // Opening on the interface language quietly hid most of a small library,
+    // and an empty shelf does not explain itself.
+    expect(requested().every((url) => !url.includes("language="))).toBe(true);
   });
 
   it("shows a shelf that has plans and stays silent about one that does not", async () => {
@@ -111,7 +113,7 @@ describe("ExplorePage", () => {
       expect(screen.getByRole("button", { name: "Clear filters" })).toBeInTheDocument();
     });
 
-    it("keeps All languages once it is chosen", async () => {
+    it("narrows to one language, and back to all of them", async () => {
       const user = userEvent.setup();
       shelves({ new: [makePlanSummary()] });
       renderWithProviders(<ExplorePage />, { route: "/explore" });
@@ -119,6 +121,12 @@ describe("ExplorePage", () => {
       await screen.findByText("Newest");
       fetchMock.mockClear();
 
+      await user.selectOptions(screen.getByLabelText("Language"), "uk");
+      await waitFor(() =>
+        expect(requested().every((url) => url.includes("language=uk"))).toBe(true),
+      );
+
+      fetchMock.mockClear();
       // Selected by its label: the value is the empty string, which
       // `selectOptions` cannot match on.
       await user.selectOptions(

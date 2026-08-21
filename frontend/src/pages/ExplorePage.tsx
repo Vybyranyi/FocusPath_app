@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { fetchShelf, type PlanShelf } from "@store/plansSlice";
 import { selectExploreIsEmpty, selectPlanSections } from "@store/selectors";
 import { isPlanCategory } from "@/lib/planCategories";
-import { interfaceLanguage } from "@/lib/planLanguages";
+import { DEFAULT_LANGUAGE } from "@/lib/planLanguages";
 
 /**
  * Three editorial shelves, in this order, and no ranking cleverer than that.
@@ -112,7 +112,7 @@ export default function ExplorePage() {
   // walked back to with the browser's own Back button.
   const rawCategory = searchParams.get("category") ?? "";
   const category = isPlanCategory(rawCategory) ? rawCategory : undefined;
-  const language = searchParams.get("lang") ?? interfaceLanguage();
+  const language = searchParams.get("lang") ?? DEFAULT_LANGUAGE;
 
   useEffect(() => {
     for (const { section } of SHELVES) {
@@ -124,10 +124,10 @@ export default function ExplorePage() {
     const next = new URLSearchParams(searchParams);
 
     if (key === "lang") {
-      // Written even when empty: "All languages" is a choice, and dropping the
-      // parameter would snap the filter back to the interface language on the
-      // next read.
-      next.set("lang", value ?? "");
+      // Dropped when empty rather than written as a blank: "all languages" is
+      // the default now, so an empty parameter would only be noise in the URL.
+      if (value) next.set("lang", value);
+      else next.delete("lang");
     } else if (value) {
       next.set("category", value);
     } else {
